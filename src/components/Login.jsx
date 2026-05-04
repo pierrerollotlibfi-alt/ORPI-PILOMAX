@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "../App";
 
 // ─── HOOK INSTALL PWA ──────────────────────────────────────────────────────
@@ -10,6 +10,16 @@ window.addEventListener("beforeinstallprompt", function(e) {
   try { sessionStorage.setItem("pwa_installable","1"); } catch(e2){}
   window.dispatchEvent(new Event("pwa_installable"));
 });
+
+// PWA install prompt global
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", function(e) {
+    e.preventDefault();
+    window._pwaInstallPrompt = e;
+    try{ sessionStorage.setItem("pwa_installable","1"); }catch(ex){}
+    window.dispatchEvent(new Event("pwa_installable"));
+  });
+}
 
 export default function Login({ onLogin }) {
   var ctx = useApp();
