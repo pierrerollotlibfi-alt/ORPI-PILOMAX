@@ -66,14 +66,21 @@ export default function DashboardMatin({ onNavigate }) {
     return t.echeance && t.echeance <= todayStr;
   }).sort(function(a,b){ return a.echeance.localeCompare(b.echeance); });
 
-  // ─── STOCK SEMAINE PRÉCÉDENTE (tendance) ─────────────────────────────────────
+  // ─── STOCK 8 SEMAINES (pour courbe) ─────────────────────────────────────────
+  var stockActuel = mandatsActifs.length;
+  var stockParSemaine = [];
+  for (var wi = 7; wi >= 0; wi--) {
+    var dateRef = new Date(today - wi*7*86400000).toISOString().slice(0,10);
+    var nb = mandats.filter(function(m) {
+      var debut  = m.dateMandat && m.dateMandat <= dateRef;
+      var encoreActif = m.statut === "mandat" || (m.dateCompromis && m.dateCompromis > dateRef) || (m.dateSignature && m.dateSignature > dateRef);
+      return debut && encoreActif;
+    }).length;
+    var label = wi === 0 ? "Auj." : (wi === 1 ? "S-1" : "S-"+wi);
+    stockParSemaine.push({ label, nb, dateRef });
+  }
   var il7j = new Date(today - 7*86400000).toISOString().slice(0,10);
-  var stockActuel  = mandatsActifs.length;
-  var stockIl7j    = mandats.filter(function(m){
-    return m.statut==="mandat" && m.dateMandat && m.dateMandat <= il7j;
-  }).length + mandats.filter(function(m){
-    return (m.statut==="compromis"||m.statut==="vendu") && m.dateMandat && m.dateMandat <= il7j && m.dateCompromis && m.dateCompromis > il7j;
-  }).length;
+  var stockIl7j = stockParSemaine[stockParSemaine.length - 2].nb;
   var tendance = stockActuel - stockIl7j;
 
   // ─── RENDU ───────────────────────────────────────────────────────────────────
@@ -95,6 +102,42 @@ export default function DashboardMatin({ onNavigate }) {
           <div style={{fontSize:12,color:"rgba(255,255,255,0.75)"}}>{"📦 "+stockActuel+" mandats actifs"+(tendance!==0?" ("+( tendance>0?"+"+(tendance):tendance)+" vs semaine dernière)":"")}</div>
           {delaiMoyen && <div style={{fontSize:12,color:"rgba(255,255,255,0.75)"}}>{"⏱ Délai moyen vente : "+delaiMoyen+" jours"}</div>}
         </div>
+        {/* Courbe stock 8 semaines */}
+        {(function(){
+          var vals = stockParSemaine.map(function(s){return s.nb;});
+          var maxV = Math.max.apply(null, vals) || 1;
+          var minV = Math.min.apply(null, vals);
+          var W = 280; var H = 56; var pad = 4;
+          var pts = vals.map(function(v, i){
+            var x = pad + i * (W - pad*2) / (vals.length-1);
+            var y = H - pad - (v - minV) / (maxV - minV || 1) * (H - pad*2);
+            return [x, y];
+          });
+          var d = pts.map(function(p,i){ return (i===0?"M":"L")+p[0].toFixed(1)+","+p[1].toFixed(1); }).join(" ");
+          var areaD = d + " L"+pts[pts.length-1][0].toFixed(1)+","+(H-pad)+" L"+pts[0][0].toFixed(1)+","+(H-pad)+" Z";
+          return (
+            <div style={{marginTop:12}}>
+              <svg viewBox={"0 0 "+W+" "+H} style={{width:"100%",height:H,display:"block"}}>
+                <defs>
+                  <linearGradient id="sgrd" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.3)"/>
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.02)"/>
+                  </linearGradient>
+                </defs>
+                <path d={areaD} fill="url(#sgrd)"/>
+                <path d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinejoin="round"/>
+                {pts.map(function(p, i){
+                  return <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="#fff" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>;
+                })}
+                {stockParSemaine.map(function(s, i){
+                  var x = pad + i * (W - pad*2) / (vals.length-1);
+                  return <text key={i} x={x} y={H} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.5)">{s.label}</text>;
+                })}
+              </svg>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",textAlign:"center",marginTop:2}}>{"Évolution du stock sur 8 semaines"}</div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Score alertes */}
@@ -130,28 +173,6 @@ export default function DashboardMatin({ onNavigate }) {
           })}
         </Section>
       )}
-
-      {/* ─── LOYERS IMPAYÉS ─── */}
-      {impayes.length > 0 && (
-        <Section icon="💸" title={"Loyers en attente ce mois ("+impayes.length+")"} color="#EF4444" bg="#FEF2F2">
-          {impayes.map(function(g) {
-            var agent = users.find(function(u){ return u.id===g.agentId; });
-            return (
-              <div key={g.id} style={{padding:"10px 0",borderBottom:"1px solid #FECACA",display:"flex",alignItems:"center",gap:10}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:700,color:"var(--navy)",fontSize:13}}>{g.ref+" — "+g.adresse.split(",")[0]}</div>
-                  <div style={{fontSize:11,color:"var(--g500)",marginTop:2}}>{g.loyer+"€/mois · "+g.proprietairePrenom+" "+g.proprietaireNom}</div>
-                </div>
-                {g.locataireTel && (
-                  <a href={"tel:"+g.locataireTel.replace(/\s/g,"")} style={{background:"#EF4444",color:"#fff",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:800,textDecoration:"none",flexShrink:0}}>{"📞 Locataire"}</a>
-                )}
-                <button onClick={function(){if(onNavigate)onNavigate("gestion");}} style={{background:"var(--navy)",color:"#fff",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:800,cursor:"pointer",flexShrink:0}}>{"Voir"}</button>
-              </div>
-            );
-          })}
-        </Section>
-      )}
-
       {/* ─── SIGNATURES CETTE SEMAINE ─── */}
       {sigCetteSemaine.length > 0 && (
         <Section icon="🎉" title={"Signatures cette semaine ("+sigCetteSemaine.length+")"} color="#059669" bg="#F0FDF4">

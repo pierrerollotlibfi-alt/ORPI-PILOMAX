@@ -42,7 +42,7 @@ export default function OffMarket() {
       prix: init.prix||"", motivation: init.motivation||"Moyen",
       proprietaireNom: init.proprietaireNom||"", proprietairePrenom: init.proprietairePrenom||"",
       proprietaireTel: init.proprietaireTel||"", proprietaireMail: init.proprietaireMail||"",
-      agentId: init.agentId||ctx.currentUser.id, notes: init.notes||"",
+      agentId: init.agentId||ctx.currentUser.id, notes: init.notes||"", confidentiel: init.confidentiel||false,
     });
     function set(k,v){ setF(function(p){ return {...p,[k]:v}; }); }
     var motivColors = {Fort:"#D1FAE5",Moyen:"#FEF3C7",Faible:"#FEE2E2"};
@@ -78,6 +78,15 @@ export default function OffMarket() {
             </select>
           </div>
           <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">{"Notes confidentielles"}</label><textarea className="form-input" rows={3} value={f.notes} onChange={function(e){set("notes",e.target.value);}}/></div>
+          <div className="form-group" style={{gridColumn:"1/-1"}}>
+            <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"10px 14px",background:f.confidentiel?"#FEF2F2":"var(--g50)",borderRadius:10,border:"2px solid "+(f.confidentiel?"#FECACA":"var(--g200)")}}>
+              <input type="checkbox" checked={f.confidentiel||false} onChange={function(e){set("confidentiel",e.target.checked);}} style={{width:18,height:18,cursor:"pointer"}}/>
+              <div>
+                <div style={{fontWeight:800,color:f.confidentiel?"#DC2626":"var(--navy)",fontSize:13}}>{"🔒 Coordonnées confidentielles"}</div>
+                <div style={{fontSize:11,color:"var(--g400)",marginTop:1}}>{"Nom et contact masqués pour les autres agents (managers voient toujours)"}</div>
+              </div>
+            </label>
+          </div>
         </div>
         <div style={{display:"flex",gap:8,marginTop:16}}>
           <button className="btn btn-secondary" style={{flex:1}} onClick={onCancel}>{"Annuler"}</button>
@@ -185,9 +194,9 @@ export default function OffMarket() {
             {/* Contact */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
               {[
-                ["📞 Téléphone", (function(){ var ok=canSeeContact(ctx.currentUser,bienSelec.agentId,null); return ok && bienSelec.proprietaireTel ? <a href={"tel:"+bienSelec.proprietaireTel.replace(/\s/g,"")} style={{color:"#059669",fontWeight:800,textDecoration:"none"}}>{bienSelec.proprietaireTel}</a> : masquerTel(bienSelec.proprietaireTel,ok); })()],
-                ["✉️ Email",      bienSelec.proprietaireMail||"—"],
-                ["👤 Contact", (function(){ var ok=canSeeContact(ctx.currentUser,bienSelec.agentId,null); return masquer(bienSelec.proprietairePrenom+" "+bienSelec.proprietaireNom,ok); })()],
+                ["📞 Téléphone", (function(){ var ok=canSeeContact(ctx.currentUser,bienSelec.agentId,null,bienSelec.confidentiel); return ok && bienSelec.proprietaireTel ? <a href={"tel:"+bienSelec.proprietaireTel.replace(/\s/g,"")} style={{color:"#059669",fontWeight:800,textDecoration:"none"}}>{bienSelec.proprietaireTel}</a> : masquerTel(bienSelec.proprietaireTel,ok); })()],
+                ["✉️ Email",      (function(){ var ok=canSeeContact(ctx.currentUser,bienSelec.agentId,null,bienSelec.confidentiel); return masquer(bienSelec.proprietaireMail,ok); })()],
+                ["👤 Contact", (function(){ var ok=canSeeContact(ctx.currentUser,bienSelec.agentId,null,bienSelec.confidentiel); return masquer(bienSelec.proprietairePrenom+" "+bienSelec.proprietaireNom,ok); })()],
                 ["📅 Contact le", bienSelec.dateContact?fmtDate(bienSelec.dateContact):"—"],
               ].map(function(row){
                 return (
@@ -198,11 +207,14 @@ export default function OffMarket() {
                 );
               })}
             </div>
-            {bienSelec.notes && (
-              <div style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:9,padding:"10px 12px",fontSize:12,color:"#92400E",marginBottom:14,fontStyle:"italic"}}>
-                {"🔒 "+bienSelec.notes}
-              </div>
-            )}
+            {bienSelec.notes && (function(){
+              var ok = canSeeContact(ctx.currentUser,bienSelec.agentId,null);
+              return (
+                <div style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:9,padding:"10px 12px",fontSize:12,color:"#92400E",marginBottom:14,fontStyle:"italic"}}>
+                  {"🔒 "+(ok?bienSelec.notes:"Informations confidentielles — réservées au manager et à l'agent")}
+                </div>
+              );
+            })()}
             {/* Actions */}
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               <button className="btn btn-sm" style={{background:"#D1FAE5",color:"#065F46",border:"none",fontWeight:800}} onClick={function(){convertirMandat(bienSelec);}}>{"📋 Convertir en mandat"}</button>
@@ -227,10 +239,11 @@ export default function OffMarket() {
                   <span style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{o.ref}</span>
                   <span style={{background:motivBg[o.motivation],color:motivCol[o.motivation],borderRadius:20,padding:"1px 10px",fontSize:10,fontWeight:800}}>{o.motivation}</span>
                   {o.typeLogement && <span style={{background:"var(--g100)",color:"var(--g500)",borderRadius:20,padding:"1px 8px",fontSize:10,fontWeight:700,textTransform:"capitalize"}}>{o.typeLogement}</span>}
+                  {o.confidentiel && <span style={{background:"#FEF2F2",color:"#DC2626",borderRadius:20,padding:"1px 8px",fontSize:10,fontWeight:800}}>{"🔒 Confidentiel"}</span>}
                   {joursDepuis > 60 && <span style={{background:"#FEE2E2",color:"#EF4444",borderRadius:20,padding:"1px 8px",fontSize:10,fontWeight:800}}>{"⏱ "+joursDepuis+"j sans relance"}</span>}
                 </div>
                 <div style={{fontSize:13,color:"var(--g600)",marginBottom:2}}>{o.adresse}</div>
-                <div style={{fontSize:11,color:"var(--g400)"}}>{o.proprietairePrenom+" "+o.proprietaireNom+(o.surface?" · "+o.surface+"m²":"")+(o.nbPieces?" · "+o.nbPieces+"P":"")}</div>
+                <div style={{fontSize:11,color:"var(--g400)"}}>{(function(){ var ok=canSeeContact(ctx.currentUser,o.agentId,null,o.confidentiel); return masquer((o.proprietairePrenom+" "+o.proprietaireNom).trim(),ok); })()+(o.surface?" · "+o.surface+"m²":"")+(o.nbPieces?" · "+o.nbPieces+"P":"")}</div>
                 {agent && <div style={{fontSize:11,color:"var(--g400)",marginTop:2}}>{"Agent : "+agent.nom}</div>}
               </div>
               <div style={{textAlign:"right",flexShrink:0,marginLeft:10}}>

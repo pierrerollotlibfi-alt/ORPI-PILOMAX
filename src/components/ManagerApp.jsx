@@ -11,6 +11,7 @@ import DashboardMatin from "./DashboardMatin";
 import FicheKPIAgent from "./FicheKPIAgent";
 import Feedback from "./Feedback";
 import Outils from "./Outils";
+import MatchingManager from "./MatchingManager";
 import OffMarket from "./OffMarket";
 import CarteInteractive from "./CarteInteractive";
 import CaRealise from "./CaRealise";
@@ -319,7 +320,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   ];
 
   return (
-    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
+    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="matching"?"🎯 Rapprochements":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
       topbarActions={
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {(ctx.notifPerm||"default")!=="granted"
@@ -388,16 +389,16 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             </div>
           )}
           <div className="kpi-grid" style={{marginBottom:16}}>
-            <KpiCard label="CA Stock (mandats)" value={fmt(caStock)} color="var(--purple)" icon="📦" sub={nbExcl+" excl. · "+nbSimple+" simples"}/>
-            <KpiCard label="CA Signé (compromis)" value={fmt(caSigne)} color="var(--amber)" icon="✍️" sub={compromis.length+" compromis actifs"}/>
-            <KpiCard label="CA Encaissable" value={fmt(caEnc)} color="var(--green)" icon="💰" sub="CS levées"/>
-            <KpiCard label="CA Réalisé (ventes)" value={fmt(caReal)} color="var(--red)" icon="🏆" sub={vendus.length+" ventes actées"}/>
+            <KpiCard label="CA Stock (mandats)" value={fmt(caStock)} color="var(--purple)" icon="📦" sub={nbExcl+" excl. · "+nbSimple+" simples"} onClick={function(){setShowKpiDetail("stock");}}/>
+            <KpiCard label="CA Signé (compromis)" value={fmt(caSigne)} color="var(--amber)" icon="✍️" sub={compromis.length+" compromis actifs"} onClick={function(){setShowKpiDetail("signe");}}/>
+            <KpiCard label="CA Encaissable" value={fmt(caEnc)} color="var(--green)" icon="💰" sub="CS levées" onClick={function(){setShowKpiDetail("encaissable");}}/>
+            <KpiCard label="CA Réalisé (ventes)" value={fmt(caReal)} color="var(--red)" icon="🏆" sub={vendus.length+" ventes actées"} onClick={function(){setShowKpiDetail("realise");}}/>
           </div>
           <div className="kpi-grid" style={{marginBottom:16}}>
-            <KpiCard label="Offres acceptées ce mois" value={offresMoisCourant.length} color="var(--amber)" icon="🤝" sub={fmt(caOffresMois)+" · "+new Date().toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}/>
-            <KpiCard label="Ventes actées ce mois" value={ventesMoisCourant.length} color="var(--green)" icon="🏆" sub={fmt(caVentesMois)+" commissions"}/>
-            <KpiCard label="Locations signées" value={locTrouvees.length} color="var(--blue)" icon="🏠" sub={fmt(caLocation)+" commissions"}/>
-            <KpiCard label="Gestion locative" value={myGestion.length+" biens"} color="var(--navy)" icon="🔑" sub={fmt(caGestionMensuel)+"/mois"}/>
+            <KpiCard label="Offres acceptées ce mois" value={offresMoisCourant.length} color="var(--amber)" icon="🤝" onClick={function(){setShowKpiDetail("offres_mois");}} sub={fmt(caOffresMois)+" · "+new Date().toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}/>
+            <KpiCard label="Ventes actées ce mois" value={ventesMoisCourant.length} color="var(--green)" icon="🏆" sub={fmt(caVentesMois)+" commissions"} onClick={function(){setShowKpiDetail("ventes_mois");}}/>
+            <KpiCard label="Locations signées" value={locTrouvees.length} color="var(--blue)" icon="🏠" sub={fmt(caLocation)+" commissions"} onClick={function(){setShowKpiDetail("locations");}}/>
+            <KpiCard label="Gestion locative" value={myGestion.length+" biens"} color="var(--navy)" icon="🔑" sub={fmt(caGestionMensuel)+"/mois"} onClick={function(){setShowKpiDetail("gestion");}}/>
           </div>
 
           {/* Signatures à venir */}
@@ -615,7 +616,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                         <span style={{fontWeight:800,color:"var(--navy)"}}>{m.ref}</span>
                         <BadgeType type={m.typeMandat}/>
                         <BadgeStatut statut={m.statut}/>
-                        {m.typeBien && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{{appartement:"🏢 Appart.",maison:"🏠 Maison",terrain:"🌿 Terrain",immeuble:"🏗️ Immeuble",garage:"🚗 Garage",local_pro_location:"🏬 Local à louer",local_pro_vente:"🏪 Local à vendre"}[m.typeBien]||m.typeBien}</span>}
+                        {m.confidentiel && <span className="badge" style={{background:"#FEF2F2",color:"#DC2626",border:"1px solid #FECACA",fontSize:10}}>{"🔒 Confidentiel"}</span>}
+                  {m.typeBien && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{{appartement:"🏢 Appart.",maison:"🏠 Maison",terrain:"🌿 Terrain",immeuble:"🏗️ Immeuble",garage:"🚗 Garage",local_pro_location:"🏬 Local à louer",local_pro_vente:"🏪 Local à vendre"}[m.typeBien]||m.typeBien}</span>}
                       {m.surface && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{"📐 "+m.surface+"m²"}</span>}
                       {m.nbPieces && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{"🛏️ "+m.nbPieces+"P"}</span>}
                       {m.dpe && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{"🌿 DPE "+m.dpe}</span>}
@@ -690,6 +692,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
 
       {/* ──────────── GESTION LOCATIVE ──────────── */}
       {tab==="gestion" && <GestionLocative/>}
+      {tab==="matching" && <MatchingManager/>}
       {tab==="outils" && <Outils/>}
       {tab==="feedback" && <Feedback/>}
       {tab==="offmarket" && <OffMarket/>}

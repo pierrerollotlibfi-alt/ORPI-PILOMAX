@@ -291,7 +291,9 @@ export default function Recherches() {
                 <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:8}}>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:4}}>
-                      <span style={{fontWeight:800,color:"var(--navy)",fontSize:14}}>{r.nom}</span>
+                      <span style={{fontWeight:800,color:"var(--navy)",fontSize:14}}>
+                      {(ctx.currentUser.role==="manager"||ctx.currentUser.role==="superadmin"||ctx.currentUser.id===r.agentId)?r.nom:(r.confidentiel?"🔒 Confidentiel":r.nom)}
+                    </span>
                       <span style={{background:statutM.bg,color:statutM.color,padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>{statutM.label}</span>
                       {tb && <span style={{background:isLoc?"#FFF7ED":"#EFF6FF",color:isLoc?"#EA580C":"#2563EB",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}>{tb.label}</span>}
                       {myMatchCount>0 && <span style={{background:"#F5F3FF",color:"#7C3AED",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:800}}>{"🎯 "+myMatchCount+" corresp."}</span>}
@@ -401,7 +403,7 @@ export default function Recherches() {
 // ─── FORMULAIRE ───────────────────────────────────────────────────────────────
 function RechercheForm({ agents, agenceId, isManager, currentUser, onSave, onCancel }) {
   var [f, setF] = useState({
-    nom:"", telephone:"", email:"", typeBien:"Appartement à vendre",
+    nom:"", telephone:"", email:"", typeBien:"Appartement à vendre", confidentiel:false,
     secteurs:"", budgetMin:"", budgetMax:"", surfaceMin:"", surfaceMax:"",
     nbPieces:"", nbChambres:"", nbSDB:"", etage:"", orientation:"",
     avecJardin:false, avecGarage:false, avecTerrasse:false,
@@ -549,6 +551,15 @@ function RechercheForm({ agents, agenceId, isManager, currentUser, onSave, onCan
 
         {/* Notes */}
         <div className="form-group form-full"><label className="form-label">{"Notes / critères complémentaires"}</label><textarea className="form-input" rows={3} value={f.notes} onChange={function(e){set("notes",e.target.value);}} style={{resize:"vertical",fontFamily:"var(--font)"}} placeholder="Ex: RDC refusé, lumineux, cuisine ouverte..."/></div>
+        <div className="form-group form-full">
+          <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"10px 14px",background:f.confidentiel?"#FEF2F2":"var(--g50)",borderRadius:10,border:"2px solid "+(f.confidentiel?"#FECACA":"var(--g200)")}}>
+            <input type="checkbox" checked={f.confidentiel||false} onChange={function(e){set("confidentiel",e.target.checked);}} style={{width:18,height:18,cursor:"pointer"}}/>
+            <div>
+              <div style={{fontWeight:800,color:f.confidentiel?"#DC2626":"var(--navy)",fontSize:13}}>{"🔒 Prospect confidentiel"}</div>
+              <div style={{fontSize:11,color:"var(--g400)",marginTop:1}}>{"Nom, téléphone et email masqués pour les autres agents"}</div>
+            </div>
+          </label>
+        </div>
       </div>
     </Modal>
   );

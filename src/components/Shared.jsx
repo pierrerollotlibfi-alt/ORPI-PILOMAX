@@ -229,11 +229,14 @@ export function fmtComm(comm, typeBien) {
 }
 
 // ─── CONFIDENTIALITÉ CONTACTS ─────────────────────────────────────────────────
-// canSeeContact : true si manager, agent créateur ou co-agent
-export function canSeeContact(currentUser, agentId, coAgents) {
+// canSeeContact : true si manager/superadmin, agent créateur, co-agent
+// Si confidentiel=true : seuls manager et créateur voient les coordonnées
+export function canSeeContact(currentUser, agentId, coAgents, confidentiel) {
   if (!currentUser) return false;
   if (currentUser.role === "manager" || currentUser.role === "superadmin") return true;
   if (currentUser.id === agentId) return true;
+  // Si confidentiel : seul le créateur ou manager (déjà retourné true ci-dessus)
+  if (confidentiel) return false;
   if (coAgents && coAgents.find(function(ca){ return ca.agentId === currentUser.id; })) return true;
   return false;
 }
