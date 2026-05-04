@@ -233,10 +233,14 @@ export function fmtComm(comm, typeBien) {
 // Si confidentiel=true : seuls manager et créateur voient les coordonnées
 export function canSeeContact(currentUser, agentId, coAgents, confidentiel) {
   if (!currentUser) return false;
-  if (currentUser.role === "manager" || currentUser.role === "superadmin") return true;
+  // Superadmin voit toujours tout, sans exception
+  if (currentUser.role === "superadmin") return true;
+  // Le créateur voit toujours ses propres données
   if (currentUser.id === agentId) return true;
-  // Si confidentiel : seul le créateur ou manager (déjà retourné true ci-dessus)
+  // Si confidentiel : seuls le créateur (ci-dessus) et le superadmin (ci-dessus) voient
   if (confidentiel) return false;
+  // Sinon managers et co-agents voient
+  if (currentUser.role === "manager") return true;
   if (coAgents && coAgents.find(function(ca){ return ca.agentId === currentUser.id; })) return true;
   return false;
 }

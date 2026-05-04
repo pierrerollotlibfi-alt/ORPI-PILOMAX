@@ -311,6 +311,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     {id:"taches",     icon:"✅", label:"Tâches",      shortLabel:"Tâches", active:tab==="taches",     onClick:function(){setTab("taches");},     badge:nbTasks||null},
     {id:"leads",      icon:"📥", label:"Leads",       shortLabel:"Leads",   active:tab==="leads",      onClick:function(){setTab("leads");}},
     {id:"recherches", icon:"🔍", label:"Recherches",  shortLabel:"Rech.",   active:tab==="recherches", onClick:function(){setTab("recherches");}},
+    {id:"matching",   icon:"🎯", label:"Rapprochements",shortLabel:"Match",   active:tab==="matching",   onClick:function(){setTab("matching");}},
     {id:"messagerie", icon:"💬", label:"Messagerie",  shortLabel:"Msgs",    active:tab==="messagerie", onClick:function(){setTab("messagerie");}},
     {id:"offmarket",  icon:"🔒", label:"Off Market",   shortLabel:"OffMkt",  active:tab==="offmarket",  onClick:function(){setTab("offmarket");}},
     {id:"carte",      icon:"🗺️", label:"Carte",         shortLabel:"Carte",   active:tab==="carte",      onClick:function(){setTab("carte");}},
