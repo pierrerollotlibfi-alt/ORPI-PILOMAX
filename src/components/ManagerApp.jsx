@@ -20,6 +20,7 @@ import {
   AppShell, SaveBanner, KpiCard, Modal, MandatForm, PeriodSelector,
   BadgeStatut, BadgeType, BadgeNiveau, inPeriod,
   fmt, fmtDate, diffDays, todayStr, avatarColor,
+  isTVA, commHT, canSeeContact, masquer, masquerTel,
 } from "./Shared";
 
 var MEDAL = ["🥇","🥈","🥉"];

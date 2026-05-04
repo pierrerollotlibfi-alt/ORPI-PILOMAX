@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../App";
 
-// ─── HOOK INSTALL PWA ──────────────────────────────────────────────────────
-var _pwaInstallPrompt = null;
-window.addEventListener("beforeinstallprompt", function(e) {
-  e.preventDefault();
-  _pwaInstallPrompt = e;
-  // Déclencher un re-render en stockant dans sessionStorage
-  try { sessionStorage.setItem("pwa_installable","1"); } catch(e2){}
-  window.dispatchEvent(new Event("pwa_installable"));
-});
-
-// PWA install prompt global
-if (typeof window !== "undefined") {
+// PWA install prompt — capturé globalement
+if (typeof window !== "undefined" && !window._pwaListenerAdded) {
+  window._pwaListenerAdded = true;
+  window._pwaInstallPrompt = null;
   window.addEventListener("beforeinstallprompt", function(e) {
     e.preventDefault();
     window._pwaInstallPrompt = e;
@@ -23,11 +15,29 @@ if (typeof window !== "undefined") {
 
 export default function Login({ onLogin }) {
   var ctx = useApp();
-  var [email,   setEmail]   = useState("");
-  var [pwd,     setPwd]     = useState("");
-  var [error,   setError]   = useState("");
-  var [loading, setLoading] = useState(false);
-  var [vue,     setVue]     = useState("login"); // login | oubli | oubliOk
+  var [email,      setEmail]      = useState("");
+  var [pwd,        setPwd]        = useState("");
+  var [error,      setError]      = useState("");
+  var [loading,    setLoading]    = useState(false);
+  var [vue,        setVue]        = useState("login");
+  var [canInstall, setCanInstall] = useState(function(){
+    try{ return !!(window._pwaInstallPrompt || sessionStorage.getItem("pwa_installable")); }catch(e){ return false; }
+  });
+
+  useEffect(function(){
+    function handler(){ setCanInstall(true); }
+    window.addEventListener("pwa_installable", handler);
+    return function(){ window.removeEventListener("pwa_installable", handler); };
+  }, []);
+
+  function installApp() {
+    if (window._pwaInstallPrompt) {
+      window._pwaInstallPrompt.prompt();
+      window._pwaInstallPrompt.userChoice.then(function(r){
+        if (r.outcome==="accepted"){ setCanInstall(false); window._pwaInstallPrompt=null; }
+      });
+    }
+  }
 
   function submit() {
     if (!email.trim()) { setError("Saisissez votre email"); return; }
@@ -65,77 +75,75 @@ export default function Login({ onLogin }) {
   );
 
   return (
-    <>
     <div style={{minHeight:"100vh",background:"linear-gradient(145deg,#1D3557 0%,#2a4a7a 50%,#E63946 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"var(--font)"}}>
-      <div style={{background:"#fff",borderRadius:22,padding:"40px 34px",width:"100%",maxWidth:400,boxShadow:"0 40px 100px rgba(0,0,0,0.25)"}}>
+      <div style={{width:"100%",maxWidth:400}}>
+        <div style={{background:"#fff",borderRadius:22,padding:"40px 34px",boxShadow:"0 40px 100px rgba(0,0,0,0.25)",marginBottom:16}}>
 
-        <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
-          <div style={{background:"#E63946",borderRadius:14,padding:"12px 26px"}}>
-            <div style={{color:"#fff",fontWeight:900,fontSize:18,letterSpacing:1}}>{"ORPI"}</div>
-            <div style={{color:"rgba(255,255,255,0.7)",fontSize:9,letterSpacing:3}}>{"DÉCLIC IMMO"}</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+            <div style={{background:"#E63946",borderRadius:14,padding:"12px 26px"}}>
+              <div style={{color:"#fff",fontWeight:900,fontSize:18,letterSpacing:1}}>{"ORPI"}</div>
+              <div style={{color:"rgba(255,255,255,0.7)",fontSize:9,letterSpacing:3}}>{"DÉCLIC IMMO"}</div>
+            </div>
           </div>
-        </div>
 
-        <h1 style={{textAlign:"center",fontSize:19,fontWeight:800,color:"#1D3557",marginBottom:4}}>{"Pilotage Commercial"}</h1>
-        <p style={{textAlign:"center",color:"#94A3B8",fontSize:12,marginBottom:24}}>{"ORPI Pro Amiens"}</p>
+          <h1 style={{textAlign:"center",fontSize:19,fontWeight:800,color:"#1D3557",marginBottom:4}}>{"Pilotage Commercial"}</h1>
+          <p style={{textAlign:"center",color:"#94A3B8",fontSize:12,marginBottom:24}}>{"ORPI Pro Amiens"}</p>
 
-        {error && (
-          <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#DC2626",fontWeight:600}}>
-            {"⚠️ "+error}
+          {error && (
+            <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#DC2626",fontWeight:600}}>
+              {"⚠️ "+error}
+            </div>
+          )}
+
+          <div className="form-group" style={{marginBottom:14}}>
+            <label className="form-label">{"Email"}</label>
+            <input type="email" className="form-input"
+              placeholder="votre@email.fr"
+              value={email}
+              onChange={function(e){setEmail(e.target.value);setError("");}}
+              onKeyDown={function(e){if(e.key==="Enter")submit();}}
+              autoComplete="email" autoFocus/>
           </div>
-        )}
 
-        <div className="form-group" style={{marginBottom:14}}>
-          <label className="form-label">{"Email"}</label>
-          <input type="email" className="form-input"
-            placeholder="votre@email.fr"
-            value={email}
-            onChange={function(e){setEmail(e.target.value);setError("");}}
-            onKeyDown={function(e){if(e.key==="Enter")submit();}}
-            autoComplete="email" autoFocus/>
-        </div>
+          <div className="form-group" style={{marginBottom:8}}>
+            <label className="form-label">{"Mot de passe"}</label>
+            <input type="password" className="form-input"
+              placeholder="••••••••"
+              value={pwd}
+              onChange={function(e){setPwd(e.target.value);setError("");}}
+              onKeyDown={function(e){if(e.key==="Enter")submit();}}
+              autoComplete="current-password"/>
+          </div>
 
-        <div className="form-group" style={{marginBottom:8}}>
-          <label className="form-label">{"Mot de passe"}</label>
-          <input type="password" className="form-input"
-            placeholder="••••••••"
-            value={pwd}
-            onChange={function(e){setPwd(e.target.value);setError("");}}
-            onKeyDown={function(e){if(e.key==="Enter")submit();}}
-            autoComplete="current-password"/>
-        </div>
+          <div style={{textAlign:"right",marginBottom:20}}>
+            <button onClick={demanderReset} style={{background:"none",border:"none",color:"#E63946",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font)",textDecoration:"underline"}}>
+              {"Mot de passe oublié ?"}
+            </button>
+          </div>
 
-        {/* Lien mot de passe oublié */}
-        <div style={{textAlign:"right",marginBottom:20}}>
-          <button onClick={demanderReset} style={{background:"none",border:"none",color:"#E63946",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font)",textDecoration:"underline"}}>
-            {"Mot de passe oublié ?"}
+          <button className="btn btn-primary"
+            style={{width:"100%",padding:14,fontSize:15,justifyContent:"center",boxShadow:"0 4px 16px rgba(230,57,70,0.3)"}}
+            onClick={submit} disabled={loading}>
+            {loading ? "Connexion…" : "Se connecter →"}
           </button>
+
+          <div style={{marginTop:20,background:"#F8FAFC",borderRadius:10,padding:"12px 14px",fontSize:12,color:"#64748B",border:"1px solid #E2E8F0"}}>
+            <div style={{fontWeight:700,color:"#334155",marginBottom:4}}>{"🔑 Première connexion ?"}</div>
+            <div>{"Votre manager vous a communiqué un mot de passe temporaire. Utilisez-le pour vous connecter, puis changez-le depuis Mon Profil."}</div>
+          </div>
         </div>
 
-        <button className="btn btn-primary"
-          style={{width:"100%",padding:14,fontSize:15,justifyContent:"center",boxShadow:"0 4px 16px rgba(230,57,70,0.3)"}}
-          onClick={submit} disabled={loading}>
-          {loading ? "Connexion…" : "Se connecter →"}
-        </button>
-
-        <div style={{marginTop:20,background:"#F8FAFC",borderRadius:10,padding:"12px 14px",fontSize:12,color:"#64748B",border:"1px solid #E2E8F0"}}>
-          <div style={{fontWeight:700,color:"#334155",marginBottom:4}}>{"🔑 Première connexion ?"}</div>
-          <div>{"Votre manager vous a communiqué un mot de passe temporaire. Utilisez-le pour vous connecter, puis changez-le depuis Mon Profil."}</div>
-        </div>
-
-      </div>
-    </div>
-      {canInstall && (
-        <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:100,textAlign:"center"}}>
-          <button onClick={installApp} style={{background:"linear-gradient(135deg,#1D3557,#2a6096)",color:"#fff",border:"none",borderRadius:40,padding:"12px 24px",fontWeight:800,fontSize:14,cursor:"pointer",boxShadow:"0 4px 20px rgba(29,53,87,0.4)",display:"flex",alignItems:"center",gap:10,fontFamily:"inherit"}}>
+        {/* Bouton PWA install */}
+        {canInstall && (
+          <button onClick={installApp} style={{width:"100%",background:"rgba(255,255,255,0.15)",color:"#fff",border:"2px solid rgba(255,255,255,0.3)",borderRadius:16,padding:"12px 20px",fontWeight:800,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,fontFamily:"var(--font)",backdropFilter:"blur(10px)"}}>
             <span style={{fontSize:22}}>{"✈️"}</span>
             <div style={{textAlign:"left"}}>
               <div style={{fontSize:13,fontWeight:900}}>{"Ajouter à l'écran d'accueil"}</div>
               <div style={{fontSize:10,opacity:.7,fontWeight:600}}>{"Accès rapide depuis votre téléphone"}</div>
             </div>
           </button>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 }
