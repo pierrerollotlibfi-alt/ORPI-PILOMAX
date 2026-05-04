@@ -322,7 +322,7 @@ export default function CarteInteractive({ onNavigate }) {
       </div>
 
       {/* Carte */}
-      <div style={{position:"relative",borderRadius:12,overflow:"hidden",border:"1px solid var(--g200)",minHeight:300,width:"100%"}}>
+      <div style={{position:"relative",borderRadius:12,overflow:"hidden",border:"1px solid var(--g200)",minHeight:300,width:"100%",zIndex:0}}>
         <div ref={mapRef} className="carte-map-container"/>
         {!leafletReady && (
           <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",background:"#F0F4F8",flexDirection:"column",gap:10}}>

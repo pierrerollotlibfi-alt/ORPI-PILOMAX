@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../App";
-import { fmt, fmtDate, avatarColor } from "./Shared";
+import { fmt, fmtDate, avatarColor, canSeeContact, masquer, masquerTel } from "./Shared";
 
 var MOTIVATIONS = ["Fort","Moyen","Faible"];
 var TYPES = ["appartement","maison","studio","local commercial","terrain","parking"];
@@ -185,9 +185,9 @@ export default function OffMarket() {
             {/* Contact */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
               {[
-                ["👤 Contact",   bienSelec.proprietairePrenom+" "+bienSelec.proprietaireNom],
-                ["📞 Téléphone", bienSelec.proprietaireTel ? <a href={"tel:"+bienSelec.proprietaireTel.replace(/\s/g,"")} style={{color:"#059669",fontWeight:800,textDecoration:"none"}}>{bienSelec.proprietaireTel}</a> : "—"],
+                ["📞 Téléphone", (function(){ var ok=canSeeContact(ctx.currentUser,bienSelec.agentId,null); return ok && bienSelec.proprietaireTel ? <a href={"tel:"+bienSelec.proprietaireTel.replace(/\s/g,"")} style={{color:"#059669",fontWeight:800,textDecoration:"none"}}>{bienSelec.proprietaireTel}</a> : masquerTel(bienSelec.proprietaireTel,ok); })()],
                 ["✉️ Email",      bienSelec.proprietaireMail||"—"],
+                ["👤 Contact", (function(){ var ok=canSeeContact(ctx.currentUser,bienSelec.agentId,null); return masquer(bienSelec.proprietairePrenom+" "+bienSelec.proprietaireNom,ok); })()],
                 ["📅 Contact le", bienSelec.dateContact?fmtDate(bienSelec.dateContact):"—"],
               ].map(function(row){
                 return (

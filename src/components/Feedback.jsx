@@ -20,10 +20,6 @@ var STATUTS = [
   { id:"resolu",     label:"Résolu ✅",   color:"#059669", bg:"#F0FDF4" },
   { id:"refuse",     label:"Refusé",      color:"#EF4444", bg:"#FEF2F2" },
 ];
-var SK_FB = "orpi_data_feedback";
-
-function lload(k,fb){ try{var v=localStorage.getItem(k);return v?JSON.parse(v):fb;}catch(e){return fb;} }
-function lsave(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
 
 export default function Feedback() {
   var ctx      = useApp();
@@ -31,20 +27,14 @@ export default function Feedback() {
   var isManager= me.role==="manager" || me.role==="superadmin";
   var users    = ctx.users || [];
 
-  var [feedbacks,    setFeedbacksRaw] = useState(function(){ return lload(SK_FB,[]); });
+  var feedbacks    = ctx.feedback || [];
   var [showForm,     setShowForm]     = useState(false);
   var [filtreCat,    setFiltreCat]    = useState("");
   var [filtreStatut, setFiltreStatut] = useState(isManager?"":"");
   var [filtreAgent,  setFiltreAgent]  = useState("");
   var [selFb,        setSelFb]        = useState(null);
 
-  function setFeedbacks(v) {
-    var next = typeof v==="function" ? v(feedbacks) : v;
-    setFeedbacksRaw(next);
-    lsave(SK_FB, next);
-    // Sync Supabase si dispo
-    try { if(ctx.syncMode==="supabase" && window._supabaseSave) window._supabaseSave("feedback",next); } catch(e){}
-  }
+  var setFeedbacks = ctx.setFeedback;
 
   // Feedbacks visibles
   var agenceId = me.agenceId;

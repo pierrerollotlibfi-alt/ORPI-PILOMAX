@@ -189,6 +189,69 @@ export function PeriodSelector({ value, onChange, customFrom, customTo, onCustom
 }
 
 // ─── BADGES ───────────────────────────────────────────────────────────────────
+
+// ─── HT / TTC ─────────────────────────────────────────────────────────────────
+var TVA_IMMO = 0.20; // TVA 20% sur honoraires et locaux pro
+var TYPES_PRO = ["local_pro_location","local_pro_vente","immeuble"];
+
+// Détermine si le type de bien est soumis à TVA
+export function isTVA(typeBien) {
+  return TYPES_PRO.includes(typeBien);
+}
+
+// Commission HT depuis commission TTC (pour KPI CA)
+export function commHT(commTTC, typeBien) {
+  if (!commTTC) return 0;
+  // Les honoraires immo sont toujours TTC — on les ramène HT pour les KPI
+  return Math.round(commTTC / (1 + TVA_IMMO) * 100) / 100;
+}
+
+// Commission TTC depuis HT
+export function commTTC(commHT, typeBien) {
+  return Math.round(commHT * (1 + TVA_IMMO) * 100) / 100;
+}
+
+// Formater un prix avec mention HT si local pro
+export function fmtPrix(prix, typeBien) {
+  if (!prix) return "—";
+  var base = Number(prix).toLocaleString("fr-FR")+"€";
+  if (isTVA(typeBien)) return base+" HT";
+  return base;
+}
+
+// Formater une commission toujours TTC (pour affichage terrain)
+export function fmtComm(comm, typeBien) {
+  if (!comm) return "—";
+  var ht = commHT(comm, typeBien);
+  var base = Number(comm).toLocaleString("fr-FR")+"€ TTC";
+  if (isTVA(typeBien)) return base+" ("+Number(ht).toLocaleString("fr-FR")+"€ HT)";
+  return base;
+}
+
+// ─── CONFIDENTIALITÉ CONTACTS ─────────────────────────────────────────────────
+// canSeeContact : true si manager, agent créateur ou co-agent
+export function canSeeContact(currentUser, agentId, coAgents) {
+  if (!currentUser) return false;
+  if (currentUser.role === "manager" || currentUser.role === "superadmin") return true;
+  if (currentUser.id === agentId) return true;
+  if (coAgents && coAgents.find(function(ca){ return ca.agentId === currentUser.id; })) return true;
+  return false;
+}
+
+// Masquer un texte confidentiel
+export function masquer(texte, visible) {
+  if (!texte) return "—";
+  if (visible) return texte;
+  return "••••••••";
+}
+
+// Masquer un téléphone : garder les 2 premiers chiffres
+export function masquerTel(tel, visible) {
+  if (!tel) return "—";
+  if (visible) return tel;
+  return tel.toString().slice(0,2)+" ••• ••• ••";
+}
+
 export function BadgeStatut({ statut }) {
   var map = { mandat:"badge-mandat", sous_offre:"badge-sous-offre", compromis:"badge-compromis", vendu:"badge-vendu" };
   var lbl = { mandat:"Mandat", sous_offre:"🤝 Sous offre", compromis:"Compromis", vendu:"Vendu" };

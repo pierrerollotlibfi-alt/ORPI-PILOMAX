@@ -10,6 +10,7 @@ import GestionLocative from "./GestionLocative";
 import DashboardMatin from "./DashboardMatin";
 import FicheKPIAgent from "./FicheKPIAgent";
 import Feedback from "./Feedback";
+import Outils from "./Outils";
 import OffMarket from "./OffMarket";
 import CarteInteractive from "./CarteInteractive";
 import CaRealise from "./CaRealise";
@@ -27,7 +28,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var ctx = useApp();
   var { currentUser, users, agences, mandats, setMandats, locations, setLocations, gestion, setGestion, setUsers, inviterAgent, invitations, objectifs, setObjectifs, tasks, setTasks, addJournal, journal, resets, resetMdpParManager, changerMotDePasse, prospection, kpiConfig, setKpiConfig } = ctx;
 
-  var [tab, setTab] = useState("dashboard");
+  var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_manager")||"dashboard"; }catch(e){ return "dashboard"; } });
+  function setTab(v){ try{ localStorage.setItem("orpi_tab_manager",v); }catch(e){} _setTabRaw(v); }
   var [showMandatForm,  setShowMandatForm]  = useState(false);
   var [editingMandat,   setEditingMandat]   = useState(null);
   var [detailMandat,    setDetailMandat]    = useState(null);
@@ -48,6 +50,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [filterAgent, setFilterAgent] = useState("");
   var [filterStatut,setFilterStatut]= useState("");
   var [critereClassement, setCritereClassement] = useState("caRealise");
+  var [showKpiDetail,    setShowKpiDetail]    = useState(null);
   var [filterType,  setFilterType]  = useState("");
   var [searchText,  setSearchText]  = useState("");
   var [filterBien,  setFilterBien]  = useState("");
@@ -66,6 +69,11 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
 
   // Taux commission moyen agence (tous agents)
   var agenceVendus = myMandats.filter(function(m){ return m.statut==="vendu" && m.prix>0 && m.commission>0; });
+  // Leads confiés par agent
+  var leads = ctx.tasks ? ctx.tasks.filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; }) : [];
+  var leadsParAgent = agents.map(function(a){
+    return { ...a, nbLeads: (ctx.leads||[]).filter(function(l){ return l.agentId===a.id && l.agenceId===agenceId; }).length };
+  });
   var txCommMoyenAgence = agenceVendus.length > 0
     ? Math.round(agenceVendus.reduce(function(s,m){ return s+(m.commission/m.prix*100); },0)/agenceVendus.length*100)/100
     : null;
@@ -304,12 +312,13 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     {id:"messagerie", icon:"💬", label:"Messagerie",  shortLabel:"Msgs",    active:tab==="messagerie", onClick:function(){setTab("messagerie");}},
     {id:"offmarket",  icon:"🔒", label:"Off Market",   shortLabel:"OffMkt",  active:tab==="offmarket",  onClick:function(){setTab("offmarket");}},
     {id:"carte",      icon:"🗺️", label:"Carte",         shortLabel:"Carte",   active:tab==="carte",      onClick:function(){setTab("carte");}},
+    {id:"outils",     icon:"🛠️", label:"Outils",         shortLabel:"Outils",  active:tab==="outils",     onClick:function(){setTab("outils");}},
     {id:"feedback",   icon:"💡", label:"Suggestions",   shortLabel:"Ideas",   active:tab==="feedback",   onClick:function(){setTab("feedback");}},
     {id:"profil",     icon:"👤", label:"Mon profil",    shortLabel:"Profil",  active:tab==="profil",     onClick:function(){setTab("profil");}},
   ];
 
   return (
-    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
+    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
       topbarActions={
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {(ctx.notifPerm||"default")!=="granted"
@@ -680,6 +689,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
 
       {/* ──────────── GESTION LOCATIVE ──────────── */}
       {tab==="gestion" && <GestionLocative/>}
+      {tab==="outils" && <Outils/>}
       {tab==="feedback" && <Feedback/>}
       {tab==="offmarket" && <OffMarket/>}
       {tab==="carte" && <CarteInteractive onNavigate={function(targetTab, bienId, bienType){
@@ -1563,6 +1573,63 @@ function MandatDetail({ mandat, users, onEdit, onDelete, onClose, onUpdateMandat
   }
 
   function partagerFiche() {
+    var agenceInfo = (ctx2.agences||[]).find(function(a){return a.id===m.agenceId;});
+    var photoSrc = m.photoBase64||m.photoUrl||"";
+    var commHTVal = Math.round((m.commission||0)/1.2);
+    var rows = [
+      m.surface?"📐 Surface : "+m.surface+" m²":"",
+      m.nbPieces?"🛏️ Pièces : "+m.nbPieces:"",
+      m.nbChambres?"🛏️ Chambres : "+m.nbChambres:"",
+      m.dpe?"🌿 DPE : "+m.dpe:"",
+      m.avecJardin?"🌿 Jardin : Oui":"",
+      m.avecGarage?"🚗 Garage : Oui":"",
+      m.avecTerrasse?"☀️ Terrasse : Oui":"",
+    ].filter(Boolean);
+    var html = "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+m.ref+"</title>"
+      +"<style>*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;}body{background:#f0f4f8;padding:16px;}"
+      +".c{background:#fff;border-radius:16px;overflow:hidden;max-width:560px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,.12);}"
+      +".h{background:linear-gradient(135deg,#1D3557,#2a4a7a);padding:20px;color:#fff;}"
+      +".ref{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}"
+      +".adr{font-size:18px;font-weight:900;margin-bottom:8px;}"
+      +".bdg{display:inline-block;background:rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;margin:2px;}"
+      +".photo{width:100%;max-height:260px;object-fit:cover;}"
+      +".prix{background:#F0FDF4;border-left:4px solid #059669;padding:14px 18px;}"
+      +".pv{font-size:28px;font-weight:900;color:#059669;}"
+      +".ps{font-size:11px;color:#6B7280;margin-top:3px;}"
+      +".sec{padding:14px 18px;border-bottom:1px solid #F1F5F9;}"
+      +".st{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94A3B8;margin-bottom:10px;}"
+      +".grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}"
+      +".it{background:#F8FAFC;border-radius:8px;padding:8px 10px;}"
+      +".il{font-size:10px;color:#94A3B8;font-weight:700;}"
+      +".iv{font-size:13px;font-weight:700;color:#1D3557;}"
+      +".ag{display:flex;align-items:center;gap:10px;padding:14px 18px;background:#EFF6FF;}"
+      +".av{width:40px;height:40px;border-radius:20px;background:#1D3557;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;}"
+      +".ft{padding:10px 18px;background:#F8FAFC;text-align:center;font-size:10px;color:#94A3B8;}"
+      +"@media print{body{background:#fff;}}"
+      +"</style></head><body><div class='c'>"
+      +"<div class='h'><div class='ref'>"+m.ref+" · "+(m.typeMandat==="exclusif"?"⭐ Exclusif":"Simple")+"</div>"
+      +"<div class='adr'>"+m.adresse+"</div>"
+      +(m.typeBien?"<span class='bdg'>"+(m.typeBien.charAt(0).toUpperCase()+m.typeBien.slice(1).replace(/_/g," "))+"</span>":"")
+      +(m.surface?"<span class='bdg'>"+m.surface+" m²</span>":"")
+      +(m.nbPieces?"<span class='bdg'>"+m.nbPieces+"P</span>":"")
+      +(m.statut==="sous_offre"?"<span class='bdg'>🤝 Sous offre</span>":"")
+      +"</div>"
+      +(photoSrc?"<img class='photo' src='"+photoSrc+"' alt=''/>" : "")
+      +"<div class='prix'><div class='pv'>"+(m.prix?m.prix.toLocaleString("fr-FR")+"€"+(isTVA(m.typeBien)?" HT":""):"Prix sur demande")+"</div>"
+      +(m.commission?"<div class='ps'>Honoraires : "+m.commission.toLocaleString("fr-FR")+"€ TTC ("+commHTVal.toLocaleString("fr-FR")+"€ HT)</div>":"")
+      +"</div>"
+      +(rows.length?"<div class='sec'><div class='st'>Caractéristiques</div><div class='grid'>"+rows.map(function(r){var p=r.split(" : ");return "<div class='it'><div class='il'>"+p[0]+"</div><div class='iv'>"+(p[1]||"")+"</div></div>";}).join("")+"</div></div>":"")
+      +(m.dpe?"<div class='sec'><div class='st'>DPE</div><span style='background:#059669;color:#fff;border-radius:6px;padding:3px 10px;font-weight:900;'>"+m.dpe+"</span></div>":"")
+      +(m.notes?"<div class='sec'><div class='st'>Description</div><p style='font-size:13px;color:#4B5563;line-height:1.7;'>"+m.notes+"</p></div>":"")
+      +(agent?"<div class='ag'><div class='av'>"+(agent.avatar||"?")+"</div><div><div style='font-weight:800;font-size:13px;'>"+agent.nom+"</div>"+(agent.telephone?"<div style='font-size:12px;color:#4B5563;'>"+agent.telephone+"</div>":"")+( agenceInfo?"<div style='font-size:11px;color:#94A3B8;'>"+agenceInfo.nom+"</div>":"")+"</div></div>":"")
+      +"<div class='ft'>"+(agenceInfo?agenceInfo.nom+" — ":"")+"Fiche du "+new Date().toLocaleDateString("fr-FR")+"</div>"
+      +"</div></body></html>";
+    var w=window.open("","_blank");
+    if(w){w.document.write(html);w.document.close();w.focus();setTimeout(function(){try{w.print();}catch(e){}},600);}
+  }
+
+  // ─── DUMMY (ancien code remplacé) ───
+  function _old_partage_unused() {
     var texte = [
       "🏠 FICHE BIEN — "+m.ref,
       "━━━━━━━━━━━━━━━━━━━━━━━━━━━",

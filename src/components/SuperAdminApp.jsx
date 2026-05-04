@@ -40,7 +40,8 @@ export default function SuperAdminApp() {
   var ctx = useApp();
   var { currentUser, users, agences, mandats, locations, gestion, objectifs, offmarket, handleLogout, changerMotDePasse, setAgences, setUsers, setObjectifs } = ctx;
 
-  var [tab, setTab] = useState("groupe");
+  var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_superadmin")||"groupe"; }catch(e){ return "groupe"; } });
+  function setTab(v){ try{ localStorage.setItem("orpi_tab_superadmin",v); }catch(e){} _setTabRaw(v); }
   var [agenceSelectee, setAgenceSelectee] = useState(null); // null = vue groupe
   var [agenceMode, setAgenceMode] = useState(null); // null = vue groupe, sinon agenceId de la vue manager
   var [periode, setPeriode] = useState("mois"); // mois | trim | annee | tout

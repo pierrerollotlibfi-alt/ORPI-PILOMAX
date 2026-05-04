@@ -7,6 +7,7 @@ import Recherches from "./Recherches";
 import GestionLocative from "./GestionLocative";
 import OffMarket from "./OffMarket";
 import Feedback from "./Feedback";
+import Outils from "./Outils";
 import CarteInteractive from "./CarteInteractive";
 import {
   AppShell, KpiCard, MandatForm, BadgeStatut, BadgeType,
@@ -51,7 +52,8 @@ export default function AgentApp() {
   var ctx = useApp();
   var { currentUser, mandats, setMandats, locations, gestion, objectifs, tasks, setTasks, addJournal, changerMotDePasse } = ctx;
 
-  var [tab, setTab] = useState("mandats");
+  var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_agent")||"mandats"; }catch(e){ return "mandats"; } });
+  function setTab(v){ try{ localStorage.setItem("orpi_tab_agent",v); }catch(e){} _setTabRaw(v); }
   var [sweepOpen,    setSweepOpen]    = useState(null);
   var [showMandatForm, setShowMandatForm] = useState(false);
   var [editingMandat,  setEditingMandat]  = useState(null);
@@ -243,7 +245,7 @@ export default function AgentApp() {
 
   var sweepMandat = sweepOpen ? agenceMandats.find(function(m){ return m.id===sweepOpen; }) : null;
   return (
-    <AppShell navItems={navItems} title={tab==="mandats"?"📋 Mandats agence":tab==="locations"?"🏠 Mes locations":tab==="gestion"?"🔑 Mes gestions":tab==="gestion-loc"?"🏘️ Parc locatif":tab==="offmarket"?"🔒 Off Market":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Mes tâches":tab==="stats"?"📊 Mes stats":tab==="leads"?"📥 Mes leads":tab==="recherches"?"🔍 Recherches":tab==="profil"?"👤 Mon profil":"💬 Messagerie"}
+    <AppShell navItems={navItems} title={tab==="mandats"?"📋 Mandats agence":tab==="locations"?"🏠 Mes locations":tab==="gestion"?"🔑 Mes gestions":tab==="gestion-loc"?"🏘️ Parc locatif":tab==="offmarket"?"🔒 Off Market":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Mes tâches":tab==="stats"?"📊 Mes stats":tab==="leads"?"📥 Mes leads":tab==="recherches"?"🔍 Recherches":tab==="profil"?"👤 Mon profil":"💬 Messagerie"}
       topbarActions={
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {notifPerm!=="granted" && <button onClick={async function(){ await (ctx.demanderPermission||askPerm)(); }} style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:"#D97706",cursor:"pointer",fontFamily:"var(--font)",display:"flex",alignItems:"center",gap:4}}>{"🔔 Activer notifs"}</button>}
@@ -255,7 +257,7 @@ export default function AgentApp() {
       {/* ──────────── MANDATS ──────────── */}
       {tab==="mandats" && (
         <div>
-          <div className="kpi-grid" style={{marginBottom:16}}>
+          <div className="kpi-grid" style={{marginBottom:16,overflowX:"hidden"}}>
             <KpiCard label="CA Stock" value={fmt(caStock)} color="var(--purple)" icon="📦" sub={active.filter(function(m){return m.typeMandat==="exclusif";}).length+" excl."}/>
             <KpiCard label="CA Signé" value={fmt(caSigne)} color="var(--amber)" icon="✍️" sub={compromis.length+" compromis"}/>
             <KpiCard label="Offres ce mois" value={offresMois.length} color="var(--blue)" icon="🤝" sub={offresMois.length>0?fmt(offresMois.reduce(function(s,m){return s+(m.commission||0);},0)):"Aucune offre"}/>
@@ -334,6 +336,7 @@ export default function AgentApp() {
                     {(m.sweepUrl||m.sweepPdf)?"🏷️ Fiche SweepBright ✓":"🏷️ SweepBright"}
                   </button>
                   {isMine && <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setEditingMandat(m);setShowMandatForm(true);}}>{"✏️ Modifier"}</button>}
+                {!isMine && <div style={{fontSize:10,color:"var(--g400)",padding:"4px 8px",background:"var(--g50)",borderRadius:7,textAlign:"center"}}>{"🔒 Mandat de "+(agentProp?agentProp.nom:"un collègue")}</div>}
                 </div>
                 {!isMine && <div style={{textAlign:"center",fontSize:11,color:"var(--g400)",padding:"5px",background:"var(--g50)",borderRadius:8,marginTop:4}}>{"🔒 Mandat de "+(agentProp?agentProp.nom:"un collègue")}</div>}
               </div>
@@ -528,6 +531,7 @@ export default function AgentApp() {
 
       {tab==="leads" && <Leads/>}
       {tab==="gestion-loc" && <GestionLocative/>}
+      {tab==="outils" && <Outils/>}
       {tab==="feedback" && <Feedback/>}
       {tab==="offmarket" && <OffMarket/>}
       {tab==="carte" && <CarteInteractive onNavigate={function(targetTab, bienId, bienType){ setTab(targetTab); }}/>}

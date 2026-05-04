@@ -34,6 +34,8 @@ var SK = {
   resets:      "orpi_data_resets",
   offmarket:   "orpi_data_offmarket",
   kpiConfig:   "orpi_data_kpi_config",
+  feedback:    "orpi_data_feedback",
+  journal:     "orpi_data_journal",
   session:     "orpi_data_session",
 };
 
@@ -236,6 +238,8 @@ export default function App() {
   var [resets,      setResetsRaw]    = useState(function(){ return lload(SK.resets, []); });
   var [offmarket,   setOffMktRaw]   = useState(function(){ return loadOrInit(SK.offmarket, [], INIT_OFFMARKET); });
   var [kpiConfig,   setKpiCfgRaw]   = useState(function(){ return loadOrInit(SK.kpiConfig,  [], INIT_KPI_CONFIG); });
+  var [feedback,    setFeedbackRaw]  = useState(function(){ return lload(SK.feedback, []); });
+  var [journal2,    setJournal2Raw]  = useState(function(){ return lload(SK.journal, []); });
 
   var [currentUser, setCurrentUser] = useState(function() { return loadSession(lload(SK.users, INIT_USERS)); });
   var [page,        setPage]        = useState(function() {
@@ -271,6 +275,12 @@ export default function App() {
       { name:"prospection", setter:setProspRaw,    sk:SK.prospection, init:[] },
       { name:"tasks",       setter:setTasksRaw,    sk:SK.tasks,       init:[] },
       { name:"recherches", setter:setRechercheRaw, sk:SK.recherches,  init:[] },
+      { name:"feedback",    setter:setFeedbackRaw,  sk:SK.feedback,    init:[] },
+      { name:"kpiConfig",   setter:setKpiCfgRaw,    sk:SK.kpiConfig,   init:INIT_KPI_CONFIG },
+      { name:"offmarket",   setter:setOffMktRaw,    sk:SK.offmarket,   init:INIT_OFFMARKET },
+      { name:"journal",     setter:setJournalRaw,   sk:SK.journal,     init:[] },
+      { name:"resets",      setter:setResetsRaw,    sk:SK.resets,      init:[] },
+      { name:"prospConfig", setter:setProspCfgRaw,  sk:SK.prospConfig, init:{delaiRappelMois:2} },
     ];
     Promise.all(collections.map(function(c) {
       return dbLoad(c.name, null).then(function(v) {
@@ -348,6 +358,7 @@ export default function App() {
   var setResets      = useCallback(function(u){ var v=typeof u==="function"?u(resets):u;        setResetsRaw(v);   lsave(SK.resets,v);    if(supabaseConfigured)dbSave("resets",v);      },[resets]);
   var setOffMarket   = useCallback(function(u){ var v=typeof u==="function"?u(offmarket):u;    setOffMktRaw(v);   lsave(SK.offmarket,v); if(supabaseConfigured)dbSave("offmarket",v);  },[offmarket]);
   var setKpiConfig   = useCallback(function(u){ var v=typeof u==="function"?u(kpiConfig):u;    setKpiCfgRaw(v);   lsave(SK.kpiConfig,v); if(supabaseConfigured)dbSave("kpiConfig",v); },[kpiConfig]);
+  var setFeedback    = useCallback(function(u){ var v=typeof u==="function"?u(feedback):u;     setFeedbackRaw(v);  lsave(SK.feedback,v);  if(supabaseConfigured)dbSave("feedback",v);  },[feedback]);
 
   // ─── TOKEN INVITATION (useEffect conservé pour compatibilité) ───────────────
   useEffect(function() {
@@ -370,7 +381,9 @@ export default function App() {
     if (!u.password || u.password!==pwd) return "Email ou mot de passe incorrect";
     var now = new Date().toISOString();
     var uWithLogin = {...u, derniereConnexion: now};
-    setUsers(function(prev){ return prev.map(function(x){ return x.id===u.id ? uWithLogin : x; }); });
+    var newUsers = users.map(function(x){ return x.id===u.id ? uWithLogin : x; });
+    setUsers(newUsers);
+    if(supabaseConfigured) { try { dbSave("users", newUsers); } catch(e){} }
     saveSession(u.id); setCurrentUser(uWithLogin); setPage("app"); return null;
   }
   function handleLogout() { clearSession(); setCurrentUser(null); setPage("login"); }
@@ -572,8 +585,8 @@ export default function App() {
   );
 
   var ctx = {
-    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig,
-    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig,
+    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback,
+    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback,
     handleLogout, inviterAgent, changerMotDePasse, demanderResetMdp, resetMdpParManager, handleExport, handleImport, saveMsg,
     resets, setResets,
     notifPerm, demanderPermission: async function(){ var r = await demanderPermission(); setNotifPerm(r); return r; },

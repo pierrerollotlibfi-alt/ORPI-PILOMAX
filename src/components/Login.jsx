@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useApp } from "../App";
 
+// ─── HOOK INSTALL PWA ──────────────────────────────────────────────────────
+var _pwaInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", function(e) {
+  e.preventDefault();
+  _pwaInstallPrompt = e;
+  // Déclencher un re-render en stockant dans sessionStorage
+  try { sessionStorage.setItem("pwa_installable","1"); } catch(e2){}
+  window.dispatchEvent(new Event("pwa_installable"));
+});
+
 export default function Login({ onLogin }) {
   var ctx = useApp();
   var [email,   setEmail]   = useState("");
@@ -45,6 +55,7 @@ export default function Login({ onLogin }) {
   );
 
   return (
+    <>
     <div style={{minHeight:"100vh",background:"linear-gradient(145deg,#1D3557 0%,#2a4a7a 50%,#E63946 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"var(--font)"}}>
       <div style={{background:"#fff",borderRadius:22,padding:"40px 34px",width:"100%",maxWidth:400,boxShadow:"0 40px 100px rgba(0,0,0,0.25)"}}>
 
@@ -104,5 +115,17 @@ export default function Login({ onLogin }) {
 
       </div>
     </div>
+      {canInstall && (
+        <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:100,textAlign:"center"}}>
+          <button onClick={installApp} style={{background:"linear-gradient(135deg,#1D3557,#2a6096)",color:"#fff",border:"none",borderRadius:40,padding:"12px 24px",fontWeight:800,fontSize:14,cursor:"pointer",boxShadow:"0 4px 20px rgba(29,53,87,0.4)",display:"flex",alignItems:"center",gap:10,fontFamily:"inherit"}}>
+            <span style={{fontSize:22}}>{"✈️"}</span>
+            <div style={{textAlign:"left"}}>
+              <div style={{fontSize:13,fontWeight:900}}>{"Ajouter à l'écran d'accueil"}</div>
+              <div style={{fontSize:10,opacity:.7,fontWeight:600}}>{"Accès rapide depuis votre téléphone"}</div>
+            </div>
+          </button>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../App";
-import { fmt, fmtDate, avatarColor } from "./Shared";
+import { fmt, fmtDate, avatarColor, canSeeContact, masquer, masquerTel } from "./Shared";
 
 var NOW   = new Date();
 var ANNEE = NOW.getFullYear();

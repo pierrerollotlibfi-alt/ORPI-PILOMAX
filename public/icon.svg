@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fond dégradé bleu marine ORPI -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1D3557"/>
+      <stop offset="100%" style="stop-color:#2a6096"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E63946"/>
+      <stop offset="100%" style="stop-color:#c1121f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fond arrondi -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+
+  <!-- Grand O stylisé ORPI — anneau épais -->
+  <circle cx="256" cy="256" r="185" fill="none" stroke="white" stroke-width="68" opacity="0.95"/>
+
+  <!-- Découpe intérieure pour donner effet "O ouvert" / dynamisme -->
+  <path d="M 256 71 A 185 185 0 0 1 415 185" stroke="url(#glow)" stroke-width="68" fill="none" stroke-linecap="round"/>
+
+  <!-- Avion stylisé — traversant le O en diagonale -->
+  <!-- Corps de l'avion -->
+  <g transform="translate(256,256) rotate(-35)">
+    <!-- Fuselage -->
+    <ellipse cx="0" cy="0" rx="80" ry="14" fill="white"/>
+    <!-- Aile gauche -->
+    <polygon points="-15,-14 -55,-45 10,-14" fill="white" opacity="0.9"/>
+    <!-- Aile droite -->
+    <polygon points="-15,14 -55,45 10,14" fill="white" opacity="0.9"/>
+    <!-- Empennage -->
+    <polygon points="-65,-14 -85,-28 -60,-14" fill="#E63946"/>
+    <polygon points="-65,14 -85,28 -60,14" fill="#E63946"/>
+    <!-- Nez -->
+    <ellipse cx="82" cy="0" rx="12" ry="8" fill="#E63946"/>
+    <!-- Hublots -->
+    <circle cx="20" cy="-5" r="5" fill="#1D3557" opacity="0.6"/>
+    <circle cx="4" cy="-5" r="5" fill="#1D3557" opacity="0.6"/>
+    <circle cx="-12" cy="-5" r="5" fill="#1D3557" opacity="0.6"/>
+  </g>
+
+  <!-- Point rouge ORPI signature (bas droite) -->
+  <circle cx="385" cy="385" r="22" fill="#E63946"/>
+
+  <!-- Texte "ORPI" en petit sous l'icône - optionnel -->
+</svg>
