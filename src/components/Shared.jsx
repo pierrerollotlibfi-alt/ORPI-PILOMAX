@@ -149,10 +149,11 @@ export function Modal({ title, onClose, children, footer, wide }) {
 }
 
 // ─── KPI CARD ─────────────────────────────────────────────────────────────────
-export function KpiCard({ label, value, sub, color, icon, trend }) {
+export function KpiCard({ label, value, sub, color, icon, trend, onClick }) {
   var c = color || "var(--navy)";
   return (
-    <div className="kpi-card" style={{borderLeftColor:c}}>
+    <div className="kpi-card" style={{borderLeftColor:c, cursor:onClick?"pointer":"default", position:"relative"}} onClick={onClick}>
+      {onClick && <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"var(--g300)"}}>{"▶"}</div>}
       <div className="kpi-label">{icon&&<span style={{marginRight:4}}>{icon}</span>}{label}</div>
       <div className="kpi-value" style={{color:c}}>{value}</div>
       {sub && <div className="kpi-sub">{sub}</div>}

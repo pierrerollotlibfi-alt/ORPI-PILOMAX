@@ -761,7 +761,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                   <div style={{width:40,height:40,borderRadius:20,background:col,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:15,flexShrink:0}}>{a.avatar}</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:800,fontSize:14,color:"var(--navy)"}}>{a.nom}</div>
-                    <BadgeNiveau niveau={a.niveau}/>
+                    {a.role==="manager"?<span style={{background:"#FEF3C7",color:"#92400E",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:800}}>{"⚙️ Manager"}</span>:<BadgeNiveau niveau={a.niveau}/>}
                   </div>
                   {/* Valeur hero (critère sélectionné) */}
                   <div style={{textAlign:"right",flexShrink:0}}>
@@ -846,7 +846,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                     <div style={{fontWeight:800,color:"var(--navy)"}}>{a.nom}</div>
                     <div style={{fontSize:12,color:"var(--g400)"}}>{a.email}</div>
                     <div style={{display:"flex",gap:6,marginTop:3,flexWrap:"wrap"}}>
-                      <BadgeNiveau niveau={a.niveau}/>
+                      {a.role==="manager"?<span style={{background:"#FEF3C7",color:"#92400E",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>{"⚙️ Manager"}</span>:<BadgeNiveau niveau={a.niveau}/>}
                       {(function(){
                         if (!a.derniereConnexion) return <span style={{fontSize:10,color:"var(--g400)",fontStyle:"italic"}}>{"Jamais connecté"}</span>;
                         var d = new Date(a.derniereConnexion);
