@@ -7,6 +7,7 @@ import Recherches from "./Recherches";
 import GestionLocative from "./GestionLocative";
 import OffMarket from "./OffMarket";
 import Feedback from "./Feedback";
+import { checkMatchesNouveauMandat, checkMatchesNouvelleRecherche } from "../matchingAuto";
 import Outils from "./Outils";
 import CarteInteractive from "./CarteInteractive";
 import {
@@ -50,7 +51,7 @@ function SwipeCard({ onSwipeLeft, onSwipeRight, children, style }) {
 
 export default function AgentApp() {
   var ctx = useApp();
-  var { currentUser, mandats, setMandats, locations, gestion, objectifs, tasks, setTasks, addJournal, changerMotDePasse } = ctx;
+  var { currentUser, mandats, setMandats, locations, gestion, objectifs, tasks, setTasks, addJournal, changerMotDePasse, recherches, offmarket, users } = ctx;
 
   var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_agent")||"mandats"; }catch(e){ return "mandats"; } });
   function setTab(v){ try{ localStorage.setItem("orpi_tab_agent",v); }catch(e){} _setTabRaw(v); }
