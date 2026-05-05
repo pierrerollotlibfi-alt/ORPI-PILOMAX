@@ -20,7 +20,11 @@ export default function OffMarket() {
   var [filtreMotiv, setFiltreMotiv] = useState("");
   var [filtreAgent, setFiltreAgent] = useState("");
 
+  // Inclure le currentUser même si superadmin (pour qu'il puisse s'attribuer un bien)
   var agents = users.filter(function(u){ return (u.role==="agent"||u.role==="manager") && u.agenceId===agenceId && u.actif; });
+  if (!agents.find(function(a){ return a.id===ctx.currentUser.id; })) {
+    agents = [ctx.currentUser, ...agents];
+  }
   var biensFiltres = offmarket.filter(function(o){
     return (!filtreMotiv || o.motivation===filtreMotiv) && (!filtreAgent || o.agentId===filtreAgent);
   });
@@ -74,7 +78,8 @@ export default function OffMarket() {
           <div className="form-group"><label className="form-label">{"Email"}</label><input className="form-input" type="email" value={f.proprietaireMail} onChange={function(e){set("proprietaireMail",e.target.value);}}/></div>
           <div className="form-group"><label className="form-label">{"Agent en charge"}</label>
             <select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}>
-              {agents.map(function(a){ return <option key={a.id} value={a.id}>{a.nom}</option>; })}
+              <option value={ctx.currentUser.id}>{"🙋 Moi-même ("+ctx.currentUser.nom+")"}</option>
+              {agents.filter(function(a){return a.id!==ctx.currentUser.id;}).map(function(a){ return <option key={a.id} value={a.id}>{a.nom}</option>; })}
             </select>
           </div>
           <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">{"Notes confidentielles"}</label><textarea className="form-input" rows={3} value={f.notes} onChange={function(e){set("notes",e.target.value);}}/></div>

@@ -142,6 +142,10 @@ export default function Recherches() {
   var isManager = ctx.currentUser.role === "manager";
   var agenceId  = ctx.currentUser.agenceId;
   var agents    = ctx.users.filter(function(u){ return (u.role==="agent"||u.role==="manager") && u.actif && u.agenceId===agenceId; });
+  // S'assurer que le currentUser est toujours dans la liste (ex: superadmin)
+  if (!agents.find(function(a){ return a.id===ctx.currentUser.id; })) {
+    agents = [ctx.currentUser, ...agents];
+  }
   // Matching cross-agences : on cherche dans TOUT le réseau
   var mandats   = ctx.mandats.filter(function(m){ return m.statut==="mandat"; });
   var locations = (ctx.locations||[]).filter(function(l){ return !l.locataireTrouve; });
@@ -547,7 +551,13 @@ function RechercheForm({ agents, agenceId, isManager, currentUser, onSave, onCan
         )}
 
         {/* Agent */}
-        {isManager && <div className="form-group"><label className="form-label">{"Agent"}</label><select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}><option value="">{"— Choisir —"}</option>{agents.map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}</select></div>}
+        <div className="form-group">
+          <label className="form-label">{"Agent en charge"}</label>
+          <select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}>
+            <option value={currentUser.id}>{"🙋 Moi-même ("+currentUser.nom+")"}</option>
+            {isManager && agents.filter(function(a){return a.id!==currentUser.id;}).map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}
+          </select>
+        </div>
 
         {/* Notes */}
         <div className="form-group form-full"><label className="form-label">{"Notes / critères complémentaires"}</label><textarea className="form-input" rows={3} value={f.notes} onChange={function(e){set("notes",e.target.value);}} style={{resize:"vertical",fontFamily:"var(--font)"}} placeholder="Ex: RDC refusé, lumineux, cuisine ouverte..."/></div>
