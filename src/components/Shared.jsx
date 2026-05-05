@@ -277,7 +277,7 @@ export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
   var init = initial || {};
   var today2 = new Date().toISOString().slice(0,10);
   var [f, setF] = useState({
-    ref:"", typeMandat:"simple", typeBien:"appartement", adresse:"", prix:"", commission:"",
+    ref:"", typeMandat:"simple", typeBien:"appartement", adresse:"", prix:"", commission:"", tauxCommission:7,
     statut:"mandat", agentId:"", agenceId:agenceId||"",
     dateMandat:today2, dateExpiration:"", dateCompromis:"", dateSignature:"",
     clausesSuspensivesLevees:false,
@@ -292,7 +292,16 @@ export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
     notes:"", photos:[],
     ...init,
   });
-  function set(k, v) { setF(function(p) { return {...p,[k]:v}; }); }
+  function set(k, v) {
+    setF(function(p) {
+      var next = {...p,[k]:v};
+      // Recalcul auto commission si prix ou taux change
+      if ((k==="prix"||k==="tauxCommission") && next.prix && next.tauxCommission) {
+        next.commission = Math.round(Number(next.prix) * Number(next.tauxCommission) / 100);
+      }
+      return next;
+    });
+  }
   function toggleOpt(k) { setF(function(p){ return {...p,[k]:!p[k]}; }); }
 
   var TYPES_BIEN = [
@@ -356,12 +365,30 @@ export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
 
         {/* ─── PRIX ─── */}
         <div className="form-group">
-          <label className="form-label">{"Prix (€)"}</label>
-          <input className="form-input" type="number" value={f.prix} onChange={function(e){set("prix",Number(e.target.value));}}/>
+          <label className="form-label">{isTVA(f.typeBien)?"Prix HT (€)":"Prix de vente (€)"}</label>
+          <input className="form-input" type="number" value={f.prix} onChange={function(e){set("prix",Number(e.target.value));}} placeholder="Ex : 250000"/>
+          {isTVA(f.typeBien)&&f.prix>0&&<div style={{fontSize:11,color:"var(--g400)",marginTop:3}}>{"TTC : "+Math.round(f.prix*1.2).toLocaleString("fr-FR")+"€"}</div>}
         </div>
         <div className="form-group">
-          <label className="form-label">{"Commission HT (€)"}</label>
-          <input className="form-input" type="number" value={f.commission} onChange={function(e){set("commission",Number(e.target.value));}}/>
+          <label className="form-label">{"Commission TTC (€)"}</label>
+          <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+            {[3,4,5,6,7,8].map(function(t){
+              var actif = f.tauxCommission===t || (!f.tauxCommission && t===7);
+              return (
+                <button key={t} type="button" onClick={function(){set("tauxCommission",t);}}
+                  style={{flex:1,padding:"4px 0",borderRadius:7,border:"2px solid "+(actif?"var(--navy)":"var(--g200)"),background:actif?"var(--navy)":"#fff",color:actif?"#fff":"var(--g500)",fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"var(--font)"}}>
+                  {t+"%"}
+                </button>
+              );
+            })}
+          </div>
+          <input className="form-input" type="number" value={f.commission} onChange={function(e){set("commission",Number(e.target.value));}} placeholder="Calculé automatiquement"/>
+          {f.prix>0&&f.commission>0&&(
+            <div style={{fontSize:11,color:"var(--g400)",marginTop:3,display:"flex",gap:8}}>
+              <span>{"HT : "+Math.round(f.commission/1.2).toLocaleString("fr-FR")+"€"}</span>
+              <span>{"· "+Math.round(f.commission/f.prix*100*100)/100+"% du prix"}</span>
+            </div>
+          )}
         </div>
 
         {/* ─── COMPOSITION ─── */}
