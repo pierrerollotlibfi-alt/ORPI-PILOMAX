@@ -112,7 +112,10 @@ export default function AgentApp() {
       setShowMandatForm(false); setEditingMandat(null); return;
     }
     var isNew = !editingMandat;
-    var data = {...form, agentId:currentUser.id, agenceId:agenceId, id:newId};
+    var data = {...form, agentId:form.agentId||currentUser.id, agenceId:agenceId, id:newId};
+    // Sécurité : si prix est string, le convertir
+    data.prix       = Number(data.prix)||0;
+    data.commission = Number(data.commission)||0;
     setMandats(function(prev){ var ex=prev.find(function(m){return m.id===data.id;}); return ex?prev.map(function(m){return m.id===data.id?data:m;}):[...prev,data]; });
     if (addJournal) addJournal({ type: isNew?"creation":"modification", description: (isNew?"Nouveau mandat créé : ":"Mandat modifié : ")+data.ref+" — "+data.adresse, cible:"mandat", cibleId:data.id });
     if (isNew) {

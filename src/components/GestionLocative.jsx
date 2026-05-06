@@ -495,7 +495,8 @@ export default function GestionLocative() {
 
           {showForm&&<GestFormComplet initial={editBien} onSave={saveBien} onCancel={function(){setShowForm(false);setEditBien(null);}} agents={agents} currentUser={ctx.currentUser}/>}
 
-          {bienActif&&<BienDetailCompact bien={bienActif} users={users} saisirLoyer={saisirLoyer} ajouterIntervention={ajouterIntervention} updateIntervention={updateIntervention} onEdit={function(){setEditBien(bienActif);setShowForm(true);}} onArchive={function(){if(window.confirm("Archiver ce bien ?"))setGestion(function(prev){return prev.map(function(g){return g.id===bienActif.id?{...g,actif:false}:g;});});setBienSelec(null);}} gestion={gestion}/>}
+          {bienActif&&<BienDetailCompact bien={bienActif} users={users} saisirLoyer={saisirLoyer} ajouterIntervention={ajouterIntervention} updateIntervention={updateIntervention} onEdit={function(){setEditBien(bienActif);setShowForm(true);}} onArchive={function(){if(window.confirm("Archiver ce bien ? Il n'apparaîtra plus dans la liste active."))setGestion(function(prev){return prev.map(function(g){return g.id===bienActif.id?{...g,actif:false}:g;});});setBienSelec(null);}}
+          onDelete={function(){if(window.confirm("⚠️ Supprimer définitivement ce bien ? Cette action est irréversible."))setGestion(function(prev){return prev.filter(function(g){return g.id!==bienActif.id;});});setBienSelec(null);}} gestion={gestion}/>}
 
           {biensFiltres.map(function(g){
             var a = users.find(function(u){return u.id===g.agentId;});
@@ -617,7 +618,7 @@ function GestFormComplet({ initial, onSave, onCancel, agents, currentUser }) {
 }
 
 // ─── FICHE DÉTAIL COMPACT ─────────────────────────────────────────────────────
-function BienDetailCompact({ bien, users, saisirLoyer, ajouterIntervention, updateIntervention, onEdit, onArchive, gestion }) {
+function BienDetailCompact({ bien, users, saisirLoyer, ajouterIntervention, updateIntervention, onEdit, onArchive, onDelete, gestion }) {
   var [tabD,setTabD] = useState("infos");
   var [showIntForm,setShowIntForm] = useState(false);
   var [intF,setIntF] = useState({type:"plomberie",description:"",prestataire:"",montant:"",statut:"planifie",urgence:false});
@@ -664,7 +665,8 @@ function BienDetailCompact({ bien, users, saisirLoyer, ajouterIntervention, upda
             {bien.notes&&<div style={{background:"var(--g50)",borderRadius:8,padding:"8px 10px",fontSize:12,color:"var(--g600)",fontStyle:"italic",marginBottom:10}}>{bien.notes}</div>}
             <div style={{display:"flex",gap:8}}>
               <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={onEdit}>{"✏️ Modifier"}</button>
-              <button className="btn btn-sm" style={{background:"#FEF2F2",color:"var(--red)",border:"none",flex:1}} onClick={onArchive}>{"🗑 Archiver"}</button>
+              <button className="btn btn-sm" style={{background:"#FFF7ED",color:"var(--amber)",border:"none",flex:1}} onClick={onArchive}>{"📦 Archiver"}</button>
+              <button className="btn btn-sm" style={{background:"#FEF2F2",color:"var(--red)",border:"none",flex:1}} onClick={onDelete}>{"🗑 Supprimer"}</button>
             </div>
           </div>
         )}

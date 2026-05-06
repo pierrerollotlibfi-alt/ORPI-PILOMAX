@@ -193,7 +193,7 @@ export function PeriodSelector({ value, onChange, customFrom, customTo, onCustom
 
 // ─── HT / TTC ─────────────────────────────────────────────────────────────────
 var TVA_IMMO = 0.20; // TVA 20% sur honoraires et locaux pro
-var TYPES_PRO = ["local_pro_location","local_pro_vente","immeuble"];
+var TYPES_PRO = ["local_pro_location","local_pro_vente","immeuble","fonds_commerce"];
 
 // Détermine si le type de bien est soumis à TVA
 export function isTVA(typeBien) {
@@ -276,10 +276,12 @@ export function BadgeNiveau({ niveau }) {
 export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
   var init = initial || {};
   var [erreurs, setErreurs] = useState([]);
+  // Préremplir agentId avec le premier agent si non défini
+  var defaultAgentId = (init.agentId) || (agents && agents.length>0 ? agents[0].id : "");
   var today2 = new Date().toISOString().slice(0,10);
   var [f, setF] = useState({
     ref:"", typeMandat:"simple", typeBien:"appartement", adresse:"", prix:"", commission:"", tauxCommission:7,
-    statut:"mandat", agentId:"", agenceId:agenceId||"",
+    statut:"mandat", agentId:defaultAgentId, agenceId:agenceId||"",
     dateMandat:today2, dateExpiration:"", dateCompromis:"", dateSignature:"",
     clausesSuspensivesLevees:false,
     // Composition
@@ -313,6 +315,7 @@ export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
     {id:"garage",             label:"🚗 Garage"},
     {id:"local_pro_vente",    label:"🏪 Local pro à vendre"},
     {id:"local_pro_location", label:"🏬 Local pro à louer"},
+    {id:"fonds_commerce",      label:"🏪 Fonds de commerce"},
   ];
   var DPE_OPTS = ["A","B","C","D","E","F","G"];
   var DPE_COL  = {A:"#059669",B:"#22C55E",C:"#84CC16",D:"#EAB308",E:"#F97316",F:"#EF4444",G:"#991B1B"};
@@ -323,11 +326,26 @@ export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
   return (
     <Modal title={init.id?"✏️ Modifier le mandat":"➕ Nouveau mandat"} onClose={onCancel}
       footer={
-        <div style={{display:"flex",gap:8,width:"100%"}}>
+        <div style={{display:"flex",gap:8,width:"100%",flexDirection:"column"}}>
+          {erreurs.length>0 && (
+            <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",width:"100%"}}>
+              {erreurs.map(function(e,i){ return <div key={i} style={{fontSize:12,color:"#DC2626",fontWeight:600}}>{"⚠️ "+e}</div>; })}
+            </div>
+          )}
+          <div style={{display:"flex",gap:8,width:"100%"}}>
           <button className="btn btn-secondary" onClick={onCancel}>{"Annuler"}</button>
-          <button className="btn btn-primary" style={{flex:1}} onClick={function(){onSave(f);}}>
+          <button className="btn btn-primary" style={{flex:1}} onClick={function(){
+            var errs = [];
+            if (!f.ref || !f.ref.trim())        errs.push("Référence mandat obligatoire");
+            if (!f.adresse || !f.adresse.trim())errs.push("Adresse obligatoire");
+            if (!f.prix || Number(f.prix)<=0)   errs.push("Prix obligatoire (supérieur à 0)");
+            if (!f.agentId)                     errs.push("Veuillez sélectionner un agent");
+            setErreurs(errs);
+            if (errs.length===0) onSave(f);
+          }}>
             {init.id?"Enregistrer les modifications":"Créer le mandat"}
           </button>
+          </div>
         </div>
       }>
       <div className="form-grid">

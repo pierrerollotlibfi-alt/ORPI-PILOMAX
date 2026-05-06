@@ -44,7 +44,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [showInvite,      setShowInvite]      = useState(false);
   var [showObjModal,    setShowObjModal]    = useState(false);
   var [showBravo,       setShowBravo]       = useState(null); // { mandatRef, agentNom }
-  var [ficheKPIAgent,   setFicheKPIAgent]   = useState(null); // agent à afficher
+  var [ficheKPIAgent,   setFicheKPIAgent]   = useState(null);
+  var [editingAgent,    setEditingAgent]    = useState(null); // agent à afficher
   var [showConfigKPI,   setShowConfigKPI]   = useState(false);
   var [showTaskModal,   setShowTaskModal]   = useState(false);
   var [inviteResult,    setInviteResult]    = useState(null);
@@ -1036,17 +1037,35 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       {showMoreMenu && (
         <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",borderTop:"1px solid var(--g200)",boxShadow:"0 -8px 30px rgba(0,0,0,0.12)",padding:"14px 14px 10px",maxHeight:"60vh",overflowY:"auto"}} onClick={function(){setShowMoreMenu(false);}}>
           <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:10,textTransform:"uppercase",letterSpacing:.8}}>{"Tous les onglets"}</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
-            {NAV_SECONDARY.map(function(id){
-              var t = ALL_TABS[id]||{};
-              return (
-                <button key={id} onClick={function(e){e.stopPropagation();setTab(id);setShowMoreMenu(false);}} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"2px solid "+(tab===id?"var(--navy)":"var(--g200)"),background:tab===id?"var(--navy)":"#fff",color:tab===id?"#fff":"var(--g600)",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left",fontFamily:"var(--font)"}}>
-                  <span style={{fontSize:18}}>{t.icon}</span>
-                  <span>{t.shortLabel||t.label}</span>
-                </button>
-              );
-            })}
-          </div>
+            {[
+            { theme:"💼 Commercial",    ids:["prospection","leads","taches","recherches","matching"] },
+            { theme:"📋 Portefeuille",  ids:["mandats","offmarket","carte","ca","rapport","objectifs"] },
+            { theme:"🏠 Location",      ids:["gestion","locations"] },
+            { theme:"👥 Équipe",        ids:["agents","classement","stats"] },
+            { theme:"⚙️ Outils",        ids:["outils","km","feedback","profil"] },
+          ].map(function(grp){
+            return (
+              <div key={grp.theme} style={{marginBottom:12}}>
+                <div style={{fontSize:10,fontWeight:800,color:"var(--g400)",textTransform:"uppercase",letterSpacing:.8,marginBottom:6}}>{grp.theme}</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+                  {grp.ids.map(function(id){
+                    var t = ALL_TABS[id]||{};
+                    return (
+                      <button key={id} onClick={function(e){e.stopPropagation();setTab(id);setShowMoreMenu(false);}}
+                        style={{display:"flex",alignItems:"center",gap:6,padding:"8px 10px",borderRadius:10,
+                          border:"2px solid "+(tab===id?"var(--navy)":"var(--g200)"),
+                          background:tab===id?"var(--navy)":"#fff",
+                          color:tab===id?"#fff":"var(--g600)",
+                          fontWeight:700,fontSize:11,cursor:"pointer",textAlign:"left",fontFamily:"var(--font)"}}>
+                        <span style={{fontSize:16}}>{t.icon}</span>
+                        <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.shortLabel||t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </AppShell>

@@ -12,6 +12,7 @@ var TYPES_BIEN = [
   { id:"Appartement à louer",   label:"🏢 Appartement à louer",    mode:"location" },
   { id:"Maison à louer",        label:"🏠 Maison à louer",         mode:"location" },
   { id:"Local pro à louer",     label:"🏬 Local pro à louer",      mode:"location" },
+  { id:"Fonds de commerce",      label:"🏪 Fonds de commerce",       mode:"achat"    },
   { id:"Garage à louer",        label:"🚗 Garage à louer",         mode:"location" },
 ];
 
