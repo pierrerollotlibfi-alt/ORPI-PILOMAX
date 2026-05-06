@@ -66,12 +66,22 @@ function agenceNom(agenceId, agences) {
 function scoreMatchVente(recherche, mandat) {
   var score = 0;
   var raisons = [];
-  // Budget
-  if (mandat.prix >= recherche.budgetMin * 0.9 && mandat.prix <= recherche.budgetMax * 1.1) {
+  if (!mandat.prix || !recherche.budgetMax) return null;
+  // Budget — budgetMin optionnel
+  var bMin = recherche.budgetMin || 0;
+  var bMax = recherche.budgetMax;
+  if (mandat.prix >= bMin * 0.9 && mandat.prix <= bMax * 1.1) {
     score += 35; raisons.push("✅ Budget compatible ("+mandat.prix.toLocaleString("fr-FR")+"€)");
-  } else if (mandat.prix <= recherche.budgetMax * 1.2) {
+  } else if (mandat.prix <= bMax * 1.2) {
     score += 12; raisons.push("⚠️ Budget légèrement dépassé");
   } else { return null; }
+  // Compatibilité type de bien (flexible : appartement ↔ "Appartement à vendre")
+  var rbien = (recherche.typeBien||"").toLowerCase();
+  var mbien = (mandat.typeBien||"").toLowerCase();
+  if (rbien && mbien && !rbien.includes(mbien) && !mbien.includes(rbien.split(" ")[0])) {
+    // Types incompatibles → léger malus mais pas bloquant
+    score -= 5;
+  }
   // Secteur
   var adresseLow = (mandat.adresse||"").toLowerCase();
   var sectMatch = (recherche.secteurs||[]).some(function(s){ return adresseLow.includes(s.toLowerCase()) || adresseLow.includes("amiens"); });
@@ -100,17 +110,20 @@ function scoreMatchVente(recherche, mandat) {
   }
   // Exclusif = bonus
   if (mandat.typeMandat === "exclusif") { score += 7; raisons.push("⭐ Exclusif"); }
-  return score >= 35 ? { score: Math.min(score, 100), raisons } : null;
+  return score >= 30 ? { score: Math.min(score, 100), raisons } : null;
 }
 
 // ─── SCORE MATCHING (location) ────────────────────────────────────────────────
 function scoreMatchLocation(recherche, loc) {
   var score = 0;
   var raisons = [];
+  if (!loc.loyer || !recherche.budgetMax) return null;
+  var bMin = recherche.budgetMin || 0;
+  var bMax = recherche.budgetMax;
   // Loyer
-  if (loc.loyer >= recherche.budgetMin * 0.9 && loc.loyer <= recherche.budgetMax * 1.1) {
+  if (loc.loyer >= bMin * 0.9 && loc.loyer <= bMax * 1.1) {
     score += 40; raisons.push("✅ Loyer compatible ("+loc.loyer+"€/mois)");
-  } else if (loc.loyer <= recherche.budgetMax * 1.2) {
+  } else if (loc.loyer <= bMax * 1.2) {
     score += 15; raisons.push("⚠️ Loyer légèrement dépassé");
   } else { return null; }
   // Secteur
@@ -178,7 +191,8 @@ export default function Recherches() {
     var result = [];
     myRech.filter(function(r){ return r.statut==="active"; }).forEach(function(r) {
       var tb = TYPES_BIEN.find(function(t){ return t.id===r.typeBien; });
-      var isLoc = tb && tb.mode==="location";
+      // Détection location : via TYPES_BIEN ou via le label du typeBien directement
+      var isLoc = (tb && tb.mode==="location") || (!tb && r.typeBien && r.typeBien.toLowerCase().includes("louer"));
       if (isLoc) {
         locations.forEach(function(l) {
           var match = scoreMatchLocation(r, l);

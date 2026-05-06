@@ -275,6 +275,7 @@ export function BadgeNiveau({ niveau }) {
 // ─── MANDAT FORM ──────────────────────────────────────────────────────────────
 export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
   var init = initial || {};
+  var [erreurs, setErreurs] = useState([]);
   var today2 = new Date().toISOString().slice(0,10);
   var [f, setF] = useState({
     ref:"", typeMandat:"simple", typeBien:"appartement", adresse:"", prix:"", commission:"", tauxCommission:7,

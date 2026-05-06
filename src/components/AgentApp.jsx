@@ -7,6 +7,7 @@ import Recherches from "./Recherches";
 import GestionLocative from "./GestionLocative";
 import OffMarket from "./OffMarket";
 import Feedback from "./Feedback";
+import StatsComparatives from "./StatsComparatives";
 import { checkMatchesNouveauMandat, checkMatchesNouvelleRecherche } from "../matchingAuto";
 import Outils from "./Outils";
 import CarteInteractive from "./CarteInteractive";
@@ -56,7 +57,8 @@ export default function AgentApp() {
   var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_agent")||"mandats"; }catch(e){ return "mandats"; } });
   function setTab(v){ try{ localStorage.setItem("orpi_tab_agent",v); }catch(e){} _setTabRaw(v); }
   var [sweepOpen,    setSweepOpen]    = useState(null);
-  var [showMandatForm, setShowMandatForm] = useState(false);
+  var [showMandatForm,   setShowMandatForm]   = useState(false);
+  var [confirmMandat,   setConfirmMandat]   = useState(null); // { ref, adresse, isNew }
   var [editingMandat,  setEditingMandat]  = useState(null);
   var [showBravo,      setShowBravo]      = useState(null);
 
@@ -113,25 +115,71 @@ export default function AgentApp() {
     var data = {...form, agentId:currentUser.id, agenceId:agenceId, id:newId};
     setMandats(function(prev){ var ex=prev.find(function(m){return m.id===data.id;}); return ex?prev.map(function(m){return m.id===data.id?data:m;}):[...prev,data]; });
     if (addJournal) addJournal({ type: isNew?"creation":"modification", description: (isNew?"Nouveau mandat créé : ":"Mandat modifié : ")+data.ref+" — "+data.adresse, cible:"mandat", cibleId:data.id });
-    if (isNew) { notifNouveauMandat(data, currentUser.nom); }
+    if (isNew) {
+      notifNouveauMandat(data, currentUser.nom);
+      // Notifier les managers via messagerie privée
+      var SK_MSG = "orpi_data_messages_v1";
+      try {
+        var msgs = JSON.parse(localStorage.getItem(SK_MSG)||"[]");
+        var managers = (ctx.users||[]).filter(function(u){ return u.agenceId===agenceId && u.actif && (u.role==="manager"||u.role==="superadmin"); });
+        managers.forEach(function(mgr){
+          msgs.push({
+            id:"new-mandat-"+Date.now()+"-"+mgr.id,
+            channelId:"priv-match-"+mgr.id,
+            senderId:currentUser.id,
+            senderNom:currentUser.nom,
+            senderAvatar:currentUser.avatar||"👤",
+            content:"📋 Nouveau mandat créé\n\n"
+              +"Ref : "+data.ref+"\n"
+              +"Adresse : "+data.adresse+"\n"
+              +"Prix : "+(data.prix||0).toLocaleString("fr-FR")+"€\n"
+              +"Type : "+(data.typeBien||"—")+" · "+(data.typeMandat==="exclusif"?"⭐ Exclusif":"Simple")+"\n"
+              +"Commission TTC : "+(data.commission||0).toLocaleString("fr-FR")+"€\n\n"
+              +"Agent : "+currentUser.nom,
+            ts:new Date().toISOString(),
+            type:"nouveau_mandat",
+            read:[],
+            targetAgentId:mgr.id,
+          });
+        });
+        localStorage.setItem(SK_MSG, JSON.stringify(msgs));
+      } catch(e) {}
+      // Matching automatique
+      if (typeof checkMatchesNouveauMandat === "function") {
+        checkMatchesNouveauMandat(data, ctx.recherches||[], ctx.offmarket||[], ctx.users||[], agenceId);
+      }
+    }
     else if (editingMandat && editingMandat.prix && data.prix < editingMandat.prix) { notifBaissePrix(data, editingMandat.prix, data.prix); }
+    // Confirmation visuelle
+    setConfirmMandat({ ref:data.ref, adresse:data.adresse, isNew });
+    setTimeout(function(){ setConfirmMandat(null); }, 4000);
     setShowMandatForm(false); setEditingMandat(null);
   }
 
+  var [showMoreMenuA, setShowMoreMenuA] = useState(false);
+  var [showKpiDetailA, setShowKpiDetailA] = useState(null);
+  var NAV_PRIMARY_A   = ["mandats","recherches","stats","messagerie","outils"];
+  var NAV_SECONDARY_A = ["locations","gestion","gestion-loc","offmarket","carte","prospection","taches","leads","feedback","profil"];
+  var ALL_TABS_A = {
+    mandats:    {icon:"📋", label:"Mandats",         shortLabel:"Mandats"},
+    recherches: {icon:"🔍", label:"Recherches",      shortLabel:"Rech."},
+    stats:      {icon:"📊", label:"Mes stats",       shortLabel:"Stats"},
+    messagerie: {icon:"💬", label:"Messagerie",      shortLabel:"Messages"},
+    outils:     {icon:"🛠️", label:"Outils",          shortLabel:"Outils"},
+    locations:  {icon:"🏠", label:"Mes locations",   shortLabel:"Locs"},
+    gestion:    {icon:"🔑", label:"Mes gestions",    shortLabel:"Gestion"},
+    "gestion-loc":{icon:"🏘️",label:"Parc locatif",   shortLabel:"Parc"},
+    offmarket:  {icon:"🔒", label:"Off Market",      shortLabel:"OffMkt"},
+    carte:      {icon:"🗺️", label:"Carte",           shortLabel:"Carte"},
+    prospection:{icon:"🚶", label:"Prospection",     shortLabel:"Prosp."},
+    taches:     {icon:"✅", label:"Tâches",          shortLabel:"Tâches"},
+    leads:      {icon:"📥", label:"Leads",           shortLabel:"Leads"},
+    feedback:   {icon:"💡", label:"Suggestions",     shortLabel:"Ideas"},
+    profil:     {icon:"👤", label:"Mon profil",      shortLabel:"Profil"},
+  };
   var navItems = [
-    {id:"mandats",    icon:"📋", label:"Mes mandats",   shortLabel:"Mandats",  active:tab==="mandats",    onClick:function(){setTab("mandats");}},
-    {id:"locations",  icon:"🏠", label:"Mes locations",  shortLabel:"Locations",active:tab==="locations",  onClick:function(){setTab("locations");}},
-    {id:"gestion",    icon:"🔑", label:"Gestion locative",shortLabel:"Gestion",  active:tab==="gestion",    onClick:function(){setTab("gestion");}},
-    {id:"gestion-loc", icon:"🏘️", label:"Parc locatif",    shortLabel:"Parc",     active:tab==="gestion-loc",onClick:function(){setTab("gestion-loc");}},
-    {id:"offmarket",   icon:"🔒", label:"Off Market",     shortLabel:"OffMkt",   active:tab==="offmarket",  onClick:function(){setTab("offmarket");}},
-    {id:"carte",       icon:"🗺️", label:"Carte",           shortLabel:"Carte",    active:tab==="carte",      onClick:function(){setTab("carte");}},
-    {id:"prospection",icon:"🗺️", label:"Prospection",   shortLabel:"Prosp.",   active:tab==="prospection",onClick:function(){setTab("prospection");}},
-    {id:"taches",     icon:"✅", label:"Mes tâches",     shortLabel:"Tâches",   active:tab==="taches",     onClick:function(){setTab("taches");},     badge:nbTasks||null},
-    {id:"stats",      icon:"📊", label:"Mes stats",      shortLabel:"Stats",    active:tab==="stats",      onClick:function(){setTab("stats");}},
-    {id:"leads",      icon:"📥", label:"Mes leads",      shortLabel:"Leads",    active:tab==="leads",      onClick:function(){setTab("leads");}},
-    {id:"recherches", icon:"🔍", label:"Recherches",     shortLabel:"Rech.",    active:tab==="recherches", onClick:function(){setTab("recherches");}},
-    {id:"messagerie", icon:"💬", label:"Messagerie",     shortLabel:"Msgs",     active:tab==="messagerie", onClick:function(){setTab("messagerie");}},
-    {id:"profil",     icon:"👤", label:"Mon profil",     shortLabel:"Profil",   active:tab==="profil",     onClick:function(){setTab("profil");}},
+    ...NAV_PRIMARY_A.map(function(id){ var t=ALL_TABS_A[id]||{}; return {id, icon:t.icon, label:t.label, shortLabel:t.shortLabel, active:tab===id, onClick:function(){setTab(id);setShowMoreMenuA(false);}}; }),
+    {id:"more", icon:"···", label:"Plus", shortLabel:"Plus", active:NAV_SECONDARY_A.includes(tab), onClick:function(){setShowMoreMenuA(function(p){return !p;});}, isMore:true},
   ];
 
   var notifPerm = ctx.notifPerm || permissionActuelle();
@@ -448,7 +496,7 @@ export default function AgentApp() {
       )}
 
       {/* ──────────── STATS ──────────── */}
-      {tab==="stats" && (
+      {tab==="stats_old" && (
         <div>
           <Recommandations
             agent={currentUser}
@@ -537,6 +585,7 @@ export default function AgentApp() {
       {tab==="offmarket" && <OffMarket/>}
       {tab==="carte" && <CarteInteractive onNavigate={function(targetTab, bienId, bienType){ setTab(targetTab); }}/>}
       {tab==="recherches" && <Recherches/>}
+      {tab==="stats" && <StatsComparatives/>}
       {tab==="messagerie" && <Messagerie/>}
       {tab==="profil"     && <ProfilAgent currentUser={currentUser} changerMotDePasse={changerMotDePasse}/>}
 
@@ -560,6 +609,61 @@ export default function AgentApp() {
         <MandatForm initial={editingMandat} agents={ctx.users.filter(function(u){return (u.role==="agent"||u.role==="manager")&&u.agenceId===agenceId&&u.actif;})} agenceId={agenceId} onSave={saveMandat} onCancel={function(){setShowMandatForm(false);setEditingMandat(null);}}/>
       )}
     {sweepMandat && <SweepModal m={sweepMandat}/>}
+      {showKpiDetailA && (function(){
+        var agentMandats = mandats.filter(function(m){return m.agentId===currentUser.id;});
+        var kpiMapA = {
+          mandats_actifs: {titre:"📋 Mandats actifs",   items:agentMandats.filter(function(m){return m.statut==="mandat";}),   extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
+          compromis:      {titre:"🤝 Compromis",         items:agentMandats.filter(function(m){return m.statut==="compromis";}), extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" comm.";}},
+          vendus:         {titre:"✅ Ventes actées",      items:agentMandats.filter(function(m){return m.statut==="vendu";}),     extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
+          ca_realise:     {titre:"🏆 CA Réalisé",        items:agentMandats.filter(function(m){return m.statut==="vendu";}),     extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" TTC";}},
+          locations:      {titre:"🏠 Locations signées", items:myLocs.filter(function(l){return l.locataireTrouve;}),            extra:function(l){return l.adresse.split(",")[0]+" · "+(l.loyer||0)+"€/mois";}},
+        };
+        var k = kpiMapA[showKpiDetailA];
+        if (!k) return null;
+        return (
+          <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={function(){setShowKpiDetailA(null);}}>
+            <div style={{background:"#fff",borderRadius:"16px 16px 0 0",width:"100%",maxWidth:480,maxHeight:"70vh",overflowY:"auto",padding:"20px 16px 32px"}} onClick={function(e){e.stopPropagation();}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <div style={{fontWeight:800,color:"var(--navy)",fontSize:15}}>{k.titre}</div>
+                <button onClick={function(){setShowKpiDetailA(null);}} style={{background:"var(--g100)",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:13}}>{"✕"}</button>
+              </div>
+              {k.items.length===0 && <div style={{textAlign:"center",color:"var(--g400)",padding:"20px",fontSize:13}}>{"Aucun élément"}</div>}
+              {k.items.map(function(item,i){
+                return (
+                  <div key={item.id||i} style={{padding:"10px 0",borderBottom:"1px solid var(--g50)"}}>
+                    <div style={{fontWeight:700,color:"var(--navy)",fontSize:13}}>{item.ref||item.adresse}</div>
+                    <div style={{fontSize:11,color:"var(--g400)",marginTop:2}}>{k.extra(item)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+      {confirmMandat && (
+        <div style={{position:"fixed",top:70,left:"50%",transform:"translateX(-50%)",zIndex:300,background:confirmMandat.isNew?"var(--green)":"var(--blue)",color:"#fff",borderRadius:14,padding:"14px 20px",boxShadow:"0 8px 30px rgba(0,0,0,0.2)",maxWidth:340,width:"90%",textAlign:"center",animation:"fadeIn 0.3s"}}>
+          <div style={{fontSize:22,marginBottom:6}}>{confirmMandat.isNew?"✅":"💾"}</div>
+          <div style={{fontWeight:800,fontSize:14}}>{confirmMandat.isNew?"Mandat enregistré !":"Mandat mis à jour !"}</div>
+          <div style={{fontSize:12,opacity:.85,marginTop:4}}>{confirmMandat.ref+" — "+confirmMandat.adresse.split(",")[0]}</div>
+          {confirmMandat.isNew && <div style={{fontSize:11,opacity:.7,marginTop:4}}>{"Votre manager a été notifié"}</div>}
+        </div>
+      )}
+      {showMoreMenuA && (
+        <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",borderTop:"1px solid var(--g200)",boxShadow:"0 -8px 30px rgba(0,0,0,0.12)",padding:"14px 14px 10px"}} onClick={function(){setShowMoreMenuA(false);}}>
+          <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:10,textTransform:"uppercase",letterSpacing:.8}}>{"Tous les onglets"}</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+            {NAV_SECONDARY_A.map(function(id){
+              var t = ALL_TABS_A[id]||{};
+              return (
+                <button key={id} onClick={function(e){e.stopPropagation();setTab(id);setShowMoreMenuA(false);}} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"2px solid "+(tab===id?"var(--navy)":"var(--g200)"),background:tab===id?"var(--navy)":"#fff",color:tab===id?"#fff":"var(--g600)",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left",fontFamily:"var(--font)"}}>
+                  <span style={{fontSize:18}}>{t.icon}</span>
+                  <span>{t.shortLabel||t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

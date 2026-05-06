@@ -10,8 +10,10 @@ import GestionLocative from "./GestionLocative";
 import DashboardMatin from "./DashboardMatin";
 import FicheKPIAgent from "./FicheKPIAgent";
 import Feedback from "./Feedback";
+import StatsComparatives from "./StatsComparatives";
 import Outils from "./Outils";
 import MatchingManager from "./MatchingManager";
+import IndemniteKm from "./IndemniteKm";
 import OffMarket from "./OffMarket";
 import CarteInteractive from "./CarteInteractive";
 import CaRealise from "./CaRealise";
@@ -297,31 +299,41 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   }
 
   // Nav items
+  var [showMoreMenu, setShowMoreMenu] = useState(false);
+  var NAV_PRIMARY   = ["dashboard","mandats","classement","stats","messagerie"];
+  var NAV_SECONDARY = ["ca","rapport","mandats","recherches","locations","gestion","offmarket","carte","prospection","taches","leads","matching","outils","feedback","objectifs","agents","km","profil"];
+  var ALL_TABS = {
+    dashboard:  {icon:"📊", label:"Dashboard",      shortLabel:"Accueil"},
+    mandats:    {icon:"📋", label:"Mandats",         shortLabel:"Mandats"},
+    recherches: {icon:"🔍", label:"Recherches",      shortLabel:"Rech."},
+    classement: {icon:"🏆", label:"Classement",      shortLabel:"Classmt"},
+    stats:      {icon:"📊", label:"Stats comparatives",shortLabel:"Stats"},
+    messagerie: {icon:"💬", label:"Messagerie",      shortLabel:"Messages"},
+    ca:         {icon:"📈", label:"CA Réalisé",      shortLabel:"CA"},
+    rapport:    {icon:"📄", label:"Rapport mensuel", shortLabel:"Rapport"},
+    locations:  {icon:"🏠", label:"Locations",       shortLabel:"Locs"},
+    gestion:    {icon:"🔑", label:"Gestion locative",shortLabel:"Gestion"},
+    offmarket:  {icon:"🔒", label:"Off Market",      shortLabel:"OffMkt"},
+    carte:      {icon:"🗺️", label:"Carte interactive",shortLabel:"Carte"},
+    prospection:{icon:"🚶", label:"Prospection",     shortLabel:"Prosp."},
+    taches:     {icon:"✅", label:"Tâches",          shortLabel:"Tâches"},
+    leads:      {icon:"📥", label:"Leads",           shortLabel:"Leads"},
+    matching:   {icon:"🎯", label:"Rapprochements",  shortLabel:"Match"},
+    outils:     {icon:"🛠️", label:"Outils",          shortLabel:"Outils"},
+    feedback:   {icon:"💡", label:"Suggestions",     shortLabel:"Ideas"},
+    objectifs:  {icon:"🎯", label:"Objectifs",       shortLabel:"Obj."},
+    agents:     {icon:"👥", label:"Agents",          shortLabel:"Agents"},
+    rapport:    {icon:"📄", label:"Rapport",         shortLabel:"Rapport"},
+    profil:     {icon:"👤", label:"Mon profil",      shortLabel:"Profil"},
+    km:         {icon:"🚗", label:"Indemnités km",    shortLabel:"Km"},
+  };
   var navItems = [
-    {id:"dashboard",  icon:"📊", label:"Dashboard",  shortLabel:"Board",  active:tab==="dashboard",  onClick:function(){setTab("dashboard");}},
-    {id:"ca",         icon:"📈", label:"CA Réalisé",  shortLabel:"CA",      active:tab==="ca",         onClick:function(){setTab("ca");}},
-    {id:"rapport",    icon:"📄", label:"Rapport mensuel", shortLabel:"Rapport", active:tab==="rapport", onClick:function(){setTab("rapport");}},
-    {id:"mandats",    icon:"📋", label:"Mandats",     shortLabel:"Mandats",active:tab==="mandats",    onClick:function(){setTab("mandats");},    badge:nbAlertes||null},
-    {id:"locations",  icon:"🏠", label:"Locations",   shortLabel:"Locs",   active:tab==="locations",  onClick:function(){setTab("locations");}},
-    {id:"gestion",    icon:"🔑", label:"Gestion",     shortLabel:"Gestion",active:tab==="gestion",    onClick:function(){setTab("gestion");}},
-    {id:"classement", icon:"🏆", label:"Classement",  shortLabel:"Classe", active:tab==="classement", onClick:function(){setTab("classement");}},
-    {id:"objectifs",  icon:"🎯", label:"Objectifs",    shortLabel:"Objectifs",active:tab==="objectifs",  onClick:function(){setTab("objectifs");}},
-    {id:"agents",     icon:"👥", label:"Agents",      shortLabel:"Agents", active:tab==="agents",     onClick:function(){setTab("agents");}, badge:(resets||[]).filter(function(r){return !r.traite;}).length||null},
-    {id:"prospection",icon:"🗺️", label:"Prospection", shortLabel:"Prosp",  active:tab==="prospection",onClick:function(){setTab("prospection");}},
-    {id:"taches",     icon:"✅", label:"Tâches",      shortLabel:"Tâches", active:tab==="taches",     onClick:function(){setTab("taches");},     badge:nbTasks||null},
-    {id:"leads",      icon:"📥", label:"Leads",       shortLabel:"Leads",   active:tab==="leads",      onClick:function(){setTab("leads");}},
-    {id:"recherches", icon:"🔍", label:"Recherches",  shortLabel:"Rech.",   active:tab==="recherches", onClick:function(){setTab("recherches");}},
-    {id:"matching",   icon:"🎯", label:"Rapprochements",shortLabel:"Match",   active:tab==="matching",   onClick:function(){setTab("matching");}},
-    {id:"messagerie", icon:"💬", label:"Messagerie",  shortLabel:"Msgs",    active:tab==="messagerie", onClick:function(){setTab("messagerie");}},
-    {id:"offmarket",  icon:"🔒", label:"Off Market",   shortLabel:"OffMkt",  active:tab==="offmarket",  onClick:function(){setTab("offmarket");}},
-    {id:"carte",      icon:"🗺️", label:"Carte",         shortLabel:"Carte",   active:tab==="carte",      onClick:function(){setTab("carte");}},
-    {id:"outils",     icon:"🛠️", label:"Outils",         shortLabel:"Outils",  active:tab==="outils",     onClick:function(){setTab("outils");}},
-    {id:"feedback",   icon:"💡", label:"Suggestions",   shortLabel:"Ideas",   active:tab==="feedback",   onClick:function(){setTab("feedback");}},
-    {id:"profil",     icon:"👤", label:"Mon profil",    shortLabel:"Profil",  active:tab==="profil",     onClick:function(){setTab("profil");}},
+    ...NAV_PRIMARY.map(function(id){ var t=ALL_TABS[id]||{}; return {id, icon:t.icon, label:t.label, shortLabel:t.shortLabel, active:tab===id, onClick:function(){setTab(id);setShowMoreMenu(false);}}; }),
+    {id:"more", icon:"···", label:"Plus", shortLabel:"Plus", active:NAV_SECONDARY.includes(tab), onClick:function(){setShowMoreMenu(function(p){return !p;});}, isMore:true},
   ];
 
   return (
-    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="matching"?"🎯 Rapprochements":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
+    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="km"?"🚗 Indemnités kilométriques":tab==="stats"?"📊 Stats comparatives":tab==="matching"?"🎯 Rapprochements":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
       topbarActions={
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {(ctx.notifPerm||"default")!=="granted"
@@ -693,7 +705,9 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
 
       {/* ──────────── GESTION LOCATIVE ──────────── */}
       {tab==="gestion" && <GestionLocative/>}
+      {tab==="stats" && <StatsComparatives/>}
       {tab==="matching" && <MatchingManager/>}
+      {tab==="km" && <IndemniteKm/>}
       {tab==="outils" && <Outils/>}
       {tab==="feedback" && <Feedback/>}
       {tab==="offmarket" && <OffMarket/>}
@@ -1017,6 +1031,23 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       )}
       {showTaskModal && (
         <TaskForm agents={agents} agenceId={agenceId} setTasks={setTasks} onClose={function(){setShowTaskModal(false);}}/>
+      )}
+      {/* ─── PANNEAU PLUS ─── */}
+      {showMoreMenu && (
+        <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",borderTop:"1px solid var(--g200)",boxShadow:"0 -8px 30px rgba(0,0,0,0.12)",padding:"14px 14px 10px",maxHeight:"60vh",overflowY:"auto"}} onClick={function(){setShowMoreMenu(false);}}>
+          <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:10,textTransform:"uppercase",letterSpacing:.8}}>{"Tous les onglets"}</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+            {NAV_SECONDARY.map(function(id){
+              var t = ALL_TABS[id]||{};
+              return (
+                <button key={id} onClick={function(e){e.stopPropagation();setTab(id);setShowMoreMenu(false);}} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"2px solid "+(tab===id?"var(--navy)":"var(--g200)"),background:tab===id?"var(--navy)":"#fff",color:tab===id?"#fff":"var(--g600)",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left",fontFamily:"var(--font)"}}>
+                  <span style={{fontSize:18}}>{t.icon}</span>
+                  <span>{t.shortLabel||t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
     </AppShell>
   );
