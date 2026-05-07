@@ -21,7 +21,7 @@ export default function OffMarket() {
   var [filtreAgent, setFiltreAgent] = useState("");
 
   // Inclure le currentUser même si superadmin (pour qu'il puisse s'attribuer un bien)
-  var agents = users.filter(function(u){ return (u.role==="agent"||u.role==="manager") && u.agenceId===agenceId && u.actif; });
+  var agents = users.filter(function(u){ return (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.agenceId===agenceId && u.actif; });
   if (!agents.find(function(a){ return a.id===ctx.currentUser.id; })) {
     agents = [ctx.currentUser, ...agents];
   }

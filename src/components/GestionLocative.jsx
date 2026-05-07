@@ -52,7 +52,7 @@ export default function GestionLocative() {
   var [editBien,   setEditBien]   = useState(null);
   var [filtreAgent,setFiltreAgent]= useState("");
 
-  var agents = users.filter(function(u){ return (u.role==="agent"||u.role==="manager")&&u.agenceId===agenceId&&u.actif; });
+  var agents = users.filter(function(u){ return (u.role==="agent"||u.role==="manager"||u.role==="superadmin")&&u.agenceId===agenceId&&u.actif; });
   var biensFiltres = gestion.filter(function(g){ return !filtreAgent||g.agentId===filtreAgent; });
   var bienActif = gestion.find(function(g){ return g.id===bienSelec; });
 

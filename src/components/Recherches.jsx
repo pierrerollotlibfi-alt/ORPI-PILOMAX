@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../App";
-import { Modal, fmt, BadgeType } from "./Shared";
+import { Modal, fmt, BadgeType, fmtDate, avatarColor, canSeeContact, masquer, masquerTel } from "./Shared";
+import { checkMatchesNouvelleRecherche } from "../matchingAuto";
 
 // ─── CONSTANTES ────────────────────────────────────────────────────────────────
 var TYPES_BIEN = [
@@ -155,7 +156,7 @@ export default function Recherches() {
   var ctx = useApp();
   var isManager = ctx.currentUser.role === "manager";
   var agenceId  = ctx.currentUser.agenceId;
-  var agents    = ctx.users.filter(function(u){ return (u.role==="agent"||u.role==="manager") && u.actif && u.agenceId===agenceId; });
+  var agents    = ctx.users.filter(function(u){ return (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.actif && u.agenceId===agenceId; });
   // S'assurer que le currentUser est toujours dans la liste (ex: superadmin)
   if (!agents.find(function(a){ return a.id===ctx.currentUser.id; })) {
     agents = [ctx.currentUser, ...agents];
@@ -235,17 +236,27 @@ export default function Recherches() {
   }, [myRech, mandats, locations, offmarketBiens]);
 
   function notifierMatch(match) {
-    var msg = "🎯 Rapprochement — Score "+match.score+"%\n"
-      + "Client : "+match.recherche.nom+" · Budget : "+(match.recherche.budgetMin||0).toLocaleString("fr-FR")+"–"+(match.recherche.budgetMax||0).toLocaleString("fr-FR")+(match.isLoc?"€/mois":"€")+"\n"
-      + "Bien : "+match.bienRef+" — "+match.bienAdresse+" — "+match.bienPrixLabel+"\n"
-      + (match.agent ? "Agent : "+match.agent.nom : "");
-    var SK_MSG = "orpi_data_messages_v1";
+    var SK = "orpi_data_messages_v1";
+    var users2 = ctx.users||[];
+    var agentRechNom = (users2.find(function(u){return u.id===match.recherche.agentId;})||{}).nom||"Agent";
+    var agentBienNom = match.agentBien ? match.agentBien.nom : (users2.find(function(u){return u.id===match.bien.agentId;})||{}).nom||"Agent";
+    var memeAgent = match.recherche.agentId === (match.bien.agentId||"");
     try {
-      var msgs = JSON.parse(localStorage.getItem(SK_MSG)||"[]");
-      msgs.push({ id:"msg-match-"+Date.now(), channelId:"equipe", senderId:"system", senderNom:"Système", senderAvatar:"🎯", content:msg, ts:new Date().toISOString(), type:"system", read:[] });
-      localStorage.setItem(SK_MSG, JSON.stringify(msgs));
-      alert("✅ Notification envoyée dans la messagerie Équipe !");
-    } catch(e) {}
+      var msgs = JSON.parse(localStorage.getItem(SK)||"[]");
+      var ts = new Date().toISOString();
+      var base = "🎯 Rapprochement — Score "+match.score+"%\n\n"
+        +"📋 Recherche : "+match.recherche.nom+" · Budget : "+(match.recherche.budgetMin||0).toLocaleString("fr-FR")+"–"+(match.recherche.budgetMax||0).toLocaleString("fr-FR")+(match.isLoc?"€/mois":"€")+"\n"
+        +"🏠 Bien : "+match.bienRef+" — "+match.bienAdresse+" — "+match.bienPrixLabel+"\n"
+        +"✅ "+(match.raisons||[]).join(" · ");
+      msgs.push({id:"mn-r-"+Date.now(),channelId:"priv-match-"+match.recherche.agentId,senderId:"system",senderNom:"🎯 Matching",senderAvatar:"🎯",content:base+"\n\n👉 Contactez "+agentBienNom+" pour une visite.",ts,type:"auto_match",read:[],targetAgentId:match.recherche.agentId});
+      if (!memeAgent && match.bien.agentId) {
+        msgs.push({id:"mn-b-"+Date.now(),channelId:"priv-match-"+match.bien.agentId,senderId:"system",senderNom:"🎯 Matching",senderAvatar:"🎯",content:base+"\n\n👉 "+agentRechNom+" a un acheteur pour votre bien.",ts,type:"auto_match",read:[],targetAgentId:match.bien.agentId});
+      }
+      users2.filter(function(u){return u.agenceId===agenceId&&u.actif&&(u.role==="manager"||u.role==="superadmin");}).forEach(function(mgr){
+        msgs.push({id:"mn-m-"+Date.now()+mgr.id,channelId:"priv-match-"+mgr.id,senderId:"system",senderNom:"🎯 Matching",senderAvatar:"🎯",content:base+"\n\nAgents : "+agentRechNom+(memeAgent?"":" & "+agentBienNom),ts,type:"auto_match",read:[],targetAgentId:mgr.id});
+      });
+      localStorage.setItem(SK, JSON.stringify(msgs));
+    } catch(e){}
   }
 
   function deleteRech(id) {
@@ -413,7 +424,7 @@ export default function Recherches() {
         </div>
       )}
 
-      {showForm && <RechercheForm agents={agents} agenceId={agenceId} isManager={isManager} currentUser={ctx.currentUser} onSave={function(form){ setRecherches(function(prev){return [...prev,{...form,id:"rech-"+Date.now(),dateCreation:new Date().toISOString().slice(0,10)}];}); setShowForm(false); }} onCancel={function(){setShowForm(false);}}/>}
+      {showForm && <RechercheForm agents={agents} agenceId={agenceId} isManager={isManager} currentUser={ctx.currentUser} onSave={function(form){ var nr={...form,id:"rech-"+Date.now(),dateCreation:new Date().toISOString().slice(0,10)}; setRecherches(function(prev){return [...prev,nr];}); checkMatchesNouvelleRecherche(nr, ctx.mandats||[], ctx.offmarket||[], ctx.users||[], agenceId); setShowForm(false); }} onCancel={function(){setShowForm(false);}}/>}
       {showDetail && <RechercheDetail rech={showDetail} mandats={mandats} locations={locations} offmarketBiens={offmarketBiens} agents={agents} isManager={isManager} notifierMatch={notifierMatch} onUpdate={function(patch){ setRecherches(function(prev){return prev.map(function(r){return r.id===showDetail.id?{...r,...patch}:r;});}); setShowDetail(function(prev){return{...prev,...patch};}); }} onDelete={function(){deleteRech(showDetail.id);}} onClose={function(){setShowDetail(null);}}/>}
     </div>
   );

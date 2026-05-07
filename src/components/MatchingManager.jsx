@@ -48,7 +48,7 @@ export default function MatchingManager() {
   var [selMatch,    setSelMatch]    = useState(null);
   var [msgEnvoye,   setMsgEnvoye]   = useState(null);
 
-  var agents = users.filter(function(u){ return u.agenceId===agenceId && u.actif && (u.role==="agent"||u.role==="manager"); });
+  var agents = users.filter(function(u){ return u.agenceId===agenceId && u.actif && (u.role==="agent"||u.role==="manager"||u.role==="superadmin"); });
 
   function nomAgent(id) {
     var u = users.find(function(u){ return u.id===id; });

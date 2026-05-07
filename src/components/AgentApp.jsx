@@ -105,6 +105,48 @@ export default function AgentApp() {
     notifNouveauCompromis(mandat, currentUser.nom);
   }
 
+  // Changer le statut d'un mandat + dates automatiques
+  function changerStatut(mandat, nouveauStatut) {
+    var patch = { statut: nouveauStatut };
+    if (nouveauStatut === "compromis") {
+      patch.dateCompromis = new Date().toISOString().slice(0,10);
+    }
+    if (nouveauStatut === "vendu") {
+      patch.dateSignature = patch.dateSignature || new Date().toISOString().slice(0,10);
+    }
+    if (nouveauStatut === "compromis" || nouveauStatut === "vendu") {
+      patch.clausesSuspensivesLevees = nouveauStatut === "vendu" ? true : mandat.clausesSuspensivesLevees;
+    }
+    if (nouveauStatut === "mandat") {
+      // Retour en mandat = réinitialiser
+      patch.dateCompromis = "";
+      patch.clausesSuspensivesLevees = false;
+    }
+    var updated = {...mandat, ...patch};
+    setMandats(function(prev){ return prev.map(function(m){ return m.id===mandat.id ? updated : m; }); });
+    if (addJournal) addJournal({ type:"statut", description:"Statut mandat "+mandat.ref+" → "+nouveauStatut, cible:"mandat", cibleId:mandat.id });
+    // Notifications manager
+    try {
+      var SK = "orpi_data_messages_v1";
+      var msgs = JSON.parse(localStorage.getItem(SK)||"[]");
+      var managers = (ctx.users||[]).filter(function(u){ return u.agenceId===agenceId && u.actif && (u.role==="manager"||u.role==="superadmin"); });
+      var labels = { compromis:"🤝 Offre acceptée / Compromis", vendu:"✅ Acte définitif signé", sous_offre:"📝 Sous offre", mandat:"📋 Retour en mandat" };
+      managers.forEach(function(mgr){
+        msgs.push({ id:"statut-"+Date.now()+mgr.id, channelId:"priv-match-"+mgr.id, senderId:currentUser.id, senderNom:currentUser.nom, senderAvatar:currentUser.avatar||"👤",
+          content:(labels[nouveauStatut]||nouveauStatut)+"\n\nMandat : "+mandat.ref+" — "+mandat.adresse+"\nPrix : "+(mandat.prix||0).toLocaleString("fr-FR")+"€\n\nMis à jour par "+currentUser.nom,
+          ts:new Date().toISOString(), type:"statut_mandat", read:[], targetAgentId:mgr.id });
+      });
+      localStorage.setItem(SK, JSON.stringify(msgs));
+    } catch(e){}
+    // Levée CS → applaudissements
+    if (nouveauStatut === "vendu") jouerApplaudissements();
+  }
+
+  function lever_cs(mandat) {
+    var updated = {...mandat, clausesSuspensivesLevees:true};
+    setMandats(function(prev){ return prev.map(function(m){ return m.id===mandat.id ? updated : m; }); });
+  }
+
   function saveMandat(form) {
     var newId = editingMandat ? editingMandat.id : "m-"+Date.now();
     if (editingMandat && editingMandat.agentId && editingMandat.agentId !== currentUser.id) {
@@ -374,10 +416,31 @@ export default function AgentApp() {
                     </div>
                   )}
                 </div>
-                {isMine && m.statut==="sous_offre" && (
-                  <button onClick={function(){celebrerOffreAcceptee(m);}} style={{width:"100%",marginBottom:6,background:"linear-gradient(135deg,#F59E0B,#EF4444)",border:"none",borderRadius:10,padding:"10px",cursor:"pointer",fontSize:15,fontWeight:800,color:"#fff",boxShadow:"0 3px 10px rgba(239,68,68,0.35)"}}>
-                    {"🎉 Offre acceptée — Célébrer !"}
-                  </button>
+                {isMine && (
+                  <div style={{marginBottom:8}}>
+                    <div style={{fontSize:10,color:"var(--g400)",fontWeight:700,marginBottom:5,textTransform:"uppercase",letterSpacing:.5}}>{"🔄 Changer le statut"}</div>
+                    <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                      {[
+                        {id:"mandat",     label:"📋 En mandat",     color:"#1D3557", bg:"#EFF6FF",   show: m.statut!=="mandat"},
+                        {id:"sous_offre", label:"📝 Sous offre",    color:"#D97706", bg:"#FEF3C7",   show: m.statut==="mandat"},
+                        {id:"compromis",  label:"🤝 Compromis",     color:"#059669", bg:"#F0FDF4",   show: m.statut==="mandat"||m.statut==="sous_offre"},
+                        {id:"cs_levees",  label:"✅ CS levées",     color:"#7C3AED", bg:"#F5F3FF",   show: m.statut==="compromis"&&!m.clausesSuspensivesLevees},
+                        {id:"vendu",      label:"🏆 Acte signé",    color:"#DC2626", bg:"#FEF2F2",   show: m.statut==="compromis"},
+                      ].filter(function(s){return s.show;}).map(function(s){
+                        return (
+                          <button key={s.id} onClick={function(e){
+                            e.stopPropagation();
+                            if(s.id==="cs_levees") { lever_cs(m); }
+                            else { changerStatut(m, s.id); }
+                            if(s.id==="compromis"||s.id==="vendu") celebrerOffreAcceptee(m);
+                          }}
+                          style={{padding:"5px 10px",borderRadius:8,border:"2px solid "+s.color,background:s.bg,color:s.color,fontWeight:800,fontSize:10,cursor:"pointer",fontFamily:"var(--font)"}}>
+                            {s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
                 <div style={{display:"flex",gap:6,marginTop:2}}>
                   <button
@@ -609,7 +672,7 @@ export default function AgentApp() {
       )}
 
       {showMandatForm && (
-        <MandatForm initial={editingMandat} agents={ctx.users.filter(function(u){return (u.role==="agent"||u.role==="manager")&&u.agenceId===agenceId&&u.actif;})} agenceId={agenceId} onSave={saveMandat} onCancel={function(){setShowMandatForm(false);setEditingMandat(null);}}/>
+        <MandatForm initial={editingMandat} agents={ctx.users.filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin")&&u.agenceId===agenceId&&u.actif;})} agenceId={agenceId} onSave={saveMandat} onCancel={function(){setShowMandatForm(false);setEditingMandat(null);}}/>
       )}
     {sweepMandat && <SweepModal m={sweepMandat}/>}
       {showKpiDetailA && (function(){

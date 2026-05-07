@@ -63,7 +63,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [prixMax,     setPrixMax]     = useState("");
 
   var agenceId  = agenceIdOverride || currentUser.agenceId;
-  var agents    = users.filter(function(u){return (u.role==="agent"||u.role==="manager") && u.agenceId===agenceId && u.actif;});
+  var agents    = users.filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.agenceId===agenceId && u.actif;});
   var myMandats = mandats.filter(function(m){return m.agenceId===agenceId;});
   var myLocs    = locations.filter(function(l){return l.agenceId===agenceId;});
   var myGestion = gestion.filter(function(g){return g.agenceId===agenceId && g.actif;});
@@ -83,11 +83,15 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     ? Math.round(agenceVendus.reduce(function(s,m){ return s+(m.commission/m.prix*100); },0)/agenceVendus.length*100)/100
     : null;
   // Taux par agent (pour comparatif)
+  // Taux moyen sur actes définitifs (vendus)
   var txCommParAgent = agents.map(function(a){
-    var av = agenceVendus.filter(function(m){ return m.agentId===a.id; });
-    var tx = av.length>0 ? Math.round(av.reduce(function(s,m){return s+(m.commission/m.prix*100);},0)/av.length*100)/100 : null;
-    return { ...a, txComm: tx, nbVentes: av.length };
-  }).filter(function(a){ return a.txComm !== null; }).sort(function(a,b){ return b.txComm-a.txComm; });
+    var avVendus  = agenceVendus.filter(function(m){ return m.agentId===a.id && m.prix>0 && m.commission>0; });
+    var avMandats = (myMandats||[]).filter(function(m){ return m.agentId===a.id && m.prix>0 && m.commission>0; });
+    var txActe    = avVendus.length>0  ? Math.round(avVendus.reduce(function(s,m){return s+(m.commission/m.prix*100);},0)/avVendus.length*100)/100   : null;
+    var txMandat  = avMandats.length>0 ? Math.round(avMandats.reduce(function(s,m){return s+(m.commission/m.prix*100);},0)/avMandats.length*100)/100 : null;
+    return { ...a, txComm:txActe, txCommMandat:txMandat, nbVentes:avVendus.length, nbMandatsAvecPrix:avMandats.length };
+  }).filter(function(a){ return a.txComm !== null || a.txCommMandat !== null; })
+    .sort(function(a,b){ return (b.txComm||0)-(a.txComm||0); });
   var compromis = myMandats.filter(function(m){return m.statut==="compromis";});
   var vendus    = myMandats.filter(function(m){return m.statut==="vendu";});
   // Offres acceptées ce mois (dateCompromis dans le mois en cours)
@@ -497,15 +501,22 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                 {txCommParAgent.map(function(a,i){
                   var diff = Math.round((a.txComm - txCommMoyenAgence)*100)/100;
                   return (
-                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<txCommParAgent.length-1?"1px solid var(--g50)":"none"}}>
-                      <div style={{width:30,height:30,borderRadius:15,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:11,flexShrink:0}}>{a.avatar}</div>
-                      <div style={{flex:1}}>
+                    <div key={a.id} style={{padding:"10px 0",borderBottom:i<txCommParAgent.length-1?"1px solid var(--g50)":"none"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                        <div style={{width:28,height:28,borderRadius:14,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:10,flexShrink:0}}>{a.avatar}</div>
                         <div style={{fontWeight:700,color:"var(--navy)",fontSize:12}}>{a.nom}</div>
-                        <div style={{fontSize:10,color:"var(--g400)"}}>{a.nbVentes+" vente"+(a.nbVentes>1?"s":"")}</div>
                       </div>
-                      <div style={{textAlign:"right"}}>
-                        <div style={{fontWeight:900,fontSize:14,color:a.txComm>=txCommMoyenAgence?"var(--green)":"var(--red)"}}>{a.txComm+"%"}</div>
-                        <div style={{fontSize:10,color:diff>=0?"var(--green)":"var(--red)",fontWeight:700}}>{(diff>0?"+":"")+diff+" pt"}</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        <div style={{background:"#F0FDF4",borderRadius:8,padding:"6px 10px"}}>
+                          <div style={{fontSize:9,color:"var(--g400)",fontWeight:700,marginBottom:2}}>{"ACTES DÉFINITIFS ("+a.nbVentes+" vente"+(a.nbVentes>1?"s":"")+")"}</div>
+                          <div style={{fontWeight:900,fontSize:15,color:a.txComm!=null&&a.txComm>=txCommMoyenAgence?"var(--green)":"var(--red)"}}>{a.txComm!=null?(a.txComm+"%"):"—"}</div>
+                          {a.txComm!=null&&<div style={{fontSize:9,color:diff>=0?"var(--green)":"var(--red)",fontWeight:700}}>{(diff>0?"+":"")+diff+" pt vs moy."}</div>}
+                        </div>
+                        <div style={{background:"#EFF6FF",borderRadius:8,padding:"6px 10px"}}>
+                          <div style={{fontSize:9,color:"var(--g400)",fontWeight:700,marginBottom:2}}>{"STOCK MANDATS ("+a.nbMandatsAvecPrix+")"}</div>
+                          <div style={{fontWeight:900,fontSize:15,color:"var(--blue)"}}>{a.txCommMandat!=null?(a.txCommMandat+"%"):"—"}</div>
+                          <div style={{fontSize:9,color:"var(--g400)",fontWeight:600}}>{"taux honoraires saisi"}</div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -776,7 +787,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                   <div style={{width:40,height:40,borderRadius:20,background:col,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:15,flexShrink:0}}>{a.avatar}</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:800,fontSize:14,color:"var(--navy)"}}>{a.nom}</div>
-                    {a.role==="manager"?<span style={{background:"#FEF3C7",color:"#92400E",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:800}}>{"⚙️ Manager"}</span>:<BadgeNiveau niveau={a.niveau}/>}
+                    {(a.role==="manager"||a.role==="superadmin")?<span style={{background:"#FEF3C7",color:"#92400E",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:800}}>{a.role==="superadmin"?"🌟 SuperAdmin":"⚙️ Manager"}</span>:<BadgeNiveau niveau={a.niveau}/>}
                   </div>
                   {/* Valeur hero (critère sélectionné) */}
                   <div style={{textAlign:"right",flexShrink:0}}>
@@ -815,9 +826,9 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                     <div style={{fontWeight:800,color:"var(--amber)",fontSize:13}}>{fmt(a.caSigne)}</div>
                   </div>
                   <div style={{background:critereClassement==="txCommMoyen"?"var(--navy)":"var(--g50)",borderRadius:9,padding:"7px 10px",border:"1px solid "+(critereClassement==="txCommMoyen"?"var(--navy)":"var(--g100)")}}>
-                    <div style={{fontSize:10,color:critereClassement==="txCommMoyen"?"rgba(255,255,255,0.7)":"var(--g400)",fontWeight:700}}>{"📐 Tx comm. moy."}</div>
-                    <div style={{fontWeight:900,fontSize:15,color:critereClassement==="txCommMoyen"?"#fff":(a.txCommMoyen!=null&&a.txCommMoyen<3?"var(--red)":a.txCommMoyen!=null&&a.txCommMoyen>=4?"var(--green)":"var(--amber)")}}>{a.txCommMoyen!=null?(a.txCommMoyen+"%"):"—"}</div>
-                    {a.txCommCompromis!=null && a.txCommCompromis!==a.txCommMoyen && <div style={{fontSize:9,color:critereClassement==="txCommMoyen"?"rgba(255,255,255,0.5)":"var(--g400)",marginTop:1}}>{"Compr. : "+a.txCommCompromis+"%"}</div>}
+                    <div style={{fontSize:9,color:critereClassement==="txCommMoyen"?"rgba(255,255,255,0.7)":"var(--g400)",fontWeight:700}}>{"📐 Actes : "+(a.txCommMoyen!=null?a.txCommMoyen+"%":"—")}</div>
+                    <div style={{fontWeight:900,fontSize:14,color:critereClassement==="txCommMoyen"?"#fff":(a.txCommMoyen!=null&&a.txCommMoyen<3?"var(--red)":a.txCommMoyen!=null&&a.txCommMoyen>=4?"var(--green)":"var(--amber)")}}>{a.txCommMoyen!=null?(a.txCommMoyen+"%"):"—"}</div>
+                    <div style={{fontSize:9,color:critereClassement==="txCommMoyen"?"rgba(255,255,255,0.5)":"var(--blue)",fontWeight:700,marginTop:2}}>{"Mandats : "+(a.txCommCompromis!=null?a.txCommCompromis+"%":"—")}</div>
                   </div>
                 </div>
 
@@ -1448,7 +1459,7 @@ function CoAgentSection({ m, users, onUpdate }) {
   var [pctSortie, setPctSortie] = useState(25);
 
   var agentsDispos = (users||[]).filter(function(u){
-    return u.actif && (u.role==="agent"||u.role==="manager") && u.agenceId===agenceId
+    return u.actif && (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.agenceId===agenceId
       && u.id !== m.agentId
       && !coAgents.find(function(ca){ return ca.agentId===u.id; });
   });
