@@ -484,6 +484,7 @@ export default function SuperAdminApp() {
       {/* ─── PROFIL SUPER ADMIN ─── */}
       {tab==="profil" && <ProfilSuperAdmin currentUser={currentUser} users={users} changerMotDePasse={changerMotDePasse}/>}
 
+      {showCreateAgence && <FormCreationAgence onSave={creerAgence} onClose={function(){setShowCreateAgence(false);}}/>}
     </AppShell>
   );
 }

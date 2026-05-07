@@ -45,6 +45,16 @@ var SK = {
 var INIT_USERS = [
   { id:"manager-1", nom:"Pierre Rollot",  email:"p.rollot@orpi.com",  password:"ORPI2026", role:"superadmin", agenceId:"agence-1", actif:true, createdAt:daysAgo(365), avatar:"PR", premierAcces:false, invitationAcceptee:true },
   { id:"manager-2", nom:"Frédéric Carré", email:"f.carre@orpi.com",   password:"ORPI2026", role:"superadmin", agenceId:"agence-1", actif:true, createdAt:daysAgo(365), avatar:"FC", premierAcces:false, invitationAcceptee:true },
+  { id:"agent-landry", nom:"Landry Boungo",  email:"l.boungo@orpi.com",  password:"ORPI2026", role:"agent",      agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"LB", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"BOL" },
+  { id:"agent-laetitia", nom:"Laetitia Vat", email:"l.vat@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"LV", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"LVA" },
+  { id:"agent-clement", nom:"Clément Leroy", email:"c.leroy@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"CL", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"LEC" },
+  { id:"agent-nathalie", nom:"Nathalie Ducrocq", email:"n.ducrocq@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"ND", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"DUN" },
+  { id:"agent-hugo", nom:"Hugo Sausse", email:"h.sausse@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"HS", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"SAH" },
+  { id:"agent-isabelle", nom:"Isabelle Descombes", email:"i.descombes@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"ID", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"IDE" },
+  { id:"agent-pascal", nom:"Pascal Hainselin", email:"p.hainselin@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"PH", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"HAP" },
+  { id:"agent-cedric", nom:"Cédric Salle", email:"c.salle@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"CS", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"SAC" },
+  { id:"agent-karine", nom:"Karine Flamand", email:"k.flamand@orpi.com", password:"ORPI2026", role:"agent", agenceId:"agence-1", actif:true, createdAt:daysAgo(180), avatar:"KF", premierAcces:false, invitationAcceptee:true, niveau:"junior", codeNego:"FLK" },
+
 ];
 var INIT_AGENCES = [
   { id:"agence-1", nom:"ORPI Pro Amiens",   ville:"Amiens",   adresse:"15 Rue des Trois Cailloux, 80000 Amiens", telephone:"03 22 71 00 00", email:"contact@orpi-amiens.fr",   actif:true, createdAt:daysAgo(365) },
