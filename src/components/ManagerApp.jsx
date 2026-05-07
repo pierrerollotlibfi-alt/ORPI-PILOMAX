@@ -56,6 +56,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [filterAgent, setFilterAgent] = useState("");
   var [filterStatut,setFilterStatut]= useState("");
   var [critereClassement, setCritereClassement] = useState("caRealise");
+  var [filtreDoublons,   setFiltreDoublons]   = useState(false);
   var [showKpiDetail,    setShowKpiDetail]    = useState(null);
   var [filterType,  setFilterType]  = useState("");
   var [searchText,  setSearchText]  = useState("");
@@ -362,6 +363,38 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
         <div>
           <DashboardMatin onNavigate={function(t){setTab(t);}}/>
           <div style={{height:1,background:"var(--g100)",margin:"16px 0"}}></div>
+
+          {/* ─── CARTE BIENS ─── */}
+          <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",overflow:"hidden",marginBottom:14}}>
+            <div style={{background:"var(--g50)",padding:"10px 14px",borderBottom:"1px solid var(--g100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{"🗺️ Carte des biens en stock"}</span>
+              <button onClick={function(){setTab("carte");}} style={{fontSize:11,color:"var(--blue)",fontWeight:700,background:"none",border:"none",cursor:"pointer"}}>{"Voir plein écran →"}</button>
+            </div>
+            <CarteInteractive mini={true} onNavigate={function(targetTab,bienId,bienType){
+              if((bienType==="mandat"||bienType==="compromis"||bienType==="vendu")&&bienId){
+                var found=myMandats.find(function(m){return m.id===bienId;});
+                if(found){setDetailMandat(found); return;}
+              }
+              setTab(targetTab);
+            }}/>
+          </div>
+
+          {/* ─── DOUBLONS SUSPECTS ─── */}
+          {(function(){
+            var doublons = myMandats.filter(function(m){ return m.doublonSuspecte; });
+            if (doublons.length === 0) return null;
+            return (
+              <div style={{background:"#FFF7ED",border:"2px solid #FED7AA",borderRadius:12,padding:"14px 16px",marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <div>
+                    <div style={{fontWeight:800,color:"#9A3412",fontSize:14}}>{"⚠️ "+doublons.length+" doublon"+(doublons.length>1?"s":"")+" suspect"+(doublons.length>1?"s":"")+" détecté"+(doublons.length>1?"s":"")}</div>
+                    <div style={{fontSize:11,color:"#C2410C",marginTop:2}}>{"Ces mandats importés ressemblent à des biens déjà existants (même adresse / prix similaire)"}</div>
+                  </div>
+                  <button onClick={function(){setTab("mandats");setFiltreDoublons(true);}} style={{background:"#9A3412",color:"#fff",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>{"Voir →"}</button>
+                </div>
+              </div>
+            );
+          })()}
           {/* Signatures qui approchent */}
           {signaturesProches.length>0 && (
             <div style={{background:"#F0FDF4",border:"1px solid #A7F3D0",borderRadius:12,padding:"12px 14px",marginBottom:12}}>

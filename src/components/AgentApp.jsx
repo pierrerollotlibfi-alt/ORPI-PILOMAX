@@ -351,6 +351,14 @@ export default function AgentApp() {
       {/* ──────────── MANDATS ──────────── */}
       {tab==="mandats" && (
         <div>
+          {/* Carte mini sur l'onglet mandats agent */}
+          <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",overflow:"hidden",marginBottom:14}}>
+            <div style={{background:"var(--g50)",padding:"8px 14px",borderBottom:"1px solid var(--g100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontWeight:700,color:"var(--navy)",fontSize:12}}>{"🗺️ Biens en stock"}</span>
+              <button onClick={function(){setTab("carte");}} style={{fontSize:11,color:"var(--blue)",fontWeight:700,background:"none",border:"none",cursor:"pointer"}}>{"Plein écran →"}</button>
+            </div>
+            <CarteInteractive mini={true} onNavigate={function(t,id,type){setTab(t);}}/>
+          </div>
           <div className="kpi-grid" style={{marginBottom:16,overflowX:"hidden"}}>
             <KpiCard label="CA Stock" value={fmt(caStock)} color="var(--purple)" icon="📦" sub={active.filter(function(m){return m.typeMandat==="exclusif";}).length+" excl."}/>
             <KpiCard label="CA Signé" value={fmt(caSigne)} color="var(--amber)" icon="✍️" sub={compromis.length+" compromis"}/>

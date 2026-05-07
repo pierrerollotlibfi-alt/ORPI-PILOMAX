@@ -2289,11 +2289,37 @@ export default function App() {
             if (changed) { dbSave("users", merged); }
             data = merged;
           }
+          // Pour les collections avec INIT (mandats, etc.) : fusionner les items manquants
+          if (c.name !== "users" && c.init && c.init.length > 0 && Array.isArray(data)) {
+            var dataIds = new Set(data.map(function(x){return x.id;}));
+            var manquants = c.init.filter(function(x){ return !dataIds.has(x.id); });
+            if (manquants.length > 0 && c.name === "mandats") {
+              // Détecter doublons potentiels avant fusion :
+              // Un doublon = même prix ET même adresse (normalisée) entre un mandat existant et un INIT
+              var normalise = function(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]/g,"").trim(); };
+              manquants = manquants.map(function(m) {
+                var addrNorm = normalise(m.adresse);
+                var doublon = data.find(function(ex){
+                  return ex.statut !== "archive" &&
+                    Math.abs((ex.prix||0) - (m.prix||0)) < 1000 &&
+                    normalise(ex.adresse).includes(addrNorm.slice(0,8));
+                });
+                return doublon ? {...m, doublonSuspecte:true, doublonAvec:doublon.id} : m;
+              });
+              data = [...data, ...manquants];
+              dbSave(c.name, data);
+            } else if (manquants.length > 0) {
+              data = [...data, ...manquants];
+              dbSave(c.name, data);
+            }
+          }
           c.setter(data);
           lsave(c.sk, data);
         } else {
-          var local = lload(c.sk, c.init);
+          // Supabase vide → initialiser avec les données init
+          var local = c.init && c.init.length > 0 ? c.init : lload(c.sk, []);
           dbSave(c.name, local);
+          data = local;
         }
       });
     })).then(function() {

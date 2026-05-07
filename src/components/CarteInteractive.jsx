@@ -97,7 +97,7 @@ var FILTRES = [
   { id:"offmarket", label:"Off market",   emoji:"🔒", color:"#E63946" },
 ];
 
-export default function CarteInteractive({ onNavigate }) {
+export default function CarteInteractive({ onNavigate, mini }) {
   var ctx      = useApp();
   var agenceId = ctx.currentUser.agenceId;
   var users    = ctx.users || [];
@@ -323,7 +323,7 @@ export default function CarteInteractive({ onNavigate }) {
 
       {/* Carte */}
       <div style={{position:"relative",borderRadius:12,overflow:"hidden",border:"1px solid var(--g200)",minHeight:300,width:"100%",zIndex:0}}>
-        <div ref={mapRef} className="carte-map-container"/>
+        <div ref={mapRef} className={mini?"carte-map-mini":"carte-map-container"}/>
         {!leafletReady && (
           <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",background:"#F0F4F8",flexDirection:"column",gap:10}}>
             <div style={{width:36,height:36,border:"4px solid var(--blue)",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}></div>
