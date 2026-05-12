@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../App";
+import PwaInstallButton from "./PwaInstallButton";
 
 // PWA install prompt — capturé globalement
 if (typeof window !== "undefined" && !window._pwaListenerAdded) {
