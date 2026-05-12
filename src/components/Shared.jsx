@@ -281,7 +281,7 @@ export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
   var today2 = new Date().toISOString().slice(0,10);
   var [f, setF] = useState({
     ref:"", typeMandat:"simple", typeBien:"appartement", adresse:"", prix:"", commission:"", tauxCommission:7,
-    statut:"mandat", agentId:defaultAgentId, agenceId:agenceId||"",
+    statut:"mandat", agentId:defaultAgentId, agenceId:agenceId||"", nbApparts:"", loyersMensuel:"", loyersAnnuel:"", chargesAnnuelles:"",
     dateMandat:today2, dateExpiration:"", dateCompromis:"", dateSignature:"",
     clausesSuspensivesLevees:false,
     // Composition
@@ -387,6 +387,50 @@ export function MandatForm({ initial, agents, agenceId, onSave, onCancel }) {
           <label className="form-label">{isTVA(f.typeBien)?"Prix HT (€)":"Prix de vente (€)"}</label>
           <input className="form-input" type="number" value={f.prix} onChange={function(e){set("prix",Number(e.target.value));}} placeholder="Ex : 250000"/>
           {isTVA(f.typeBien)&&f.prix>0&&<div style={{fontSize:11,color:"var(--g400)",marginTop:3}}>{"TTC : "+Math.round(f.prix*1.2).toLocaleString("fr-FR")+"€"}</div>}
+        {/* ─── CHAMPS IMMEUBLE DE RAPPORT ─── */}
+        {f.typeBien==="immeuble" && (
+          <div style={{gridColumn:"1/-1",background:"#EFF6FF",borderRadius:10,padding:"12px 14px"}}>
+            <div style={{fontWeight:800,color:"var(--blue)",fontSize:12,marginBottom:10}}>{"🏗️ Données immeuble de rapport"}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div>
+                <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"NB APPARTEMENTS"}</label>
+                <input type="number" className="form-input" value={f.nbApparts||""} onChange={function(e){set("nbApparts",e.target.value);}} placeholder="Ex: 6"/>
+              </div>
+              <div>
+                <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"LOYERS MENSUELS (€)"}</label>
+                <input type="number" className="form-input" value={f.loyersMensuel||""} onChange={function(e){
+                  set("loyersMensuel",Number(e.target.value));
+                  set("loyersAnnuel",Math.round(Number(e.target.value)*12));
+                }} placeholder="Ex: 3200"/>
+              </div>
+              <div>
+                <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"LOYERS ANNUELS (€)"}</label>
+                <input type="number" className="form-input" value={f.loyersAnnuel||""} onChange={function(e){set("loyersAnnuel",Number(e.target.value));}} placeholder="Calculé auto"/>
+              </div>
+              <div>
+                <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"CHARGES ANNUELLES (€)"}</label>
+                <input type="number" className="form-input" value={f.chargesAnnuelles||""} onChange={function(e){set("chargesAnnuelles",Number(e.target.value));}} placeholder="Ex: 4800"/>
+              </div>
+            </div>
+            {/* Calcul rentabilité auto */}
+            {f.prix>0 && f.loyersMensuel>0 && (function(){
+              var brut = Math.round(f.loyersMensuel*12/f.prix*100*10)/10;
+              var net  = f.chargesAnnuelles ? Math.round((f.loyersMensuel*12-f.chargesAnnuelles)/f.prix*100*10)/10 : null;
+              return (
+                <div style={{marginTop:10,display:"flex",gap:10}}>
+                  <div style={{flex:1,background:"#fff",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                    <div style={{fontSize:9,color:"var(--g400)",fontWeight:700}}>{"RENTA BRUTE"}</div>
+                    <div style={{fontWeight:900,fontSize:18,color:"var(--blue)"}}>{brut+"%"}</div>
+                  </div>
+                  {net && <div style={{flex:1,background:"#fff",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                    <div style={{fontSize:9,color:"var(--g400)",fontWeight:700}}>{"RENTA NETTE"}</div>
+                    <div style={{fontWeight:900,fontSize:18,color:"var(--green)"}}>{net+"%"}</div>
+                  </div>}
+                </div>
+              );
+            })()}
+          </div>
+        )}
         </div>
         <div className="form-group">
           <label className="form-label">{"Commission TTC (€)"}</label>

@@ -461,6 +461,7 @@ export default function AgentApp() {
                   {isMine && <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setEditingMandat(m);setShowMandatForm(true);}}>{"✏️ Modifier"}</button>}
                 {!isMine && <div style={{fontSize:10,color:"var(--g400)",padding:"4px 8px",background:"var(--g50)",borderRadius:7,textAlign:"center"}}>{"🔒 Mandat de "+(agentProp?agentProp.nom:"un collègue")}</div>}
                 </div>
+                {m.adresseProvisoire && <div style={{fontSize:10,color:"#92400E",background:"#FEF3C7",borderRadius:7,padding:"2px 8px",marginTop:4,display:"inline-block"}}>{"📍 Adresse à compléter"}</div>}
                 {!isMine && <div style={{textAlign:"center",fontSize:11,color:"var(--g400)",padding:"5px",background:"var(--g50)",borderRadius:8,marginTop:4}}>{"🔒 Mandat de "+(agentProp?agentProp.nom:"un collègue")}</div>}
               </div>
             </SwipeCard>
@@ -744,71 +745,146 @@ export default function AgentApp() {
 
 // ─── PROFIL AGENT ─────────────────────────────────────────────────────────────
 function ProfilAgent({ currentUser, changerMotDePasse }) {
-  var [ancien,  setAncien]  = useState("");
-  var [nouveau, setNouveau] = useState("");
-  var [confirm, setConfirm] = useState("");
-  var [msg,     setMsg]     = useState(null); // {type:"ok"|"err", text}
+  var ctx    = useApp();
+  var [ancien,   setAncien]   = useState("");
+  var [nouveau,  setNouveau]  = useState("");
+  var [confirm,  setConfirm]  = useState("");
+  var [msg,      setMsg]      = useState(null);
+  var [couleur,  setCouleur]  = useState(currentUser.couleur || "#E63946");
+  var [photoB64, setPhotoB64] = useState(currentUser.photo  || "");
+  var [saved,    setSaved]    = useState(false);
 
-  function sauvegarder() {
-    if (!ancien)          { setMsg({type:"err", text:"Saisissez votre mot de passe actuel"}); return; }
-    if (ancien !== currentUser.password) { setMsg({type:"err", text:"Mot de passe actuel incorrect"}); return; }
-    if (nouveau.length < 6) { setMsg({type:"err", text:"Le nouveau mot de passe doit faire au moins 6 caractères"}); return; }
-    if (nouveau !== confirm)  { setMsg({type:"err", text:"Les mots de passe ne correspondent pas"}); return; }
+  var COULEURS = [
+    "#E63946","#2196F3","#059669","#7C3AED","#F59E0B",
+    "#EC4899","#0891B2","#DC2626","#16A34A","#1D3557",
+    "#D97706","#9333EA","#0284C7","#BE185D","#065F46",
+  ];
+
+  function sauvegarderProfil() {
+    ctx.setUsers(function(prev){
+      return prev.map(function(u){
+        return u.id===currentUser.id ? {...u, couleur, photo:photoB64} : u;
+      });
+    });
+    setSaved(true);
+    setTimeout(function(){ setSaved(false); }, 3000);
+  }
+
+  function sauvegarderMdp() {
+    if (!ancien) { setMsg({type:"err",text:"Saisissez votre mot de passe actuel"}); return; }
+    if (ancien !== currentUser.password) { setMsg({type:"err",text:"Mot de passe actuel incorrect"}); return; }
+    if (nouveau.length < 6) { setMsg({type:"err",text:"Minimum 6 caractères"}); return; }
+    if (nouveau !== confirm) { setMsg({type:"err",text:"Les mots de passe ne correspondent pas"}); return; }
     changerMotDePasse(currentUser.id, nouveau);
-    setMsg({type:"ok", text:"✅ Mot de passe modifié avec succès !"});
+    setMsg({type:"ok",text:"✅ Mot de passe modifié !"});
     setAncien(""); setNouveau(""); setConfirm("");
   }
 
   return (
     <div>
       {/* Carte identité */}
-      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px",marginBottom:16,display:"flex",alignItems:"center",gap:16}}>
-        <div style={{width:56,height:56,borderRadius:28,background:"var(--red)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:20,flexShrink:0}}>
-          {currentUser.avatar}
+      <div style={{background:"linear-gradient(135deg,"+couleur+","+couleur+"99)",borderRadius:14,padding:"20px",marginBottom:14,display:"flex",alignItems:"center",gap:16,color:"#fff"}}>
+        <div style={{position:"relative",flexShrink:0}}>
+          <div style={{width:72,height:72,borderRadius:36,background:"rgba(255,255,255,0.2)",border:"3px solid rgba(255,255,255,0.5)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {photoB64
+              ? <img src={photoB64} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              : <span style={{fontWeight:900,fontSize:26,color:"#fff"}}>{currentUser.avatar}</span>}
+          </div>
+          <label style={{position:"absolute",bottom:-4,right:-4,width:26,height:26,borderRadius:13,background:couleur,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:13}}>
+            {"📷"}
+            <input type="file" accept="image/*" style={{display:"none"}} onChange={function(e){
+              var file=e.target.files[0]; if(!file) return;
+              if(file.size>2*1024*1024){alert("Max 2 Mo");return;}
+              var r=new FileReader(); r.onload=function(ev){setPhotoB64(ev.target.result);}; r.readAsDataURL(file);
+            }}/>
+          </label>
         </div>
         <div>
-          <div style={{fontWeight:900,fontSize:17,color:"var(--navy)"}}>{currentUser.nom}</div>
-          <div style={{fontSize:13,color:"var(--g400)",marginTop:2}}>{currentUser.email}</div>
-          <div style={{fontSize:11,marginTop:4,display:"flex",gap:8}}>
-            <span style={{background:"var(--g100)",borderRadius:20,padding:"2px 10px",color:"var(--g500)",fontWeight:700,textTransform:"capitalize"}}>{currentUser.niveau||"agent"}</span>
-            <span style={{background:"#F0FDF4",borderRadius:20,padding:"2px 10px",color:"#059669",fontWeight:700}}>{"Actif"}</span>
+          <div style={{fontWeight:900,fontSize:18}}>{currentUser.nom}</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.75)",marginTop:2}}>{currentUser.email}</div>
+          <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
+            <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,textTransform:"capitalize"}}>{currentUser.role}</span>
+            <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{currentUser.niveau==="senior"?"🏆 Senior":"🌱 Junior"}</span>
           </div>
         </div>
       </div>
 
-      {/* Changement de mot de passe */}
+      {/* Personnalisation */}
+      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px",marginBottom:14}}>
+        <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:16}}>{"🎨 Personnalisation"}</div>
+
+        {/* Photo */}
+        <div style={{marginBottom:16}}>
+          <label style={{fontSize:11,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:8}}>{"PHOTO DE PROFIL"}</label>
+          <div style={{display:"flex",gap:10,alignItems:"center"}}>
+            <div style={{width:52,height:52,borderRadius:26,background:couleur,border:"3px solid var(--g200)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              {photoB64
+                ? <img src={photoB64} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                : <span style={{fontWeight:900,fontSize:20,color:"#fff"}}>{currentUser.avatar}</span>}
+            </div>
+            <div style={{display:"flex",gap:8,flex:1}}>
+              <label style={{flex:1,background:"#EFF6FF",border:"2px solid var(--blue)",borderRadius:10,padding:"8px 12px",cursor:"pointer",textAlign:"center",fontSize:12,fontWeight:700,color:"var(--blue)"}}>
+                {"📷 Choisir une photo"}
+                <input type="file" accept="image/*" style={{display:"none"}} onChange={function(e){
+                  var file=e.target.files[0]; if(!file) return;
+                  if(file.size>2*1024*1024){alert("Max 2 Mo");return;}
+                  var r=new FileReader(); r.onload=function(ev){setPhotoB64(ev.target.result);}; r.readAsDataURL(file);
+                }}/>
+              </label>
+              {photoB64 && (
+                <button onClick={function(){setPhotoB64("");}} style={{background:"#FEF2F2",border:"2px solid #FECACA",borderRadius:10,padding:"8px 12px",fontSize:12,fontWeight:700,color:"var(--red)",cursor:"pointer"}}>{"🗑"}</button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Couleur */}
+        <div style={{marginBottom:16}}>
+          <label style={{fontSize:11,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:8}}>{"CODE COULEUR (visible sur la carte et les stats)"}</label>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+            {COULEURS.map(function(col){
+              var actif = couleur===col;
+              return (
+                <button key={col} onClick={function(){setCouleur(col);}} style={{width:36,height:36,borderRadius:18,background:col,border:actif?"3px solid var(--navy)":"3px solid transparent",cursor:"pointer",boxShadow:actif?"0 0 0 2px #fff inset":"none",transform:actif?"scale(1.15)":"scale(1)",transition:"all 0.15s"}}/>
+              );
+            })}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:11,color:"var(--g400)"}}>{"Couleur libre :"}</span>
+            <input type="color" value={couleur} onChange={function(e){setCouleur(e.target.value);}}
+              style={{width:36,height:28,borderRadius:8,border:"1px solid var(--g200)",cursor:"pointer",padding:2}}/>
+            <div style={{width:28,height:28,borderRadius:14,background:couleur,border:"2px solid var(--g200)"}}/>
+          </div>
+        </div>
+
+        {saved && <div style={{background:"#F0FDF4",border:"1px solid #A7F3D0",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#065F46",fontWeight:700,marginBottom:10}}>{"✅ Profil sauvegardé et visible par l'équipe !"}</div>}
+        <button className="btn btn-primary" style={{width:"100%",justifyContent:"center",background:couleur,border:"none"}} onClick={sauvegarderProfil}>
+          {"💾 Sauvegarder mon profil"}
+        </button>
+      </div>
+
+      {/* Mot de passe */}
       <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px"}}>
         <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:16}}>{"🔑 Changer mon mot de passe"}</div>
-
-        {msg && (
-          <div style={{background:msg.type==="ok"?"#F0FDF4":"#FEF2F2",border:"1px solid "+(msg.type==="ok"?"#A7F3D0":"#FECACA"),borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.type==="ok"?"#065F46":"#DC2626",fontWeight:600}}>
-            {msg.text}
-          </div>
-        )}
-
+        {msg && <div style={{background:msg.type==="ok"?"#F0FDF4":"#FEF2F2",border:"1px solid "+(msg.type==="ok"?"#A7F3D0":"#FECACA"),borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.type==="ok"?"#065F46":"#DC2626",fontWeight:600}}>{msg.text}</div>}
         <div className="form-group" style={{marginBottom:12}}>
           <label className="form-label">{"Mot de passe actuel"}</label>
-          <input type="password" className="form-input" placeholder="Votre mot de passe actuel"
-            value={ancien} onChange={function(e){setAncien(e.target.value);setMsg(null);}}/>
+          <input type="password" className="form-input" value={ancien} onChange={function(e){setAncien(e.target.value);setMsg(null);}} placeholder="Votre mot de passe actuel"/>
         </div>
         <div className="form-group" style={{marginBottom:12}}>
           <label className="form-label">{"Nouveau mot de passe"}</label>
-          <input type="password" className="form-input" placeholder="Minimum 6 caractères"
-            value={nouveau} onChange={function(e){setNouveau(e.target.value);setMsg(null);}}/>
+          <input type="password" className="form-input" value={nouveau} onChange={function(e){setNouveau(e.target.value);setMsg(null);}} placeholder="Minimum 6 caractères"/>
         </div>
         <div className="form-group" style={{marginBottom:20}}>
-          <label className="form-label">{"Confirmer le nouveau mot de passe"}</label>
-          <input type="password" className="form-input" placeholder="Répétez le nouveau mot de passe"
-            value={confirm} onChange={function(e){setConfirm(e.target.value);setMsg(null);}}
-            onKeyDown={function(e){if(e.key==="Enter")sauvegarder();}}/>
+          <label className="form-label">{"Confirmer"}</label>
+          <input type="password" className="form-input" value={confirm} onChange={function(e){setConfirm(e.target.value);setMsg(null);}} onKeyDown={function(e){if(e.key==="Enter")sauvegarderMdp();}} placeholder="Répétez le nouveau mot de passe"/>
         </div>
-        <button className="btn btn-primary" style={{width:"100%",justifyContent:"center"}} onClick={sauvegarder}>
-          {"💾 Enregistrer le nouveau mot de passe"}
-        </button>
+        <button className="btn btn-primary" style={{width:"100%",justifyContent:"center"}} onClick={sauvegarderMdp}>{"💾 Enregistrer"}</button>
       </div>
     </div>
   );
 }
+
 
 // ─── MOTEUR DE RECOMMANDATIONS ────────────────────────────────────────────────
 function genererRecommandations(agent, myMandats, agenceMandats, locations, gestion, objectifs) {

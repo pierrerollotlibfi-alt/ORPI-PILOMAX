@@ -65,7 +65,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-116-agence-1",
     "ref": "SB-116",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "FRADCOURT",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -83,7 +84,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-115-agence-1",
     "ref": "SB-115",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "M",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -101,7 +103,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-114-agence-1",
     "ref": "SB-114",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "ZARIOUHI",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -119,7 +122,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-113-agence-1",
     "ref": "SB-113",
-    "adresse": "Poulainville",
+    "adresse": "Poulainville, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "FRADCOURT",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -137,7 +141,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-112-agence-1",
     "ref": "SB-112",
-    "adresse": "Poulainville",
+    "adresse": "Poulainville, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "FRADCOURT",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -155,7 +160,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-111-agence-1",
     "ref": "SB-111",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "VERJOT",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -173,7 +179,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-110-agence-1",
     "ref": "SB-110",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "FRATY",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -191,7 +198,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-109-agence-1",
     "ref": "SB-109",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MORALI",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -209,7 +217,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-108-agence-1",
     "ref": "SB-108",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "WIESE",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -227,7 +236,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-107-agence-1",
     "ref": "SB-107",
-    "adresse": "Flesselles",
+    "adresse": "Flesselles, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MARTIN",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -245,7 +255,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-106-agence-1",
     "ref": "SB-106",
-    "adresse": "Rivery",
+    "adresse": "Rivery, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "VAUCHER",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -263,7 +274,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-105-agence-1",
     "ref": "SB-105",
-    "adresse": "Rivery",
+    "adresse": "Rivery, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "GATET",
     "typeBien": "local_pro_location",
     "typeMandat": "simple",
@@ -281,7 +293,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-104-agence-1",
     "ref": "SB-104",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "POUILLOT CARTON",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -299,7 +312,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-103-agence-1",
     "ref": "SB-103",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "JOLY",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -317,7 +331,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-102-agence-1",
     "ref": "SB-102",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BROTTE",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -335,7 +350,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-101-agence-1",
     "ref": "SB-101",
-    "adresse": "Candas",
+    "adresse": "Candas, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BECLIN",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -353,7 +369,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-100-agence-1",
     "ref": "SB-100",
-    "adresse": "Rainneville",
+    "adresse": "Rainneville, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "PRIME DEVELOPPEMENT",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -371,7 +388,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-99-agence-1",
     "ref": "SB-99",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "RIFFLART",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -389,7 +407,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-98-agence-1",
     "ref": "SB-98",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "WADLOW",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -407,7 +426,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-97-agence-1",
     "ref": "SB-97",
-    "adresse": "Salouël",
+    "adresse": "Salouël, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LEGOUEZ",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -425,7 +445,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-96-agence-1",
     "ref": "SB-96",
-    "adresse": "Glisy",
+    "adresse": "Glisy, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "JEAN FRANCOIS",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -443,7 +464,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-95-agence-1",
     "ref": "SB-95",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "CARRE",
     "typeBien": "local_pro_vente",
     "typeMandat": "simple",
@@ -461,7 +483,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-94-agence-1",
     "ref": "SB-94",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LOMBART",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -479,7 +502,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-93-agence-1",
     "ref": "SB-93",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MAURICIO",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -497,7 +521,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-92-agence-1",
     "ref": "SB-92",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MME",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -515,7 +540,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-91-agence-1",
     "ref": "SB-91",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "HASSAN",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -533,7 +559,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-90-agence-1",
     "ref": "SB-90",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "RICHET",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -551,7 +578,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-89-agence-1",
     "ref": "SB-89",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "PATRICK",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -569,7 +597,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-88-agence-1",
     "ref": "SB-88",
-    "adresse": "Oresmaux",
+    "adresse": "Oresmaux, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DESMAREST",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -587,7 +616,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-87-agence-1",
     "ref": "SB-87",
-    "adresse": "Dreuil-Lès-Amiens",
+    "adresse": "Dreuil-Lès-Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DELAVISSE",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -605,7 +635,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-86-agence-1",
     "ref": "SB-86",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "CARRE",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -623,7 +654,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-85-agence-1",
     "ref": "SB-85",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "CARRE",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -641,7 +673,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-84-agence-1",
     "ref": "SB-84",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "XAVIER",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -659,7 +692,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-83-agence-1",
     "ref": "SB-83",
-    "adresse": "Hébecourt",
+    "adresse": "Hébecourt, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BROTTE",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -677,7 +711,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-82-agence-1",
     "ref": "SB-82",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SYNEK",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -695,7 +730,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-81-agence-1",
     "ref": "SB-81",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BEL BARAKA",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -713,7 +749,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-80-agence-1",
     "ref": "SB-80",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "CAULET",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -731,7 +768,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-79-agence-1",
     "ref": "SB-79",
-    "adresse": "Glisy",
+    "adresse": "Glisy, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MILHAUD",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -749,7 +787,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-78-agence-1",
     "ref": "SB-78",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MESSAGER",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -767,7 +806,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-77-agence-1",
     "ref": "SB-77",
-    "adresse": "Bayonvillers",
+    "adresse": "Bayonvillers, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MASCRE",
     "typeBien": "terrain",
     "typeMandat": "exclusif",
@@ -785,7 +825,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-76-agence-1",
     "ref": "SB-76",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DEBOUT",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -803,7 +844,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-75-agence-1",
     "ref": "SB-75",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "ABDELLATIF",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -821,7 +863,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-74-agence-1",
     "ref": "SB-74",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LEPETIT",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -839,7 +882,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-73-agence-1",
     "ref": "SB-73",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "VANDEWEGHE",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -857,7 +901,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-72-agence-1",
     "ref": "SB-72",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "CUADRADO",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -875,7 +920,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-71-agence-1",
     "ref": "SB-71",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BLOC",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -893,7 +939,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-70-agence-1",
     "ref": "SB-70",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "EL GANA",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -911,7 +958,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-69-agence-1",
     "ref": "SB-69",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "THIBAUT",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -929,7 +977,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-68-agence-1",
     "ref": "SB-68",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SPICHER",
     "typeBien": "local_pro_vente",
     "typeMandat": "exclusif",
@@ -947,7 +996,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-67-agence-1",
     "ref": "SB-67",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BENZERIGA",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -965,7 +1015,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-66-agence-1",
     "ref": "SB-66",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LES LICORNES BLANCHES",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -983,7 +1034,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-65-agence-1",
     "ref": "SB-65",
-    "adresse": "Marieux",
+    "adresse": "Marieux, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "PARMENTIER",
     "typeBien": "terrain",
     "typeMandat": "exclusif",
@@ -1001,7 +1053,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-63-agence-1",
     "ref": "SB-63",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "HELENE-GAMA",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -1019,7 +1072,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-62-agence-1",
     "ref": "SB-62",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SUEUR",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1037,7 +1091,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-61-agence-1",
     "ref": "SB-61",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MANGIN",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -1055,7 +1110,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-60-agence-1",
     "ref": "SB-60",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DORE",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1073,7 +1129,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-59-agence-1",
     "ref": "SB-59",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DAMBREVILLE",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -1091,7 +1148,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-58-agence-1",
     "ref": "SB-58",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "ROUSSEAU",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1109,7 +1167,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-57-agence-1",
     "ref": "SB-57",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DRUJON",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -1127,7 +1186,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-56-agence-1",
     "ref": "SB-56",
-    "adresse": "Boves",
+    "adresse": "Boves, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SMAGACZ",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1145,7 +1205,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-55-agence-1",
     "ref": "SB-55",
-    "adresse": "Daours",
+    "adresse": "Daours, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LEJAY ÉPOUSE MOLLIENS",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -1163,7 +1224,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-54-agence-1",
     "ref": "SB-54",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DELORMEL",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -1181,7 +1243,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-53-agence-1",
     "ref": "SB-53",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "POTTIER",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1199,7 +1262,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-52-agence-1",
     "ref": "SB-52",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "VERJOT",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1217,7 +1281,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-51-agence-1",
     "ref": "SB-51",
-    "adresse": "Saint-Christ-Briost",
+    "adresse": "Saint-Christ-Briost, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LIN",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1235,7 +1300,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-50-agence-1",
     "ref": "SB-50",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "FROSSARD",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -1253,7 +1319,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-49-agence-1",
     "ref": "SB-49",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DUBOIS",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1271,7 +1338,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-48-agence-1",
     "ref": "SB-48",
-    "adresse": "Saint-Fuscien",
+    "adresse": "Saint-Fuscien, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BEKHOUCHE",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1289,7 +1357,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-47-agence-1",
     "ref": "SB-47",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DO NASCIMENTO GUEDES",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1307,7 +1376,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-46-agence-1",
     "ref": "SB-46",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LUTZ",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1325,7 +1395,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-45-agence-1",
     "ref": "SB-45",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "FINET",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1343,7 +1414,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-44-agence-1",
     "ref": "SB-44",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "GODEFROY",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1361,7 +1433,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-42-agence-1",
     "ref": "SB-42",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DO NASCIMENTO GUEDES",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1379,7 +1452,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-41-agence-1",
     "ref": "SB-41",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "HERLIN",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1397,7 +1471,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-40-agence-1",
     "ref": "SB-40",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "ANDRIEU",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1415,7 +1490,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-39-agence-1",
     "ref": "SB-39",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "PRIME DEVELOPPEMENT",
     "typeBien": "local_pro_location",
     "typeMandat": "simple",
@@ -1433,7 +1509,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-38-agence-1",
     "ref": "SB-38",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "VAQUEZ",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1451,7 +1528,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-37-agence-1",
     "ref": "SB-37",
-    "adresse": "Dreuil-Lès-Amiens",
+    "adresse": "Dreuil-Lès-Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SCHOREISZ",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1469,7 +1547,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-36-agence-1",
     "ref": "SB-36",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "RIGOLLE",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1487,7 +1566,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-35-agence-1",
     "ref": "SB-35",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BERTON-DESMET",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1505,7 +1585,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-34-agence-1",
     "ref": "SB-34",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SOINNE",
     "typeBien": "garage",
     "typeMandat": "simple",
@@ -1523,7 +1604,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-33-agence-1",
     "ref": "SB-33",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SOUPLY",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1541,7 +1623,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-32-agence-1",
     "ref": "SB-32",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LÉCOT",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1559,7 +1642,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-31-agence-1",
     "ref": "SB-31",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "EL GANA",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1577,7 +1661,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-30-agence-1",
     "ref": "SB-30",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "FRANCIS",
     "typeBien": "local_pro_location",
     "typeMandat": "simple",
@@ -1595,7 +1680,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-28-agence-1",
     "ref": "SB-28",
-    "adresse": "Herissart",
+    "adresse": "Herissart, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "MOREL",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1613,7 +1699,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-27-agence-1",
     "ref": "SB-27",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "EL KORCHI",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1631,7 +1718,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-26-agence-1",
     "ref": "SB-26",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "BENZERIGA",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1649,7 +1737,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-25-agence-1",
     "ref": "SB-25",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "2D2M",
     "typeBien": "local_pro_vente",
     "typeMandat": "simple",
@@ -1667,7 +1756,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-24-agence-1",
     "ref": "SB-24",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "PETIGNY",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1685,7 +1775,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-23-agence-1",
     "ref": "SB-23",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LETIERCE",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1703,7 +1794,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-22-agence-1",
     "ref": "SB-22",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "GAUDEFROY",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1721,7 +1813,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-21-agence-1",
     "ref": "SB-21",
-    "adresse": "Rainneville",
+    "adresse": "Rainneville, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "PRIME DEVELOPPEMENT",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1739,7 +1832,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-20-agence-1",
     "ref": "SB-20",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "EL GANA",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1757,7 +1851,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-19-agence-1",
     "ref": "SB-19",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "NOÉMIE",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1775,7 +1870,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-18-agence-1",
     "ref": "SB-18",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "ANDRÉ",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1793,7 +1889,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-17-agence-1",
     "ref": "SB-17",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "JAKUBOWICZ",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1811,7 +1908,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-16-agence-1",
     "ref": "SB-16",
-    "adresse": "Villers Bretonneux",
+    "adresse": "Villers Bretonneux, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DELIENS",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1829,7 +1927,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-15-agence-1",
     "ref": "SB-15",
-    "adresse": "Herissart",
+    "adresse": "Herissart, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "SOPHIE MOREL",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1847,7 +1946,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-14-agence-1",
     "ref": "SB-14",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DAVID",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1865,7 +1965,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-13-agence-1",
     "ref": "SB-13",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "RENOULT",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1883,7 +1984,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-12-agence-1",
     "ref": "SB-12",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "VIRGINIE MACREZ",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1901,7 +2003,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-11-agence-1",
     "ref": "SB-11",
-    "adresse": "Vaux-En-Amiénois",
+    "adresse": "Vaux-En-Amiénois, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "GODARD",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1919,7 +2022,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-10-agence-1",
     "ref": "SB-10",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "CACHELEUX",
     "typeBien": "fonds_commerce",
     "typeMandat": "exclusif",
@@ -1937,7 +2041,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-9-agence-1",
     "ref": "SB-9",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "HEIVA CHAPPEY",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -1955,7 +2060,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-8-agence-1",
     "ref": "SB-8",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "PRACHE",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -1973,7 +2079,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-7-agence-1",
     "ref": "SB-7",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "GENTEUR",
     "typeBien": "appartement",
     "typeMandat": "exclusif",
@@ -1991,7 +2098,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-6-agence-1",
     "ref": "SB-6",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "XAVIER",
     "typeBien": "maison",
     "typeMandat": "exclusif",
@@ -2009,7 +2117,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-5-agence-1",
     "ref": "SB-5",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "VALZAN",
     "typeBien": "appartement",
     "typeMandat": "simple",
@@ -2027,7 +2136,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-4-agence-1",
     "ref": "SB-4",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "LEJALLE",
     "typeBien": "maison",
     "typeMandat": "simple",
@@ -2045,7 +2155,8 @@ var INIT_MANDATS = [
   {
     "id": "SB-3-agence-1",
     "ref": "SB-3",
-    "adresse": "Amiens",
+    "adresse": "Amiens, 80000 Amiens",
+    "adresseProvisoire": true,
     "proprietaireNom": "DE COLNET",
     "typeBien": "maison",
     "typeMandat": "simple",

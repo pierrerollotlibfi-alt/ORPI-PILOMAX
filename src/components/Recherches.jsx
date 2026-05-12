@@ -65,10 +65,19 @@ function agenceNom(agenceId, agences) {
   return ag ? ag.nom : agenceId;
 }
 
+function typeCompatible(recherche, mandat) {
+  // Vérification stricte de compatibilité de type
+  var tb = TYPES_BIEN.find(function(t){ return t.id===recherche.typeBien; });
+  if (!tb || !tb.typeBienMandat || tb.typeBienMandat.length===0) return true; // pas de contrainte
+  return tb.typeBienMandat.indexOf(mandat.typeBien||"") >= 0;
+}
+
 function scoreMatchVente(recherche, mandat) {
   var score = 0;
   var raisons = [];
   if (!mandat.prix || !recherche.budgetMax) return null;
+  // Vérification stricte du type — incompatible = null immédiat
+  if (!typeCompatible(recherche, mandat)) return null;
   // Budget — budgetMin optionnel
   var bMin = recherche.budgetMin || 0;
   var bMax = recherche.budgetMax;
@@ -434,6 +443,7 @@ export default function Recherches() {
 function RechercheForm({ agents, agenceId, isManager, currentUser, onSave, onCancel }) {
   var [f, setF] = useState({
     nom:"", telephone:"", email:"", typeBien:"Appartement à vendre", confidentiel:false,
+    nbAppartsMin:"", nbAppartsMax:"", loyersMin:"", loyersMensuel:"", rentabiliteMin:"",
     secteurs:"", budgetMin:"", budgetMax:"", surfaceMin:"", surfaceMax:"",
     nbPieces:"", nbChambres:"", nbSDB:"", etage:"", orientation:"",
     avecJardin:false, avecGarage:false, avecTerrasse:false,

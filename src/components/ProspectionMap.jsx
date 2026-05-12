@@ -38,13 +38,16 @@ export default function ProspectionMap({ currentUser, isManager }) {
   var [selectedRue,    setSelectedRue]    = useState(null);
   var [showActionForm, setShowActionForm] = useState(false);
   var [showConfig,     setShowConfig]     = useState(false);
+  var [filtreAgentProsp, setFiltreAgentProsp] = useState("all"); // "all" | agentId
   var [styleMode,      setStyleMode]      = useState("streets");
   var [zoom,           setZoom]           = useState(12);
   var [stats,          setStats]          = useState({prospectees:0, rappel:0, total:0});
 
   var delai  = (prospConfig && prospConfig.delaiRappelMois) || 2;
-  var agents = users.filter(function(u){ return u.role==="agent" && u.actif; });
-  var actionsRue = selectedRue ? prospection.filter(function(a){ return a.rueId===selectedRue.id; }).sort(function(a,b){ return b.date.localeCompare(a.date); }) : [];
+  var agents = users.filter(function(u){ return (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.actif && u.agenceId===currentUser.agenceId; });
+  // Prospection filtrée par agent
+  var prospectionFiltree = filtreAgentProsp==="all" ? prospection : prospection.filter(function(a){ return a.agentId===filtreAgentProsp; });
+  var actionsRue = selectedRue ? prospectionFiltree.filter(function(a){ return a.rueId===selectedRue.id; }).sort(function(a,b){ return b.date.localeCompare(a.date); }) : [];
 
   // Charge Mapbox GL JS
   useEffect(function() {

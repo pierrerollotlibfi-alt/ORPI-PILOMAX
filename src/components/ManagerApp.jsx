@@ -677,6 +677,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                         <BadgeType type={m.typeMandat}/>
                         <BadgeStatut statut={m.statut}/>
                         {m.confidentiel && <span className="badge" style={{background:"#FEF2F2",color:"#DC2626",border:"1px solid #FECACA",fontSize:10}}>{"🔒 Confidentiel"}</span>}
+                  {m.adresseProvisoire && <span className="badge" style={{background:"#FEF3C7",color:"#92400E",border:"1px solid #FDE68A",fontSize:10}}>{"📍 Adresse à compléter"}</span>}
                   {m.typeBien && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{{appartement:"🏢 Appart.",maison:"🏠 Maison",terrain:"🌿 Terrain",immeuble:"🏗️ Immeuble",garage:"🚗 Garage",local_pro_location:"🏬 Local à louer",local_pro_vente:"🏪 Local à vendre"}[m.typeBien]||m.typeBien}</span>}
                       {m.surface && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{"📐 "+m.surface+"m²"}</span>}
                       {m.nbPieces && <span className="badge" style={{background:"var(--g100)",color:"var(--g500)",border:"1px solid var(--g200)"}}>{"🛏️ "+m.nbPieces+"P"}</span>}

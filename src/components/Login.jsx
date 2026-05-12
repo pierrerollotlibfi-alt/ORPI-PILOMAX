@@ -133,16 +133,8 @@ export default function Login({ onLogin }) {
           </div>
         </div>
 
-        {/* Bouton PWA install */}
-        {canInstall && (
-          <button onClick={installApp} style={{width:"100%",background:"rgba(255,255,255,0.15)",color:"#fff",border:"2px solid rgba(255,255,255,0.3)",borderRadius:16,padding:"12px 20px",fontWeight:800,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,fontFamily:"var(--font)",backdropFilter:"blur(10px)"}}>
-            <span style={{fontSize:22}}>{"✈️"}</span>
-            <div style={{textAlign:"left"}}>
-              <div style={{fontSize:13,fontWeight:900}}>{"Ajouter à l'écran d'accueil"}</div>
-              <div style={{fontSize:10,opacity:.7,fontWeight:600}}>{"Accès rapide depuis votre téléphone"}</div>
-            </div>
-          </button>
-        )}
+                {/* Bouton PWA install multi-navigateur */}
+        <PwaInstallButton canInstall={canInstall} installApp={installApp}/>        )}
       </div>
     </div>
   );

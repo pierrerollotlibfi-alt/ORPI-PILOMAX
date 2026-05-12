@@ -317,3 +317,104 @@ body.dark-mode .modal-content{ background: #1E293B; border: 1px solid #334155; }
 body.dark-mode .nav-bar      { background: #0F172A; border-color: #334155; }
 body.dark-mode .app-header   { background: #0F172A; border-color: #334155; }
 body.dark-mode .app-content  { background: #0F172A; }
+
+
+/* ─── RESPONSIVE COMPLET SMARTPHONES ─────────────────────────────────────── */
+
+/* iPhone SE / petits écrans (< 375px) */
+@media (max-width: 374px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+  .kpi-card { padding: 10px 10px !important; }
+  .kpi-value { font-size: 18px !important; }
+  .btn { padding: 8px 12px !important; font-size: 12px !important; }
+  .form-input, .form-select { padding: 8px 10px !important; font-size: 13px !important; }
+  .app-nav { height: 50px !important; }
+  .app-nav-item { font-size: 9px !important; }
+  .app-nav-icon { font-size: 18px !important; }
+  .app-content { padding: 8px !important; }
+  .modal-content { margin: 4px !important; border-radius: 14px !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .carte-map-mini { height: 180px !important; }
+}
+
+/* iPhone standard (375–413px) */
+@media (min-width: 375px) and (max-width: 413px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-value { font-size: 20px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .carte-map-mini { height: 200px; }
+}
+
+/* iPhone Pro Max / grands Android (414–480px) */
+@media (min-width: 414px) and (max-width: 480px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .carte-map-mini { height: 220px; }
+}
+
+/* Tablette portrait (481–768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .app-nav { max-width: 540px; margin: 0 auto; }
+  .carte-map-mini { height: 300px; }
+  .app-content { padding: 16px !important; max-width: 680px; margin: 0 auto; }
+}
+
+/* Desktop (> 768px) */
+@media (min-width: 769px) {
+  .app-shell { max-width: 800px; margin: 0 auto; }
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .carte-map-mini { height: 320px; }
+  .app-nav { max-width: 800px; margin: 0 auto; }
+}
+
+/* Améliorations tactiles globales */
+button, input, select, textarea, label {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+input, select, textarea {
+  font-size: max(16px, 1em); /* Évite le zoom auto sur iOS */
+}
+
+/* Cartes mandats responsive */
+@media (max-width: 480px) {
+  .mandat-card-actions { flex-wrap: wrap !important; }
+  .mandat-card-actions button { flex: 1 !important; min-width: 80px !important; }
+  .badge { font-size: 9px !important; padding: 1px 6px !important; }
+}
+
+/* Safe area pour iPhone avec notch/Dynamic Island */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app-header {
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+  .app-nav {
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    height: calc(56px + env(safe-area-inset-bottom));
+  }
+  .app-content {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* ─── FIREFOX COMPATIBILITY ─────────────────────────────────────────────────── */
+select, input[type="number"] {
+  -moz-appearance: none;
+  appearance: none;
+}
+input[type="color"] {
+  -moz-appearance: none;
+  padding: 2px;
+}
+/* Firefox focus ring */
+:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+/* Firefox date input */
+input[type="date"]::-moz-calendar-picker-indicator {
+  cursor: pointer;
+}

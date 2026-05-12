@@ -325,7 +325,7 @@ export default function FicheKPIAgent({ agent, onClose }) {
     }>
       {/* Header agent */}
       <div style={{background:"linear-gradient(135deg,"+col+","+col+"bb)",borderRadius:12,padding:"16px 18px",marginBottom:16,color:"#fff",display:"flex",alignItems:"center",gap:14}}>
-        <div style={{width:52,height:52,borderRadius:26,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:20,flexShrink:0}}>{agent.avatar}</div>
+        <div style={{width:52,height:52,borderRadius:26,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:20,flexShrink:0,overflow:"hidden"}}>{agent.photo?<img src={agent.photo} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:agent.avatar}</div>
         <div style={{flex:1}}>
           <div style={{fontWeight:900,fontSize:17}}>{agent.nom}</div>
           <div style={{fontSize:12,color:"rgba(255,255,255,0.75)",marginTop:2}}>{agent.email}</div>

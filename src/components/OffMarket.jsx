@@ -46,7 +46,7 @@ export default function OffMarket() {
       prix: init.prix||"", motivation: init.motivation||"Moyen",
       proprietaireNom: init.proprietaireNom||"", proprietairePrenom: init.proprietairePrenom||"",
       proprietaireTel: init.proprietaireTel||"", proprietaireMail: init.proprietaireMail||"",
-      agentId: init.agentId||ctx.currentUser.id, notes: init.notes||"", confidentiel: init.confidentiel||false,
+      agentId: init.agentId||ctx.currentUser.id, notes: init.notes||"", confidentiel: init.confidentiel||false, nbApparts: init.nbApparts||"", loyersMensuel: init.loyersMensuel||"", loyersAnnuel: init.loyersAnnuel||"", chargesAnnuelles: init.chargesAnnuelles||"",
     });
     function set(k,v){ setF(function(p){ return {...p,[k]:v}; }); }
     var motivColors = {Fort:"#D1FAE5",Moyen:"#FEF3C7",Faible:"#FEE2E2"};
@@ -82,6 +82,21 @@ export default function OffMarket() {
               {agents.filter(function(a){return a.id!==ctx.currentUser.id;}).map(function(a){ return <option key={a.id} value={a.id}>{a.nom}</option>; })}
             </select>
           </div>
+          {/* Champs immeuble */}
+          {f.typeBien==="immeuble" && (
+            <div className="form-group" style={{gridColumn:"1/-1",background:"#EFF6FF",borderRadius:10,padding:"12px"}}>
+              <div style={{fontWeight:800,color:"var(--blue)",fontSize:12,marginBottom:10}}>{"🏗️ Données immeuble"}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div><label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"NB APPARTEMENTS"}</label><input type="number" className="form-input" value={f.nbApparts||""} onChange={function(e){set("nbApparts",e.target.value);}}/></div>
+                <div><label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"LOYERS MENSUELS (€)"}</label><input type="number" className="form-input" value={f.loyersMensuel||""} onChange={function(e){set("loyersMensuel",Number(e.target.value));set("loyersAnnuel",Math.round(Number(e.target.value)*12));}}/></div>
+                <div><label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"CHARGES / AN (€)"}</label><input type="number" className="form-input" value={f.chargesAnnuelles||""} onChange={function(e){set("chargesAnnuelles",Number(e.target.value));}}/></div>
+                {f.prix>0&&f.loyersMensuel>0&&<div style={{display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",background:"#fff",borderRadius:8,padding:"8px"}}>
+                  <div style={{fontSize:9,color:"var(--g400)",fontWeight:700}}>{"RENTA BRUTE"}</div>
+                  <div style={{fontWeight:900,fontSize:18,color:"var(--blue)"}}>{Math.round(f.loyersMensuel*12/f.prix*100*10)/10+"%"}</div>
+                </div>}
+              </div>
+            </div>
+          )}
           <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">{"Notes confidentielles"}</label><textarea className="form-input" rows={3} value={f.notes} onChange={function(e){set("notes",e.target.value);}}/></div>
           <div className="form-group" style={{gridColumn:"1/-1"}}>
             <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"10px 14px",background:f.confidentiel?"#FEF2F2":"var(--g50)",borderRadius:10,border:"2px solid "+(f.confidentiel?"#FECACA":"var(--g200)")}}>
