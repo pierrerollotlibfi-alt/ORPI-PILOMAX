@@ -58,6 +58,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [critereClassement, setCritereClassement] = useState("caRealise");
   var [filtreDoublons,   setFiltreDoublons]   = useState(false);
   var [showKpiDetail,    setShowKpiDetail]    = useState(null);
+  var [filtreAgentKpi,  setFiltreAgentKpi]  = useState("");
   var [filterType,  setFilterType]  = useState("");
   var [searchText,  setSearchText]  = useState("");
   var [filterBien,  setFilterBien]  = useState("");
@@ -443,6 +444,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
           )}
           <div className="kpi-grid" style={{marginBottom:16}}>
             <KpiCard label="CA Stock (mandats)" value={fmt(caStock)} color="var(--purple)" icon="📦" sub={nbExcl+" excl. · "+nbSimple+" simples"} onClick={function(){setShowKpiDetail("stock");}}/>
+            <KpiCard label="Total mandats actifs" value={active.length} color="var(--navy)" icon="📋" sub={(nbExcl>0?Math.round(nbExcl/active.length*100)+"% exclusifs":"0% exclusifs")} onClick={function(){setShowKpiDetail("tous_mandats");}}/>
+            <KpiCard label="Taux exclusivité" value={active.length>0?Math.round(nbExcl/active.length*100)+"%":"—"} color={active.length>0&&nbExcl/active.length>=0.5?"var(--green)":"var(--amber)"} icon="⭐" sub={nbExcl+" excl. / "+active.length+" mandats"} onClick={function(){setShowKpiDetail("exclusifs");}}/>
             <KpiCard label="CA Signé (compromis)" value={fmt(caSigne)} color="var(--amber)" icon="✍️" sub={compromis.length+" compromis actifs"} onClick={function(){setShowKpiDetail("signe");}}/>
             <KpiCard label="CA Encaissable" value={fmt(caEnc)} color="var(--green)" icon="💰" sub="CS levées" onClick={function(){setShowKpiDetail("encaissable");}}/>
             <KpiCard label="CA Réalisé (ventes)" value={fmt(caReal)} color="var(--red)" icon="🏆" sub={vendus.length+" ventes actées"} onClick={function(){setShowKpiDetail("realise");}}/>
@@ -1116,6 +1119,149 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
           })}
         </div>
       )}
+
+      {/* ─── MODAL KPI DETAIL ─── */}
+      {showKpiDetail && (function(){
+        var agF = filtreAgentKpi;
+        var mandatsF   = agF ? myMandats.filter(function(m){return m.agentId===agF;}) : myMandats;
+        var activeF    = mandatsF.filter(function(m){return m.statut==="mandat";});
+        var compromisF = mandatsF.filter(function(m){return m.statut==="compromis";});
+        var vendusF    = mandatsF.filter(function(m){return m.statut==="vendu";});
+        var exclF      = activeF.filter(function(m){return m.typeMandat==="exclusif";});
+        var locF       = locTrouvees.filter(function(l){return agF?l.agentId===agF:true;});
+        var gestionF   = myGestion.filter(function(g){return agF?g.agentId===agF:true;});
+        var caStockF   = activeF.reduce(function(s,m){return s+commHT(m.commission||0,m.typeBien);},0);
+        var txExclF    = activeF.length>0?Math.round(exclF.length/activeF.length*100):0;
+
+        var kpiMap = {
+          stock:       {titre:"📦 CA Stock — Mandats actifs",   items:activeF,    field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" · "+(m.typeMandat==="exclusif"?"⭐":"Simple");}},
+          tous_mandats:{titre:"📋 Tous les mandats actifs",      items:activeF,    field:null,          extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0)+" · "+(m.typeMandat==="exclusif"?"⭐ Excl.":"Simple");}},
+          exclusifs:   {titre:"⭐ Mandats exclusifs",            items:exclF,      field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
+          signe:       {titre:"✍️ CA Signé — Compromis",        items:compromisF, field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
+          encaissable: {titre:"💰 CA Encaissable — CS levées",   items:compromisF.filter(function(m){return m.clausesSuspensivesLevees;}), field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
+          realise:     {titre:"🏆 CA Réalisé — Ventes actées",  items:vendusF,    field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" · "+fmt(m.prix||0);}},
+          offres_mois: {titre:"🤝 Offres acceptées ce mois",    items:(agF?offresMoisCourant.filter(function(m){return m.agentId===agF;}):offresMoisCourant), field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
+          ventes_mois: {titre:"🏆 Ventes actées ce mois",       items:(agF?ventesMoisCourant.filter(function(m){return m.agentId===agF;}):ventesMoisCourant), field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
+          locations:   {titre:"🏠 Locations signées",           items:locF,       field:"commission", extra:function(l){return l.adresse.split(",")[0]+" · "+(l.loyer||0)+"€/mois";}},
+          gestion:     {titre:"🔑 Gestion locative",            items:gestionF,   field:"commissionMensuelle", extra:function(g){return g.adresse.split(",")[0]+" · "+(g.loyer||0)+"€/mois";}},
+        };
+        var k = kpiMap[showKpiDetail]; if(!k) return null;
+        var totalField = k.field ? k.items.reduce(function(s,m){return s+commHT(m[k.field]||0,m.typeBien);},0) : 0;
+        var agentSelec = agF ? users.find(function(u){return u.id===agF;}) : null;
+        return (
+          <Modal title={k.titre+(agentSelec?" — "+agentSelec.nom:"")} onClose={function(){setShowKpiDetail(null);setFiltreAgentKpi("");}}>
+            {/* Résumé */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
+              {[
+                {label:"Éléments",   val:k.items.length,                            color:"var(--navy)"},
+                {label:"CA HT total",val:k.field?fmt(totalField):"—",               color:"var(--green)"},
+                {label:"% Exclusifs",val:txExclF+"%",                               color:txExclF>=50?"var(--green)":"var(--amber)"},
+              ].map(function(s){return(
+                <div key={s.label} style={{background:"var(--g50)",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                  <div style={{fontSize:9,color:"var(--g400)",fontWeight:700,textTransform:"uppercase",marginBottom:3}}>{s.label}</div>
+                  <div style={{fontWeight:900,fontSize:15,color:s.color}}>{s.val}</div>
+                </div>
+              );})}
+            </div>
+
+            {/* Filtre agents */}
+            <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:8}}>{"📊 Stats par agent"}</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+              <button onClick={function(){setFiltreAgentKpi("");}} style={{padding:"4px 12px",borderRadius:20,border:"2px solid "+(agF?"var(--g200)":"var(--navy)"),background:agF?"#fff":"var(--navy)",color:agF?"var(--g500)":"#fff",fontWeight:700,fontSize:11,cursor:"pointer"}}>{"Tous"}</button>
+              {agents.map(function(a){
+                var actif=a.id===agF;
+                var col=a.couleur||"var(--navy)";
+                var nbA=myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="mandat";}).length;
+                var nbV=myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="vendu";}).length;
+                if(nbA===0&&nbV===0) return null;
+                return(
+                  <button key={a.id} onClick={function(){setFiltreAgentKpi(actif?"":a.id);}}
+                    style={{padding:"4px 10px",borderRadius:20,border:"2px solid "+(actif?col:"var(--g200)"),background:actif?col:"#fff",color:actif?"#fff":"var(--g600)",fontWeight:700,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                    {a.photo?<img src={a.photo} style={{width:16,height:16,borderRadius:8,objectFit:"cover"}} alt=""/>:<span style={{width:16,height:16,borderRadius:8,background:col,display:"inline-flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:900,flexShrink:0}}>{a.avatar}</span>}
+                    {a.nom.split(" ")[0]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tableau stats agents */}
+            {!agF && (
+              <div style={{overflowX:"auto",marginBottom:14}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:380}}>
+                  <thead>
+                    <tr style={{background:"var(--g50)"}}>
+                      {["Agent","Stock","Repr.","CA Stock","CA Réalisé","% Excl.","Tx comm."].map(function(h){
+                        return <th key={h} style={{padding:"6px 8px",fontWeight:700,color:"var(--g500)",textAlign:h==="Agent"?"left":"right",whiteSpace:"nowrap"}}>{h}</th>;
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {agents.map(function(a){
+                      var aAct  = myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="mandat";});
+                      var aVend = myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="vendu";});
+                      var aExcl = aAct.filter(function(m){return m.typeMandat==="exclusif";});
+                      var aCaS  = aAct.reduce(function(s,m){return s+commHT(m.commission||0,m.typeBien);},0);
+                      var aCaR  = aVend.reduce(function(s,m){return s+commHT(m.commission||0,m.typeBien);},0);
+                      var aTxC  = aVend.filter(function(m){return m.prix>0&&m.commission>0;});
+                      var aTxCm = aTxC.length>0?Math.round(aTxC.reduce(function(s,m){return s+m.commission/m.prix*100;},0)/aTxC.length*100)/100:0;
+                      var tot   = active.length||1;
+                      var repr  = Math.round(aAct.length/tot*100);
+                      if(aAct.length===0&&aVend.length===0) return null;
+                      return(
+                        <tr key={a.id} style={{borderBottom:"1px solid var(--g50)",cursor:"pointer"}} onClick={function(){setFiltreAgentKpi(a.id);}}>
+                          <td style={{padding:"7px 8px"}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6}}>
+                              {a.photo?<img src={a.photo} style={{width:22,height:22,borderRadius:11,objectFit:"cover"}} alt=""/>:<div style={{width:22,height:22,borderRadius:11,background:a.couleur||"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:9,fontWeight:900,flexShrink:0}}>{a.avatar}</div>}
+                              <span style={{fontWeight:700,color:"var(--navy)"}}>{a.nom.split(" ")[0]}</span>
+                            </div>
+                          </td>
+                          <td style={{padding:"7px 8px",textAlign:"right",fontWeight:700}}>{aAct.length}</td>
+                          <td style={{padding:"7px 8px",textAlign:"right"}}>
+                            <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end"}}>
+                              <div style={{width:40,height:6,background:"var(--g100)",borderRadius:3,overflow:"hidden"}}>
+                                <div style={{width:repr+"%",height:"100%",background:a.couleur||"var(--navy)",borderRadius:3}}/>
+                              </div>
+                              <span style={{fontSize:10,color:"var(--g400)"}}>{repr+"%"}</span>
+                            </div>
+                          </td>
+                          <td style={{padding:"7px 8px",textAlign:"right",color:"var(--purple)",fontWeight:700}}>{aCaS>0?fmt(aCaS):"—"}</td>
+                          <td style={{padding:"7px 8px",textAlign:"right",color:"var(--green)",fontWeight:700}}>{aCaR>0?fmt(aCaR):"—"}</td>
+                          <td style={{padding:"7px 8px",textAlign:"right",color:aAct.length>0&&aExcl.length/aAct.length>=0.5?"var(--green)":"var(--amber)",fontWeight:700}}>{aAct.length>0?Math.round(aExcl.length/aAct.length*100)+"%":"—"}</td>
+                          <td style={{padding:"7px 8px",textAlign:"right",color:"var(--blue)",fontWeight:700}}>{aTxCm>0?aTxCm+"%":"—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Liste biens */}
+            {k.items.length===0&&<div style={{textAlign:"center",color:"var(--g400)",padding:"20px",fontSize:13}}>{"Aucun élément"+(agentSelec?" pour "+agentSelec.nom:"")}</div>}
+            {k.items.map(function(item,i){
+              var ag=users.find(function(u){return u.id===item.agentId;});
+              return(
+                <div key={item.id||i} onClick={function(){setDetailMandat(item);setShowKpiDetail(null);setFiltreAgentKpi("");}}
+                  style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--g50)",cursor:"pointer"}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                      {ag&&ag.photo?<img src={ag.photo} style={{width:18,height:18,borderRadius:9,objectFit:"cover"}} alt=""/>:ag&&<div style={{width:18,height:18,borderRadius:9,background:ag.couleur||"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:900,flexShrink:0}}>{ag.avatar}</div>}
+                      <div style={{fontWeight:700,color:"var(--navy)",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.ref||item.adresse}</div>
+                      {item.typeMandat==="exclusif"&&<span style={{background:"#FEF3C7",color:"#92400E",borderRadius:8,padding:"1px 5px",fontSize:9,fontWeight:800,flexShrink:0}}>{"⭐"}</span>}
+                    </div>
+                    <div style={{fontSize:11,color:"var(--g400)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{k.extra(item)+(ag?" · "+ag.nom:"")}</div>
+                  </div>
+                  <span style={{fontSize:18,color:"var(--g300)",flexShrink:0,marginLeft:8}}>{"›"}</span>
+                </div>
+              );
+            })}
+
+            <div style={{marginTop:14}}>
+              <button className="btn btn-secondary" style={{width:"100%"}} onClick={function(){setShowKpiDetail(null);setFiltreAgentKpi("");}}>{"Fermer"}</button>
+            </div>
+          </Modal>
+        );
+      })()}
     </AppShell>
   );
 }
