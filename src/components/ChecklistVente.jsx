@@ -113,8 +113,7 @@ export default function ChecklistVente() {
     Object.keys(CATEGORIES).forEach(function(catId){
       var items = manquants.filter(function(d){return d.cat===catId;});
       if(items.length===0) return;
-      lignesDoc.push("
-" + CATEGORIES[catId].label.replace(/^[^ ]+ /,"").toUpperCase() + " :");
+      lignesDoc.push("\n" + CATEGORIES[catId].label.replace(/^[^ ]+ /,"").toUpperCase() + " :");
       items.forEach(function(d){ lignesDoc.push("  • " + d.label); });
     });
 
