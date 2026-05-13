@@ -102,56 +102,35 @@ export default function ChecklistVente() {
 
   function genererMail() {
     var tb = TYPES_BIEN.find(function(t){ return t.id===typeBien; });
-    var typLabel = tb ? tb.label.replace(/^[^ ]+ /,"") : "bien";
+    var typLabel = tb ? tb.label.replace(/^\S+ /,"") : "bien";
     var nom = nomProprietaire || "Monsieur / Madame";
     var adr = adresseBien || "votre bien";
     var agent = prenomAgent || "Votre conseiller ORPI";
     var email = emailAgent || "";
     var manquants = docs.filter(function(d){return !checked[d.id];});
-
     var lignesDoc = [];
     Object.keys(CATEGORIES).forEach(function(catId){
       var items = manquants.filter(function(d){return d.cat===catId;});
       if(items.length===0) return;
-      lignesDoc.push("\n" + CATEGORIES[catId].label.replace(/^[^ ]+ /,"").toUpperCase() + " :");
-      items.forEach(function(d){ lignesDoc.push("  • " + d.label); });
+      lignesDoc.push("\n" + CATEGORIES[catId].label.replace(/^\S+ /,"").toUpperCase() + " :");
+      items.forEach(function(d){ lignesDoc.push("  - " + d.label); });
     });
-
-    return "Objet : Documents nécessaires à la vente de votre bien
-
-"
-      + "Madame, Monsieur " + (nomProprietaire || "") + ",
-
-"
+    var sujet = "Documents necessaires a la vente de votre bien";
+    var corps = "Madame, Monsieur " + (nomProprietaire||"") + "," + "\n\n"
       + "Je me permets de vous contacter dans le cadre de la vente de votre "
-      + typLabel + " situé" + (adresseBien?" au "+adresseBien:"") + ".
-
-"
+      + typLabel + (adresseBien ? " situe au "+adresseBien : "") + ".\n\n"
       + "Afin de constituer votre dossier de vente et de vous accompagner dans les meilleures conditions, "
-      + "nous avons besoin des documents suivants :
-"
-      + lignesDoc.join("
-")
-      + "
-
-Plus nous aurons ces documents en amont, plus nous pourrons vous proposer rapidement des acheteurs sérieux "
-      + "et sécuriser votre transaction.
-
-"
-      + "N'hésitez pas à me contacter pour toute question ou pour convenir d'un rendez-vous.
-
-"
-      + "Bien cordialement,
-
-"
-      + agent + "
-"
-      + "ORPI Déclic Immo Amiens
-"
-      + (email ? email + "
-" : "");
+      + "nous avons besoin des documents suivants :" + "\n"
+      + lignesDoc.join("\n") + "\n\n"
+      + "Plus nous aurons ces documents en amont, plus nous pourrons vous proposer rapidement des acheteurs serieux "
+      + "et securiser votre transaction.\n\n"
+      + "N hesitez pas a me contacter pour toute question ou pour convenir d un rendez-vous.\n\n"
+      + "Bien cordialement,\n\n"
+      + agent + "\n"
+      + "ORPI Declic Immo Amiens\n"
+      + (email ? email + "\n" : "");
+    return "Objet : " + sujet + "\n\n" + corps;
   }
-
   function toggle(id) { setChecked(function(p){ return {...p,[id]:!p[id]}; }); }
   function resetAll()  { setChecked({}); }
 
