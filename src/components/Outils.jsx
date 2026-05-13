@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { fmt } from "./Shared";
+import ChecklistVente from "./ChecklistVente";
 
 // ─── CALCUL CRÉDIT ────────────────────────────────────────────────────────────
 function calcCredit(montant, taux, dureeAns, dureeMois) {
@@ -41,6 +42,7 @@ export default function Outils() {
           {id:"credit",   label:"🏦 Calculette crédit"},
           {id:"frais",    label:"📋 Frais de notaire"},
           {id:"rendement",  label:"📈 Rendement locatif"},
+          {id:"checklist",  label:"📋 Check-list dossier"},
           {id:"agence",      label:"🏷️ Frais d'agence"},
           {id:"investisseur", label:"💎 Rentabilité investisseur"},
         ].map(function(o){
@@ -56,6 +58,7 @@ export default function Outils() {
       {outil==="credit"     && <CalculetteCredit/>}
       {outil==="frais"      && <FraisNotaire/>}
       {outil==="rendement"  && <RendementLocatif/>}
+      {outil==="checklist" && <ChecklistVente/>}
       {outil==="agence"     && <FraisAgence/>}
       {outil==="investisseur"&& <RentabiliteInvestisseur/>}
     </div>
