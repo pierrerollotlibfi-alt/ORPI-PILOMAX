@@ -94,6 +94,64 @@ export default function ChecklistVente() {
   var [isPersonMorale,setIsPersonMorale]= useState(false);
   var [checked,       setChecked]       = useState({});
   var [showOptionnels,setShowOptionnels]= useState(false);
+  var [nomProprietaire,setNomProprietaire]= useState("");
+  var [adresseBien,    setAdresseBien]    = useState("");
+  var [prenomAgent,    setPrenomAgent]    = useState("");
+  var [emailAgent,     setEmailAgent]     = useState("");
+  var [mailCopie,      setMailCopie]      = useState(false);
+
+  function genererMail() {
+    var tb = TYPES_BIEN.find(function(t){ return t.id===typeBien; });
+    var typLabel = tb ? tb.label.replace(/^[^ ]+ /,"") : "bien";
+    var nom = nomProprietaire || "Monsieur / Madame";
+    var adr = adresseBien || "votre bien";
+    var agent = prenomAgent || "Votre conseiller ORPI";
+    var email = emailAgent || "";
+    var manquants = docs.filter(function(d){return !checked[d.id];});
+
+    var lignesDoc = [];
+    Object.keys(CATEGORIES).forEach(function(catId){
+      var items = manquants.filter(function(d){return d.cat===catId;});
+      if(items.length===0) return;
+      lignesDoc.push("
+" + CATEGORIES[catId].label.replace(/^[^ ]+ /,"").toUpperCase() + " :");
+      items.forEach(function(d){ lignesDoc.push("  • " + d.label); });
+    });
+
+    return "Objet : Documents nécessaires à la vente de votre bien
+
+"
+      + "Madame, Monsieur " + (nomProprietaire || "") + ",
+
+"
+      + "Je me permets de vous contacter dans le cadre de la vente de votre "
+      + typLabel + " situé" + (adresseBien?" au "+adresseBien:"") + ".
+
+"
+      + "Afin de constituer votre dossier de vente et de vous accompagner dans les meilleures conditions, "
+      + "nous avons besoin des documents suivants :
+"
+      + lignesDoc.join("
+")
+      + "
+
+Plus nous aurons ces documents en amont, plus nous pourrons vous proposer rapidement des acheteurs sérieux "
+      + "et sécuriser votre transaction.
+
+"
+      + "N'hésitez pas à me contacter pour toute question ou pour convenir d'un rendez-vous.
+
+"
+      + "Bien cordialement,
+
+"
+      + agent + "
+"
+      + "ORPI Déclic Immo Amiens
+"
+      + (email ? email + "
+" : "");
+  }
 
   function toggle(id) { setChecked(function(p){ return {...p,[id]:!p[id]}; }); }
   function resetAll()  { setChecked({}); }
@@ -235,6 +293,52 @@ export default function ChecklistVente() {
               </div>
             );
           })}
+
+
+          {/* ─── MAIL AUTOMATIQUE ─── */}
+          <div style={{background:"#fff",borderRadius:12,border:"1px solid var(--g200)",overflow:"hidden",marginBottom:10}}>
+            <div style={{background:"var(--g50)",padding:"10px 14px",borderBottom:"1px solid var(--g100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{"📧 Email à envoyer au propriétaire"}</span>
+              {mailCopie && <span style={{fontSize:11,color:"var(--green)",fontWeight:700}}>{"✅ Copié !"}</span>}
+            </div>
+            <div style={{padding:"12px 14px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+                <div>
+                  <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"NOM DU PROPRIÉTAIRE"}</label>
+                  <input className="form-input" value={nomProprietaire} onChange={function(e){setNomProprietaire(e.target.value);}} placeholder="M. / Mme Dupont"/>
+                </div>
+                <div>
+                  <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"ADRESSE DU BIEN"}</label>
+                  <input className="form-input" value={adresseBien} onChange={function(e){setAdresseBien(e.target.value);}} placeholder="40 Rue Victor Hugo, Amiens"/>
+                </div>
+                <div>
+                  <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"VOTRE PRÉNOM"}</label>
+                  <input className="form-input" value={prenomAgent} onChange={function(e){setPrenomAgent(e.target.value);}} placeholder="Pierre"/>
+                </div>
+                <div>
+                  <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"VOTRE EMAIL DE CONTACT"}</label>
+                  <input className="form-input" value={emailAgent} onChange={function(e){setEmailAgent(e.target.value);}} placeholder="p.rollot@orpi.com"/>
+                </div>
+              </div>
+
+              {/* Aperçu du mail */}
+              <div style={{background:"#F8FAFC",borderRadius:10,border:"1px solid var(--g200)",padding:"14px",marginBottom:12,fontSize:12,lineHeight:1.7,color:"var(--g600)",fontFamily:"Georgia,serif",whiteSpace:"pre-wrap"}}>
+                {genererMail()}
+              </div>
+
+              <div style={{display:"flex",gap:8}}>
+                <button className="btn btn-primary" style={{flex:1,justifyContent:"center"}} onClick={function(){
+                  navigator.clipboard.writeText(genererMail()).then(function(){
+                    setMailCopie(true); setTimeout(function(){setMailCopie(false);},3000);
+                  });
+                }}>{"📋 Copier le mail"}</button>
+                <a href={"mailto:?subject="+encodeURIComponent("Documents nécessaires à la vente de votre bien")+"&body="+encodeURIComponent(genererMail())}
+                  style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--g50)",border:"2px solid var(--g200)",borderRadius:10,padding:"8px 14px",fontWeight:700,fontSize:13,color:"var(--navy)",textDecoration:"none"}}>
+                  {"✉️ Ouvrir dans Mail"}
+                </a>
+              </div>
+            </div>
+          </div>
 
           {/* Bouton export */}
           <button onClick={function(){
