@@ -15,6 +15,7 @@ import Outils from "./Outils";
 import MatchingManager from "./MatchingManager";
 import ImportSweepBright from "./ImportSweepBright";
 import IndemniteKm from "./IndemniteKm";
+import Tresorerie from "./Tresorerie";
 import OffMarket from "./OffMarket";
 import CarteInteractive from "./CarteInteractive";
 import CaRealise from "./CaRealise";
@@ -334,6 +335,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     rapport:    {icon:"📄", label:"Rapport",         shortLabel:"Rapport"},
     profil:     {icon:"👤", label:"Mon profil",      shortLabel:"Profil"},
     km:         {icon:"🚗", label:"Indemnités km",    shortLabel:"Km"},
+    tresorerie: {icon:"💰", label:"Trésorerie",         shortLabel:"Tréso"},
     import_sb:  {icon:"📥", label:"Import SweepBright", shortLabel:"Import"},
   };
   var navItems = [
@@ -342,7 +344,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   ];
 
   return (
-    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="import_sb"?"📥 Import SweepBright":tab==="km"?"🚗 Indemnités kilométriques":tab==="stats"?"📊 Stats comparatives":tab==="matching"?"🎯 Rapprochements":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
+    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="import_sb"?"📥 Import SweepBright":tab==="tresorerie"?"💰 Trésorerie":tab==="km"?"🚗 Indemnités kilométriques":tab==="stats"?"📊 Stats comparatives":tab==="matching"?"🎯 Rapprochements":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
       topbarActions={
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {(ctx.notifPerm||"default")!=="granted"
@@ -759,6 +761,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       {tab==="stats" && <StatsComparatives/>}
       {tab==="matching" && <MatchingManager/>}
       {tab==="km" && <IndemniteKm/>}
+      {tab==="tresorerie" && <Tresorerie/>}
       {tab==="import_sb" && <ImportSweepBright/>}
       {tab==="outils" && <Outils/>}
       {tab==="feedback" && <Feedback/>}
@@ -1093,7 +1096,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             { theme:"📋 Portefeuille",  ids:["mandats","offmarket","carte","ca","rapport","objectifs"] },
             { theme:"🏠 Location",      ids:["gestion","locations"] },
             { theme:"👥 Équipe",        ids:["agents","classement","stats"] },
-            { theme:"⚙️ Outils",        ids:["outils","km","import_sb","feedback","profil"] },
+            { theme:"⚙️ Outils",        ids:["outils","km","tresorerie","import_sb","feedback","profil"] },
           ].map(function(grp){
             return (
               <div key={grp.theme} style={{marginBottom:12}}>
