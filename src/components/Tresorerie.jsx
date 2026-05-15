@@ -51,6 +51,7 @@ export default function Tresorerie() {
   var users     = ctx.users     || [];
   var agenceId  = ctx.currentUser.agenceId;
   var isSuper   = ctx.currentUser.role==="superadmin";
+  var agents    = users.filter(function(u){ return u.agenceId===agenceId && u.actif && (u.role==="agent"||u.role==="manager"||u.role==="superadmin"); });
 
   // Données sync Supabase
   var data      = ctx.tresorerie || {ecritures:[]};
@@ -70,8 +71,9 @@ export default function Tresorerie() {
   var [editId,        setEditId]        = useState(null);
   var [onglet,        setOnglet]        = useState("dashboard"); // dashboard | ecritures | previsionnel
   var [f, setF] = useState({
-    type:"entree", categorie:"commission_vente", label:"", montant:"",
-    moisEncaissement:moisActuel, statut:"prevu", mandatRef:"", notes:""
+    type:"entree", categorie:"commission_vente", label:"", montantTTC:"", montantHT:"",
+    tvaRate:20, moisEncaissement:moisActuel, statut:"prevu", mandatRef:"", notes:"",
+    partAgence:100, agentCoId:"", partAgentCo:0
   });
   function setFField(k,v) { setF(function(p){return {...p,[k]:v};}); }
 
@@ -138,12 +140,28 @@ export default function Tresorerie() {
   }
   function openEdit(e) {
     setEditId(e.id);
-    setF({type:e.type, categorie:e.categorie, label:e.label, montant:String(e.montant), moisEncaissement:e.moisEncaissement, statut:e.statut, mandatRef:e.mandatRef||"", notes:e.notes||""});
+    setF({type:e.type, categorie:e.categorie, label:e.label, montantTTC:String(e.montantTTC||e.montant||""), montantHT:String(e.montantHT||""), tvaRate:e.tvaRate||20, moisEncaissement:e.moisEncaissement, statut:e.statut, mandatRef:e.mandatRef||"", notes:e.notes||"", partAgence:e.partAgence||100, agentCoId:e.agentCoId||"", partAgentCo:e.partAgentCo||0});
     setShowForm(true);
   }
   function sauvegarder() {
     if (!f.label.trim()||!f.montant||Number(f.montant)<=0) return;
-    var entry = {...f, montant:Number(f.montant), id:editId||(Date.now()+"-"+Math.random().toString(36).slice(2))};
+    var ttc = Number(f.montantTTC)||0;
+    var ht  = Number(f.montantHT)||Math.round(ttc/((f.tvaRate||20)/100+1)*100)/100;
+    var partAg  = Number(f.partAgence||100);
+    var partCo  = Number(f.partAgentCo||0);
+    var montantAgence   = Math.round(ht * partAg / 100 * 100) / 100;
+    var montantAgentCo  = Math.round(ht * partCo / 100 * 100) / 100;
+    var entry = {...f,
+      montant: ht,        // on stocke HT comme montant principal
+      montantTTC: ttc,
+      montantHT:  ht,
+      tvaRate:    Number(f.tvaRate||20),
+      partAgence: partAg,
+      partAgentCo:partCo,
+      montantAgence,
+      montantAgentCo,
+      id: editId||(Date.now()+"-"+Math.random().toString(36).slice(2))
+    };
     setData(function(prev) {
       var ecs = prev.ecritures||[];
       return {...prev, ecritures: editId ? ecs.map(function(e){return e.id===editId?entry:e;}) : [...ecs,entry]};
@@ -239,10 +257,73 @@ export default function Tresorerie() {
               <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"LIBELLÉ *"}</label>
               <input className="form-input" value={f.label} onChange={function(e){setFField("label",e.target.value);}} placeholder="Ex : Vente Dupont — 40 Rue Hugo"/>
             </div>
+            {/* TTC → HT auto */}
             <div>
-              <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"MONTANT HT (€) *"}</label>
-              <input type="number" className="form-input" value={f.montant} onChange={function(e){setFField("montant",e.target.value);}} placeholder="0"/>
+              <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"MONTANT TTC (€) *"}</label>
+              <input type="number" className="form-input" value={f.montantTTC} onChange={function(e){
+                var ttc=Number(e.target.value)||0;
+                var ht=Math.round(ttc/((Number(f.tvaRate)||20)/100+1)*100)/100;
+                setF(function(p){return{...p,montantTTC:e.target.value,montantHT:String(ht)};});
+              }} placeholder="Ex : 12000"/>
             </div>
+            <div>
+              <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"TVA (%)"}</label>
+              <select className="form-select" style={{fontSize:12}} value={f.tvaRate} onChange={function(e){
+                var rate=Number(e.target.value);
+                var ht=Math.round((Number(f.montantTTC)||0)/(rate/100+1)*100)/100;
+                setF(function(p){return{...p,tvaRate:rate,montantHT:String(ht)};});
+              }}>
+                {[20,10,5.5,0].map(function(r){return <option key={r} value={r}>{r+"% TVA"}</option>;})}
+              </select>
+            </div>
+            <div style={{gridColumn:"1/-1",background:"#EFF6FF",borderRadius:10,padding:"10px 12px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:12,color:"var(--g500)"}}>{"Montant HT calculé :"}</span>
+                <span style={{fontWeight:900,fontSize:18,color:"var(--blue)"}}>{f.montantHT?Number(f.montantHT).toLocaleString("fr-FR")+"€ HT":"—"}</span>
+              </div>
+              {f.montantTTC>0&&<div style={{fontSize:10,color:"var(--g400)",marginTop:2}}>{"TVA : "+Math.round((Number(f.montantTTC||0)-Number(f.montantHT||0))*100)/100+"€"}</div>}
+            </div>
+            {/* Répartition */}
+            {f.type==="entree" && (
+              <div style={{gridColumn:"1/-1",background:"#F0FDF4",borderRadius:10,padding:"12px"}}>
+                <div style={{fontWeight:800,color:"var(--green)",fontSize:12,marginBottom:10}}>{"📊 Répartition des honoraires"}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                  <div>
+                    <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"PART AGENCE (%)"}</label>
+                    <input type="number" min="0" max="100" className="form-input" value={f.partAgence} onChange={function(e){
+                      var pa=Math.min(100,Math.max(0,Number(e.target.value)||0));
+                      setF(function(p){return{...p,partAgence:pa,partAgentCo:Math.round((100-pa)*100)/100};});
+                    }}/>
+                    <div style={{fontSize:10,color:"var(--green)",marginTop:2,fontWeight:700}}>{"= "+Math.round((Number(f.montantHT||0)*f.partAgence/100)*100)/100+"€ HT"}</div>
+                  </div>
+                  <div>
+                    <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"PART AGENT CO (%)"}</label>
+                    <input type="number" min="0" max="100" className="form-input" value={f.partAgentCo} onChange={function(e){
+                      var pc=Math.min(100,Math.max(0,Number(e.target.value)||0));
+                      setF(function(p){return{...p,partAgentCo:pc,partAgence:Math.round((100-pc)*100)/100};});
+                    }}/>
+                    <div style={{fontSize:10,color:"var(--blue)",marginTop:2,fontWeight:700}}>{"= "+Math.round((Number(f.montantHT||0)*f.partAgentCo/100)*100)/100+"€ HT"}</div>
+                  </div>
+                </div>
+                {/* Raccourcis répartition */}
+                <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                  {[[100,0,"100% Agence"],[70,30,"70/30"],[60,40,"60/40"],[50,50,"50/50"]].map(function(r){
+                    var actif = f.partAgence===r[0]&&f.partAgentCo===r[1];
+                    return <button key={r[2]} onClick={function(){setF(function(p){return{...p,partAgence:r[0],partAgentCo:r[1]};});}} style={{padding:"4px 10px",borderRadius:20,border:"2px solid "+(actif?"var(--green)":"var(--g200)"),background:actif?"var(--green)":"#fff",color:actif?"#fff":"var(--g500)",fontWeight:700,fontSize:10,cursor:"pointer"}}>{r[2]}</button>;
+                  })}
+                </div>
+                {/* Sélection agent co */}
+                {f.partAgentCo>0 && (
+                  <div>
+                    <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"AGENT CO (bénéficiaire de la part)"}</label>
+                    <select className="form-select" style={{fontSize:12}} value={f.agentCoId} onChange={function(e){setFField("agentCoId",e.target.value);}}>
+                      <option value="">{"— Choisir un agent —"}</option>
+                      {agents.filter(function(a){return a.actif;}).map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
             <div>
               <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"MOIS D'ENCAISSEMENT"}</label>
               <input type="month" className="form-input" value={f.moisEncaissement} onChange={function(e){setFField("moisEncaissement",e.target.value);}}/>
@@ -301,7 +382,17 @@ export default function Tresorerie() {
                         </div>
                       </div>
                       <div style={{textAlign:"right",flexShrink:0}}>
-                        <div style={{fontWeight:900,fontSize:14,color:e.type==="entree"?"var(--green)":"var(--red)"}}>{(e.type==="entree"?"+":"-")+fmt(Number(e.montant||0))}</div>
+                        <div style={{fontWeight:900,fontSize:14,color:e.type==="entree"?"var(--green)":"var(--red)"}}>{(e.type==="entree"?"+":"-")+fmt(Number(e.montantHT||e.montant||0))+" HT"}</div>
+                      {e.montantTTC&&e.montantTTC!==e.montantHT&&<div style={{fontSize:10,color:"var(--g400)"}}>{"TTC : "+fmt(Number(e.montantTTC))}</div>}
+                      {e.type==="entree"&&e.partAgentCo>0&&(function(){
+                        var agCo = users.find(function(u){return u.id===e.agentCoId;});
+                        return (
+                          <div style={{marginTop:4}}>
+                            <div style={{fontSize:9,color:"var(--green)",fontWeight:700}}>{"Agence : "+fmt(e.montantAgence||0)+" ("+e.partAgence+"%)"}</div>
+                            {agCo&&<div style={{fontSize:9,color:"var(--blue)",fontWeight:700}}>{agCo.nom+" : "+fmt(e.montantAgentCo||0)+" ("+e.partAgentCo+"%)"}</div>}
+                          </div>
+                        );
+                      })()}
                         {!e.auto && isSuper && (
                           <div style={{display:"flex",gap:4,marginTop:4,justifyContent:"flex-end"}}>
                             <button onClick={function(){openEdit(e);}} style={{background:"var(--g50)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:11}}>{"✏️"}</button>
