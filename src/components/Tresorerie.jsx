@@ -81,21 +81,6 @@ export default function Tresorerie() {
   var ecrituresAuto = useMemo(function() {
     var list = [];
 
-    // ─── MANDATS ACTIFS (stock potentiel) ─────────────────────────────────
-    mandats.filter(function(m){ return m.statut==="mandat"&&m.commission>0; }).forEach(function(m) {
-      var ag = users.find(function(u){return u.id===m.agentId;})||{};
-      // Estimation encaissement : délai moyen 3 mois
-      var moisEst = getMoisStr(3);
-      var ht = commHT(m.commission||0, m.typeBien);
-      list.push({
-        id:"auto-mandat-"+m.id, type:"entree", categorie:"commission_vente",
-        label:"📋 Stock — "+m.ref+" ("+ag.nom+")",
-        montant:ht, montantHT:ht, montantTTC:Math.round(ht*1.2*100)/100, tvaRate:20,
-        moisEncaissement:moisEst, statut:"prevu", auto:true, mandatRef:m.ref,
-        agentId:m.agentId, partAgence:100, partAgentCo:0,
-      });
-    });
-
     // ─── SOUS OFFRE (probable) ─────────────────────────────────────────────
     mandats.filter(function(m){ return m.statut==="sous_offre"&&m.commission>0; }).forEach(function(m) {
       var ag = users.find(function(u){return u.id===m.agentId;})||{};
@@ -207,11 +192,11 @@ export default function Tresorerie() {
   }
 
   // ─── STATS PAR STATUT MANDAT ─────────────────────────────────────────
-  var caStock     = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-mandat-");}).reduce(function(s,e){return s+e.montant;},0);
+  var caStock     = 0; // Mandats actifs exclus — taux de transformation trop faible
   var caSousOffre = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-offre-");}).reduce(function(s,e){return s+e.montant;},0);
   var caCompromis = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-compr-")||e.id.startsWith("auto-cs-");}).reduce(function(s,e){return s+e.montant;},0);
   var caVendus    = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-vendu-");}).reduce(function(s,e){return s+e.montant;},0);
-  var caGestion   = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-gest-")&&e.moisEncaissement===moisActuel;}).reduce(function(s,e){return s+e.montant;},0);
+  var caGestion   = 0; // Gestion désactivée — aucun bien en gestion
   var caManuel    = ecritures.filter(function(e){return e.type==="entree"&&e.statut!=="annule";}).reduce(function(s,e){return s+Number(e.montantHT||e.montant||0);},0);
 
   var statsTotal = moisList.reduce(function(acc, m) {
@@ -281,8 +266,7 @@ export default function Tresorerie() {
         <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:10}}>{"📊 Pipeline CA (commissions HT)"}</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:8}}>
           {[
-            {label:"📋 Stock mandats",    val:fmt(caStock),     color:"var(--navy)",   sub:"CA potentiel"},
-            {label:"📝 Sous offre",       val:fmt(caSousOffre), color:"var(--amber)",  sub:"Probable"},
+            {label:"📝 Sous offre",       val:fmt(caSousOffre), color:"var(--amber)",  sub:"Probable — inclus dans tréso"},
             {label:"🤝 Compromis",        val:fmt(caCompromis), color:"var(--green)",  sub:"Confirmé"},
             {label:"🏆 Actes signés",     val:fmt(caVendus),    color:"var(--red)",    sub:"Encaissable"},
           ].map(function(k){
