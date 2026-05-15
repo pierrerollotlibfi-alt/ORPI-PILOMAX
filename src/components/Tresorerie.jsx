@@ -80,29 +80,108 @@ export default function Tresorerie() {
   // ─── GÉNÉRATION AUTO depuis les mandats ──────────────────────────────────────
   var ecrituresAuto = useMemo(function() {
     var list = [];
-    // Compromis → prévu
+
+    // ─── MANDATS ACTIFS (stock potentiel) ─────────────────────────────────
+    mandats.filter(function(m){ return m.statut==="mandat"&&m.commission>0; }).forEach(function(m) {
+      var ag = users.find(function(u){return u.id===m.agentId;})||{};
+      // Estimation encaissement : délai moyen 3 mois
+      var moisEst = getMoisStr(3);
+      var ht = commHT(m.commission||0, m.typeBien);
+      list.push({
+        id:"auto-mandat-"+m.id, type:"entree", categorie:"commission_vente",
+        label:"📋 Stock — "+m.ref+" ("+ag.nom+")",
+        montant:ht, montantHT:ht, montantTTC:Math.round(ht*1.2*100)/100, tvaRate:20,
+        moisEncaissement:moisEst, statut:"prevu", auto:true, mandatRef:m.ref,
+        agentId:m.agentId, partAgence:100, partAgentCo:0,
+      });
+    });
+
+    // ─── SOUS OFFRE (probable) ─────────────────────────────────────────────
+    mandats.filter(function(m){ return m.statut==="sous_offre"&&m.commission>0; }).forEach(function(m) {
+      var ag = users.find(function(u){return u.id===m.agentId;})||{};
+      var moisEst = getMoisStr(2);
+      var ht = commHT(m.commission||0, m.typeBien);
+      list.push({
+        id:"auto-offre-"+m.id, type:"entree", categorie:"commission_vente",
+        label:"📝 Sous offre — "+m.ref+" ("+ag.nom+")",
+        montant:ht, montantHT:ht, montantTTC:Math.round(ht*1.2*100)/100, tvaRate:20,
+        moisEncaissement:moisEst, statut:"prevu", auto:true, mandatRef:m.ref,
+        agentId:m.agentId, partAgence:100, partAgentCo:0,
+      });
+    });
+
+    // ─── COMPROMIS (confirmé) ──────────────────────────────────────────────
     mandats.filter(function(m){ return m.statut==="compromis"&&m.commission>0; }).forEach(function(m) {
       var ag = users.find(function(u){return u.id===m.agentId;})||{};
       var moisPrev = m.dateSignature ? m.dateSignature.slice(0,7) : getMoisStr(2);
+      var ht = commHT(m.commission||0, m.typeBien);
       list.push({
-        id: "auto-compr-"+m.id, type:"entree", categorie:"commission_vente",
-        label: "Compromis — "+m.ref+" ("+ag.nom+")", montant: commHT(m.commission||0,m.typeBien),
-        moisEncaissement: moisPrev, statut:"confirme", auto:true, mandatRef:m.ref,
+        id:"auto-compr-"+m.id, type:"entree", categorie:"commission_vente",
+        label:"🤝 Compromis — "+m.ref+" ("+ag.nom+")",
+        montant:ht, montantHT:ht, montantTTC:Math.round(ht*1.2*100)/100, tvaRate:20,
+        moisEncaissement:moisPrev, statut:"confirme", auto:true, mandatRef:m.ref,
+        agentId:m.agentId, partAgence:100, partAgentCo:0,
       });
     });
-    // Gestion locative → mensuel
+
+    // ─── CS LEVÉES (quasi-certain) ─────────────────────────────────────────
+    mandats.filter(function(m){ return m.statut==="compromis"&&m.clausesSuspensivesLevees&&m.commission>0; }).forEach(function(m) {
+      var ag = users.find(function(u){return u.id===m.agentId;})||{};
+      var moisPrev = m.dateSignature ? m.dateSignature.slice(0,7) : getMoisStr(1);
+      var ht = commHT(m.commission||0, m.typeBien);
+      // Remplacer l'écriture compromis par CS levées (plus fiable)
+      var idx = list.findIndex(function(x){return x.id==="auto-compr-"+m.id;});
+      if(idx>=0) {
+        list[idx] = {...list[idx], id:"auto-cs-"+m.id, label:"✅ CS levées — "+m.ref+" ("+ag.nom+")", statut:"confirme", moisEncaissement:moisPrev};
+      }
+    });
+
+    // ─── VENDUS (encaissé ou à encaisser) ─────────────────────────────────
+    mandats.filter(function(m){ return m.statut==="vendu"&&m.commission>0; }).forEach(function(m) {
+      var ag = users.find(function(u){return u.id===m.agentId;})||{};
+      var moisVente = m.dateSignature ? m.dateSignature.slice(0,7) : moisActuel;
+      var ht = commHT(m.commission||0, m.typeBien);
+      list.push({
+        id:"auto-vendu-"+m.id, type:"entree", categorie:"commission_vente",
+        label:"🏆 Acte signé — "+m.ref+" ("+ag.nom+")",
+        montant:ht, montantHT:ht, montantTTC:Math.round(ht*1.2*100)/100, tvaRate:20,
+        moisEncaissement:moisVente, statut:"encaisse", auto:true, mandatRef:m.ref,
+        agentId:m.agentId, partAgence:100, partAgentCo:0,
+      });
+    });
+
+    // ─── LOCATIONS SIGNÉES ─────────────────────────────────────────────────
+    var locations = ctx.locations||[];
+    locations.filter(function(l){ return l.locataireTrouve&&l.commission>0; }).forEach(function(l) {
+      var ag = users.find(function(u){return u.id===l.agentId;})||{};
+      var moisLoc = l.dateTrouve ? l.dateTrouve.slice(0,7) : moisActuel;
+      var ht = commHT(l.commission||0, "appartement");
+      list.push({
+        id:"auto-loc-"+l.id, type:"entree", categorie:"commission_location",
+        label:"🏠 Location — "+(l.adresse||"").split(",")[0]+" ("+ag.nom+")",
+        montant:ht, montantHT:ht, montantTTC:Math.round(ht*1.2*100)/100, tvaRate:20,
+        moisEncaissement:moisLoc, statut:"encaisse", auto:true,
+        agentId:l.agentId, partAgence:100, partAgentCo:0,
+      });
+    });
+
+    // ─── GESTION LOCATIVE (mensuel récurrent) ─────────────────────────────
     gestion.filter(function(g){return g.actif&&g.commissionMensuelle>0;}).forEach(function(g){
-      for(var i=0;i<6;i++) {
+      for(var i=-1;i<6;i++) {
         var mois = getMoisStr(i);
         list.push({
-          id: "auto-gest-"+g.id+"-"+mois, type:"entree", categorie:"commission_gestion",
-          label: "Gestion — "+g.adresse.split(",")[0], montant: g.commissionMensuelle||0,
-          moisEncaissement: mois, statut: mois<=moisActuel?"encaisse":"prevu", auto:true,
+          id:"auto-gest-"+g.id+"-"+mois, type:"entree", categorie:"commission_gestion",
+          label:"🔑 Gestion — "+(g.adresse||"").split(",")[0],
+          montant:g.commissionMensuelle||0, montantHT:g.commissionMensuelle||0,
+          montantTTC:Math.round((g.commissionMensuelle||0)*1.2*100)/100, tvaRate:20,
+          moisEncaissement:mois, statut:mois<=moisActuel?"encaisse":"prevu", auto:true,
+          agentId:g.agentId, partAgence:100, partAgentCo:0,
         });
       }
     });
+
     return list;
-  }, [mandats, gestion, users]);
+  }, [mandats, gestion, users, ctx.locations]);
 
   var toutesEcritures = [...ecritures, ...ecrituresAuto];
 
@@ -127,6 +206,14 @@ export default function Tresorerie() {
     return { entrees, sorties, solde, encaisse };
   }
 
+  // ─── STATS PAR STATUT MANDAT ─────────────────────────────────────────
+  var caStock     = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-mandat-");}).reduce(function(s,e){return s+e.montant;},0);
+  var caSousOffre = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-offre-");}).reduce(function(s,e){return s+e.montant;},0);
+  var caCompromis = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-compr-")||e.id.startsWith("auto-cs-");}).reduce(function(s,e){return s+e.montant;},0);
+  var caVendus    = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-vendu-");}).reduce(function(s,e){return s+e.montant;},0);
+  var caGestion   = ecrituresAuto.filter(function(e){return e.id.startsWith("auto-gest-")&&e.moisEncaissement===moisActuel;}).reduce(function(s,e){return s+e.montant;},0);
+  var caManuel    = ecritures.filter(function(e){return e.type==="entree"&&e.statut!=="annule";}).reduce(function(s,e){return s+Number(e.montantHT||e.montant||0);},0);
+
   var statsTotal = moisList.reduce(function(acc, m) {
     var s = calcMois(m);
     return { entrees:acc.entrees+s.entrees, sorties:acc.sorties+s.sorties, solde:acc.solde+s.solde, encaisse:acc.encaisse+s.encaisse };
@@ -144,7 +231,7 @@ export default function Tresorerie() {
     setShowForm(true);
   }
   function sauvegarder() {
-    if (!f.label.trim()||!f.montant||Number(f.montant)<=0) return;
+    if (!f.label.trim()||(!f.montantTTC&&!f.montantHT)||Number(f.montantTTC||f.montantHT||0)<=0) return;
     var ttc = Number(f.montantTTC)||0;
     var ht  = Number(f.montantHT)||Math.round(ttc/((f.tvaRate||20)/100+1)*100)/100;
     var partAg  = Number(f.partAgence||100);
@@ -189,7 +276,39 @@ export default function Tresorerie() {
 
       {/* ─── KPIs RÉSUMÉ ─── */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        {[
+        {/* Ligne 1 : Pipeline par statut */}
+      <div style={{background:"#fff",borderRadius:12,border:"1px solid var(--g200)",padding:"12px 14px",marginBottom:10}}>
+        <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:10}}>{"📊 Pipeline CA (commissions HT)"}</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:8}}>
+          {[
+            {label:"📋 Stock mandats",    val:fmt(caStock),     color:"var(--navy)",   sub:"CA potentiel"},
+            {label:"📝 Sous offre",       val:fmt(caSousOffre), color:"var(--amber)",  sub:"Probable"},
+            {label:"🤝 Compromis",        val:fmt(caCompromis), color:"var(--green)",  sub:"Confirmé"},
+            {label:"🏆 Actes signés",     val:fmt(caVendus),    color:"var(--red)",    sub:"Encaissable"},
+          ].map(function(k){
+            return(
+              <div key={k.label} style={{background:"var(--g50)",borderRadius:8,padding:"8px 10px",borderLeft:"3px solid "+k.color}}>
+                <div style={{fontSize:9,color:"var(--g400)",fontWeight:700}}>{k.label}</div>
+                <div style={{fontWeight:900,fontSize:15,color:k.color}}>{k.val}</div>
+                <div style={{fontSize:9,color:"var(--g400)"}}>{k.sub}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <div style={{flex:1,background:"#EFF6FF",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+            <div style={{fontSize:9,color:"var(--g400)",fontWeight:700}}>{"🔑 Gestion /mois"}</div>
+            <div style={{fontWeight:800,fontSize:14,color:"var(--blue)"}}>{fmt(caGestion)}</div>
+          </div>
+          <div style={{flex:1,background:"#F5F3FF",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+            <div style={{fontSize:9,color:"var(--g400)",fontWeight:700}}>{"💼 CA manuel saisi"}</div>
+            <div style={{fontWeight:800,fontSize:14,color:"var(--purple)"}}>{fmt(caManuel)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ligne 2 : Tréso période */}
+      {[
           {label:"Entrées prévues", val:fmt(statsTotal.entrees), color:"var(--green)", icon:"📈"},
           {label:"Sorties prévues", val:fmt(statsTotal.sorties), color:"var(--red)",   icon:"📉"},
           {label:"Solde net",       val:fmt(statsTotal.solde),   color:statsTotal.solde>=0?"var(--green)":"var(--red)", icon:"💰"},
@@ -339,7 +458,7 @@ export default function Tresorerie() {
           </div>
           <div style={{display:"flex",gap:8}}>
             <button className="btn btn-secondary" style={{flex:1}} onClick={function(){setShowForm(false);setEditId(null);}}>{"Annuler"}</button>
-            <button className="btn btn-primary" style={{flex:2}} onClick={sauvegarder} disabled={!f.label.trim()||!f.montant||Number(f.montant)<=0}>{"💾 Enregistrer"}</button>
+            <button className="btn btn-primary" style={{flex:2}} onClick={sauvegarder} disabled={!f.label.trim()||Number(f.montantTTC||f.montantHT||0)<=0}>{"💾 Enregistrer"}</button>
           </div>
         </div>
       )}
