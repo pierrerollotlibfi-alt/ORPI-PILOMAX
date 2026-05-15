@@ -135,20 +135,7 @@ export default function Tresorerie() {
       });
     });
 
-    // ─── LOCATIONS SIGNÉES ─────────────────────────────────────────────────
-    var locations = ctx.locations||[];
-    locations.filter(function(l){ return l.locataireTrouve&&l.commission>0; }).forEach(function(l) {
-      var ag = users.find(function(u){return u.id===l.agentId;})||{};
-      var moisLoc = l.dateTrouve ? l.dateTrouve.slice(0,7) : moisActuel;
-      var ht = commHT(l.commission||0, "appartement");
-      list.push({
-        id:"auto-loc-"+l.id, type:"entree", categorie:"commission_location",
-        label:"🏠 Location — "+(l.adresse||"").split(",")[0]+" ("+ag.nom+")",
-        montant:ht, montantHT:ht, montantTTC:Math.round(ht*1.2*100)/100, tvaRate:20,
-        moisEncaissement:moisLoc, statut:"encaisse", auto:true,
-        agentId:l.agentId, partAgence:100, partAgentCo:0,
-      });
-    });
+    // Locations désactivées — stock à 0
 
     // ─── GESTION LOCATIVE (mensuel récurrent) ─────────────────────────────
     gestion.filter(function(g){return g.actif&&g.commissionMensuelle>0;}).forEach(function(g){
@@ -166,7 +153,7 @@ export default function Tresorerie() {
     });
 
     return list;
-  }, [mandats, gestion, users, ctx.locations]);
+  }, [mandats, gestion, users]);
 
   var toutesEcritures = [...ecritures, ...ecrituresAuto];
 
