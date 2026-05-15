@@ -16,9 +16,7 @@ function parseMois(m) {
   return { annee: Number(y), mois: Number(mo)-1, label: MOIS_NOM[Number(mo)-1] + " " + y };
 }
 
-var SK = "orpi_tresorerie_v1";
-function lload() { try { return JSON.parse(localStorage.getItem(SK)||"{}"); } catch(e) { return {}; } }
-function lsave(v) { try { localStorage.setItem(SK, JSON.stringify(v)); } catch(e) {} }
+// Données sync Supabase via ctx
 
 var CATEGORIES_ENTREES = [
   { id:"commission_vente",    label:"🏆 Commission vente",       color:"var(--green)" },
@@ -54,16 +52,13 @@ export default function Tresorerie() {
   var agenceId  = ctx.currentUser.agenceId;
   var isSuper   = ctx.currentUser.role==="superadmin";
 
-  // Données persistées
-  var [data, setDataRaw] = useState(lload);
+  // Données sync Supabase
+  var data      = ctx.tresorerie || {ecritures:[]};
   var ecritures = data.ecritures || [];
 
   function setData(fn) {
-    setDataRaw(function(prev) {
-      var next = typeof fn==="function" ? fn(prev) : fn;
-      lsave(next);
-      return next;
-    });
+    var next = typeof fn==="function" ? fn(data) : fn;
+    ctx.setTresorerie(next);
   }
 
   // ─── STATE UI ────────────────────────────────────────────────────────────────

@@ -37,6 +37,7 @@ var SK = {
   feedback:    "orpi_data_feedback",
   journal:     "orpi_data_journal",
   session:     "orpi_data_session",
+  tresorerie:  "orpi_data_tresorerie",
 };
 
 // ─── DONNÉES INITIALES ────────────────────────────────────────────────────────
@@ -2334,6 +2335,7 @@ export default function App() {
   var [offmarket,   setOffMktRaw]   = useState(function(){ return loadOrInit(SK.offmarket, [], INIT_OFFMARKET); });
   var [kpiConfig,   setKpiCfgRaw]   = useState(function(){ return loadOrInit(SK.kpiConfig,  [], INIT_KPI_CONFIG); });
   var [feedback,    setFeedbackRaw]  = useState(function(){ return lload(SK.feedback, []); });
+  var [tresorerie,  setTresoRaw]     = useState(function(){ return loadOrInit(SK.tresorerie, [], {ecritures:[]}); });
   var [journal2,    setJournal2Raw]  = useState(function(){ return lload(SK.journal, []); });
 
   var [currentUser, setCurrentUser] = useState(function() { return loadSession(lload(SK.users, INIT_USERS)); });
@@ -2450,6 +2452,7 @@ export default function App() {
     var unsubs = [
       dbSubscribe("users",       function(v){ setUsersRaw(v); lsave(SK.users, v); }),
       dbSubscribe("mandats",     function(v){ setMandatsRaw(v); lsave(SK.mandats, v); }),
+      dbSubscribe("tresorerie",  function(v){ setTresoRaw(v);   lsave(SK.tresorerie, v); }),
       dbSubscribe("locations",   function(v){ setLocsRaw(v); lsave(SK.locations, v); }),
       dbSubscribe("gestion",     function(v){ setGestRaw(v); lsave(SK.gestion, v); }),
       dbSubscribe("invitations", function(v){ setInvRaw(v); lsave(SK.invitations, v); }),
@@ -2467,6 +2470,7 @@ export default function App() {
   var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       setUsersRaw(v);    lsave(SK.users,v);       if(supabaseConfigured)dbSave("users",v);       },[users]);
   var setAgences     = useCallback(function(u){ var v=typeof u==="function"?u(agences):u;     setAgencesRaw(v);  lsave(SK.agences,v);     if(supabaseConfigured)dbSave("agences",v);     },[agences]);
   var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     setMandatsRaw(v);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSave("mandats",v);     },[mandats]);
+  var setTresorerie  = useCallback(function(u){ var v=typeof u==="function"?u(tresorerie):u;  setTresoRaw(v);    lsave(SK.tresorerie,v);  if(supabaseConfigured)dbSave("tresorerie",v);  },[tresorerie]);
   var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   setLocsRaw(v);     lsave(SK.locations,v);   if(supabaseConfigured)dbSave("locations",v);   },[locations]);
   var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     setGestRaw(v);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSave("gestion",v);     },[gestion]);
   var setInvitations = useCallback(function(u){ var v=typeof u==="function"?u(invitations):u; setInvRaw(v);      lsave(SK.invitations,v); if(supabaseConfigured)dbSave("invitations",v); },[invitations]);
