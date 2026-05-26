@@ -8,6 +8,7 @@ import Leads from "./Leads";
 import Recherches from "./Recherches";
 import GestionLocative from "./GestionLocative";
 import DashboardMatin from "./DashboardMatin";
+import PwaInstallButton from "./PwaInstallButton";
 import FicheKPIAgent from "./FicheKPIAgent";
 import Feedback from "./Feedback";
 import StatsComparatives from "./StatsComparatives";
@@ -59,6 +60,12 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [critereClassement, setCritereClassement] = useState("caRealise");
   var [filtreDoublons,   setFiltreDoublons]   = useState(false);
   var [showKpiDetail,    setShowKpiDetail]    = useState(null);
+  var [canInstall, setCanInstall] = useState(function(){
+    return !!(window._pwaPrompt);
+  });
+  var installApp = function() {
+    if (window._pwaPrompt) { window._pwaPrompt.prompt(); window._pwaPrompt = null; setCanInstall(false); }
+  };
   var [filtreAgentKpi,  setFiltreAgentKpi]  = useState("");
   var [filterType,  setFilterType]  = useState("");
   var [searchText,  setSearchText]  = useState("");
@@ -308,48 +315,94 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   }
 
   // Nav items
+
+  // ─── NAVIGATION THÉMATIQUE ────────────────────────────────────────────────
   var [showMoreMenu, setShowMoreMenu] = useState(false);
-  var NAV_PRIMARY   = ["dashboard","mandats","classement","stats","messagerie"];
-  var NAV_SECONDARY = ["ca","rapport","mandats","recherches","locations","gestion","offmarket","carte","prospection","taches","leads","matching","outils","feedback","objectifs","agents","km","profil"];
-  var ALL_TABS = {
-    dashboard:  {icon:"📊", label:"Dashboard",      shortLabel:"Accueil"},
-    mandats:    {icon:"📋", label:"Mandats",         shortLabel:"Mandats"},
-    recherches: {icon:"🔍", label:"Recherches",      shortLabel:"Rech."},
-    classement: {icon:"🏆", label:"Classement",      shortLabel:"Classmt"},
-    stats:      {icon:"📊", label:"Stats comparatives",shortLabel:"Stats"},
-    messagerie: {icon:"💬", label:"Messagerie",      shortLabel:"Messages"},
-    ca:         {icon:"📈", label:"CA Réalisé",      shortLabel:"CA"},
-    rapport:    {icon:"📄", label:"Rapport mensuel", shortLabel:"Rapport"},
-    locations:  {icon:"🏠", label:"Locations",       shortLabel:"Locs"},
-    gestion:    {icon:"🔑", label:"Gestion locative",shortLabel:"Gestion"},
-    offmarket:  {icon:"🔒", label:"Off Market",      shortLabel:"OffMkt"},
-    carte:      {icon:"🗺️", label:"Carte interactive",shortLabel:"Carte"},
-    prospection:{icon:"🚶", label:"Prospection",     shortLabel:"Prosp."},
-    taches:     {icon:"✅", label:"Tâches",          shortLabel:"Tâches"},
-    leads:      {icon:"📥", label:"Leads",           shortLabel:"Leads"},
-    matching:   {icon:"🎯", label:"Rapprochements",  shortLabel:"Match"},
-    outils:     {icon:"🛠️", label:"Outils",          shortLabel:"Outils"},
-    feedback:   {icon:"💡", label:"Suggestions",     shortLabel:"Ideas"},
-    objectifs:  {icon:"🎯", label:"Objectifs",       shortLabel:"Obj."},
-    agents:     {icon:"👥", label:"Agents",          shortLabel:"Agents"},
-    rapport:    {icon:"📄", label:"Rapport",         shortLabel:"Rapport"},
-    profil:     {icon:"👤", label:"Mon profil",      shortLabel:"Profil"},
-    km:         {icon:"🚗", label:"Indemnités km",    shortLabel:"Km"},
-    tresorerie: {icon:"💰", label:"Trésorerie",         shortLabel:"Tréso"},
-    import_sb:  {icon:"📥", label:"Import SweepBright", shortLabel:"Import"},
-  };
-  var navItems = [
-    ...NAV_PRIMARY.map(function(id){ var t=ALL_TABS[id]||{}; return {id, icon:t.icon, label:t.label, shortLabel:t.shortLabel, active:tab===id, onClick:function(){setTab(id);setShowMoreMenu(false);}}; }),
-    {id:"more", icon:"···", label:"Plus", shortLabel:"Plus", active:NAV_SECONDARY.includes(tab), onClick:function(){setShowMoreMenu(function(p){return !p;});}, isMore:true},
+  var [activeTheme,  setActiveTheme]  = useState(null);
+
+  var THEMES = [
+    {
+      id:"commercial", icon:"💼", label:"Commercial",
+      tabs:[
+        {id:"dashboard",   icon:"📊", label:"Tableau de bord"},
+        {id:"prospection", icon:"🚶", label:"Prospection"},
+        {id:"leads",       icon:"📥", label:"Leads"},
+        {id:"taches",      icon:"✅", label:"Tâches"},
+        {id:"recherches",  icon:"🔍", label:"Recherches"},
+        {id:"matching",    icon:"🎯", label:"Rapprochements"},
+      ]
+    },
+    {
+      id:"portefeuille", icon:"📋", label:"Portefeuille",
+      tabs:[
+        {id:"mandats",     icon:"📋", label:"Mandats"},
+        {id:"offmarket",   icon:"🔒", label:"Off Market"},
+        {id:"carte",       icon:"🗺️", label:"Carte"},
+        {id:"ca",          icon:"📈", label:"CA Réalisé"},
+        {id:"rapport",     icon:"📄", label:"Rapport mensuel"},
+        {id:"objectifs",   icon:"🎯", label:"Objectifs"},
+      ]
+    },
+    {
+      id:"location", icon:"🏠", label:"Location",
+      tabs:[
+        {id:"locations",   icon:"🏠", label:"Locations"},
+        {id:"gestion",     icon:"🔑", label:"Gestion locative"},
+      ]
+    },
+    {
+      id:"equipe", icon:"👥", label:"Équipe",
+      tabs:[
+        {id:"agents",      icon:"👥", label:"Agents"},
+        {id:"classement",  icon:"🏆", label:"Classement"},
+        {id:"stats",       icon:"📊", label:"Stats comparatives"},
+        {id:"messagerie",  icon:"💬", label:"Messagerie"},
+      ]
+    },
+    {
+      id:"outils", icon:"⚙️", label:"Outils",
+      tabs:[
+        {id:"outils",      icon:"🛠️", label:"Outils"},
+        {id:"tresorerie",  icon:"💰", label:"Trésorerie"},
+        {id:"km",          icon:"🚗", label:"Indemnités km"},
+        {id:"import_sb",   icon:"📥", label:"Import SweepBright"},
+        {id:"feedback",    icon:"💡", label:"Suggestions"},
+        {id:"profil",      icon:"👤", label:"Mon profil"},
+      ]
+    },
   ];
 
+  // Trouver le thème actif selon l'onglet ouvert
+  var themeActif = THEMES.find(function(th){ return th.tabs.some(function(t){return t.id===tab;}); });
+
+  var navItems = THEMES.map(function(theme){
+    var isActive = themeActif && themeActif.id===theme.id;
+    return {
+      id:theme.id, icon:theme.icon, label:theme.label, shortLabel:theme.label,
+      active:isActive,
+      onClick:function(){
+        if(isActive && activeTheme===theme.id) { setActiveTheme(null); return; }
+        setActiveTheme(theme.id);
+        // Naviguer vers le 1er onglet du thème si pas déjà dedans
+        if(!isActive) setTab(theme.tabs[0].id);
+      }
+    };
+  });
+
+  // ─── TITRE ONGLET ─── 
+  var tabTitle = (function(){
+    var t = (themeActif ? themeActif.tabs.find(function(x){return x.id===tab;}) : null);
+    return t ? t.icon+" "+t.label : tab;
+  })();
+
   return (
-    <AppShell navItems={navItems} title={tab==="objectifs"?"🎯 Objectifs & Progression":tab==="rapport"?"📄 Rapport mensuel":tab==="ca"?"📈 CA Réalisé":tab==="dashboard"?"📊 Dashboard":tab==="mandats"?"📋 Mandats":tab==="locations"?"🏠 Locations":tab==="gestion"?"🔑 Gestion locative":tab==="offmarket"?"🔒 Off Market":tab==="import_sb"?"📥 Import SweepBright":tab==="tresorerie"?"💰 Trésorerie":tab==="km"?"🚗 Indemnités kilométriques":tab==="stats"?"📊 Stats comparatives":tab==="matching"?"🎯 Rapprochements":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="classement"?"🏆 Classement":tab==="agents"?"👥 Agents":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Tâches":tab==="leads"?"📥 Leads":tab==="recherches"?"🔍 Recherches":"💬 Messagerie"}
+    <AppShell navItems={navItems} title={tabTitle}
       topbarActions={
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {(ctx.notifPerm||"default")!=="granted"
             ? <button onClick={async function(){ if(ctx.demanderPermission) await ctx.demanderPermission(); }} style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:"#D97706",cursor:"pointer",fontFamily:"var(--font)"}}>{"🔔 Notifs"}</button>
             : <span style={{fontSize:11,color:"#059669",fontWeight:700}}>{"🔔"}</span>}
+          <PwaInstallButton canInstall={canInstall} installApp={installApp}/>
           {tab==="mandats"    && <button className="btn btn-primary btn-sm" onClick={function(){setEditingMandat(null);setShowMandatForm(true);}}>{"+ Mandat"}</button>}
           {tab==="locations"  && <button className="btn btn-primary btn-sm" onClick={function(){setEditingLoc(null);setShowLocForm(true);}}>{"+ Location"}</button>}
           {tab==="gestion"    && <button className="btn btn-primary btn-sm" onClick={function(){setEditingGest(null);setShowGestForm(true);}}>{"+ Bien en gestion"}</button>}
@@ -1088,1388 +1141,42 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
         <TaskForm agents={agents} agenceId={agenceId} setTasks={setTasks} onClose={function(){setShowTaskModal(false);}}/>
       )}
       {/* ─── PANNEAU PLUS ─── */}
-      {showMoreMenu && (
-        <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",borderTop:"1px solid var(--g200)",boxShadow:"0 -8px 30px rgba(0,0,0,0.12)",padding:"14px 14px 10px",maxHeight:"60vh",overflowY:"auto"}} onClick={function(){setShowMoreMenu(false);}}>
-          <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:10,textTransform:"uppercase",letterSpacing:.8}}>{"Tous les onglets"}</div>
-            {[
-            { theme:"💼 Commercial",    ids:["prospection","leads","taches","recherches","matching"] },
-            { theme:"📋 Portefeuille",  ids:["mandats","offmarket","carte","ca","rapport","objectifs"] },
-            { theme:"🏠 Location",      ids:["gestion","locations"] },
-            { theme:"👥 Équipe",        ids:["agents","classement","stats"] },
-            { theme:"⚙️ Outils",        ids:["outils","km","tresorerie","import_sb","feedback","profil"] },
-          ].map(function(grp){
-            return (
-              <div key={grp.theme} style={{marginBottom:12}}>
-                <div style={{fontSize:10,fontWeight:800,color:"var(--g400)",textTransform:"uppercase",letterSpacing:.8,marginBottom:6}}>{grp.theme}</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-                  {grp.ids.map(function(id){
-                    var t = ALL_TABS[id]||{};
-                    return (
-                      <button key={id} onClick={function(e){e.stopPropagation();setTab(id);setShowMoreMenu(false);}}
-                        style={{display:"flex",alignItems:"center",gap:6,padding:"8px 10px",borderRadius:10,
-                          border:"2px solid "+(tab===id?"var(--navy)":"var(--g200)"),
-                          background:tab===id?"var(--navy)":"#fff",
-                          color:tab===id?"#fff":"var(--g600)",
-                          fontWeight:700,fontSize:11,cursor:"pointer",textAlign:"left",fontFamily:"var(--font)"}}>
-                        <span style={{fontSize:16}}>{t.icon}</span>
-                        <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.shortLabel||t.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* ─── MODAL KPI DETAIL ─── */}
-      {showKpiDetail && (function(){
-        var agF = filtreAgentKpi;
-        var mandatsF   = agF ? myMandats.filter(function(m){return m.agentId===agF;}) : myMandats;
-        var activeF    = mandatsF.filter(function(m){return m.statut==="mandat";});
-        var compromisF = mandatsF.filter(function(m){return m.statut==="compromis";});
-        var vendusF    = mandatsF.filter(function(m){return m.statut==="vendu";});
-        var exclF      = activeF.filter(function(m){return m.typeMandat==="exclusif";});
-        var locF       = locTrouvees.filter(function(l){return agF?l.agentId===agF:true;});
-        var gestionF   = myGestion.filter(function(g){return agF?g.agentId===agF:true;});
-        var caStockF   = activeF.reduce(function(s,m){return s+commHT(m.commission||0,m.typeBien);},0);
-        var txExclF    = activeF.length>0?Math.round(exclF.length/activeF.length*100):0;
-
-        var kpiMap = {
-          stock:       {titre:"📦 CA Stock — Mandats actifs",   items:activeF,    field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" · "+(m.typeMandat==="exclusif"?"⭐":"Simple");}},
-          tous_mandats:{titre:"📋 Tous les mandats actifs",      items:activeF,    field:null,          extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0)+" · "+(m.typeMandat==="exclusif"?"⭐ Excl.":"Simple");}},
-          exclusifs:   {titre:"⭐ Mandats exclusifs",            items:exclF,      field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
-          signe:       {titre:"✍️ CA Signé — Compromis",        items:compromisF, field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
-          encaissable: {titre:"💰 CA Encaissable — CS levées",   items:compromisF.filter(function(m){return m.clausesSuspensivesLevees;}), field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
-          realise:     {titre:"🏆 CA Réalisé — Ventes actées",  items:vendusF,    field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" · "+fmt(m.prix||0);}},
-          offres_mois: {titre:"🤝 Offres acceptées ce mois",    items:(agF?offresMoisCourant.filter(function(m){return m.agentId===agF;}):offresMoisCourant), field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
-          ventes_mois: {titre:"🏆 Ventes actées ce mois",       items:(agF?ventesMoisCourant.filter(function(m){return m.agentId===agF;}):ventesMoisCourant), field:"commission", extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0);}},
-          locations:   {titre:"🏠 Locations signées",           items:locF,       field:"commission", extra:function(l){return l.adresse.split(",")[0]+" · "+(l.loyer||0)+"€/mois";}},
-          gestion:     {titre:"🔑 Gestion locative",            items:gestionF,   field:"commissionMensuelle", extra:function(g){return g.adresse.split(",")[0]+" · "+(g.loyer||0)+"€/mois";}},
-        };
-        var k = kpiMap[showKpiDetail]; if(!k) return null;
-        var totalField = k.field ? k.items.reduce(function(s,m){return s+commHT(m[k.field]||0,m.typeBien);},0) : 0;
-        var agentSelec = agF ? users.find(function(u){return u.id===agF;}) : null;
+      {/* ─── SOUS-NAVIGATION THÉMATIQUE ─── */}
+      {(activeTheme) && (function(){
+        var theme = THEMES.find(function(t){return t.id===activeTheme;});
+        if(!theme) return null;
         return (
-          <Modal title={k.titre+(agentSelec?" — "+agentSelec.nom:"")} onClose={function(){setShowKpiDetail(null);setFiltreAgentKpi("");}}>
-            {/* Résumé */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
-              {[
-                {label:"Éléments",   val:k.items.length,                            color:"var(--navy)"},
-                {label:"CA HT total",val:k.field?fmt(totalField):"—",               color:"var(--green)"},
-                {label:"% Exclusifs",val:txExclF+"%",                               color:txExclF>=50?"var(--green)":"var(--amber)"},
-              ].map(function(s){return(
-                <div key={s.label} style={{background:"var(--g50)",borderRadius:8,padding:"8px",textAlign:"center"}}>
-                  <div style={{fontSize:9,color:"var(--g400)",fontWeight:700,textTransform:"uppercase",marginBottom:3}}>{s.label}</div>
-                  <div style={{fontWeight:900,fontSize:15,color:s.color}}>{s.val}</div>
-                </div>
-              );})}
+          <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",
+            borderTop:"2px solid var(--navy)",boxShadow:"0 -4px 20px rgba(0,0,0,0.15)",
+            padding:"10px 12px 8px"}}
+            onClick={function(e){e.stopPropagation();}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <span style={{fontSize:16}}>{theme.icon}</span>
+              <span style={{fontWeight:900,color:"var(--navy)",fontSize:13}}>{theme.label}</span>
+              <button onClick={function(){setActiveTheme(null);}} style={{marginLeft:"auto",background:"var(--g100)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:12,color:"var(--g500)"}}>{"✕"}</button>
             </div>
-
-            {/* Filtre agents */}
-            <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:8}}>{"📊 Stats par agent"}</div>
-            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
-              <button onClick={function(){setFiltreAgentKpi("");}} style={{padding:"4px 12px",borderRadius:20,border:"2px solid "+(agF?"var(--g200)":"var(--navy)"),background:agF?"#fff":"var(--navy)",color:agF?"var(--g500)":"#fff",fontWeight:700,fontSize:11,cursor:"pointer"}}>{"Tous"}</button>
-              {agents.map(function(a){
-                var actif=a.id===agF;
-                var col=a.couleur||"var(--navy)";
-                var nbA=myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="mandat";}).length;
-                var nbV=myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="vendu";}).length;
-                if(nbA===0&&nbV===0) return null;
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2,scrollbarWidth:"none"}}>
+              {theme.tabs.map(function(t){
+                var isActive = tab===t.id;
                 return(
-                  <button key={a.id} onClick={function(){setFiltreAgentKpi(actif?"":a.id);}}
-                    style={{padding:"4px 10px",borderRadius:20,border:"2px solid "+(actif?col:"var(--g200)"),background:actif?col:"#fff",color:actif?"#fff":"var(--g600)",fontWeight:700,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
-                    {a.photo?<img src={a.photo} style={{width:16,height:16,borderRadius:8,objectFit:"cover"}} alt=""/>:<span style={{width:16,height:16,borderRadius:8,background:col,display:"inline-flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:900,flexShrink:0}}>{a.avatar}</span>}
-                    {a.nom.split(" ")[0]}
+                  <button key={t.id} onClick={function(){setTab(t.id);setActiveTheme(null);}}
+                    style={{flexShrink:0,display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+                      borderRadius:20,border:"2px solid "+(isActive?"var(--navy)":"var(--g200)"),
+                      background:isActive?"var(--navy)":"#fff",
+                      color:isActive?"#fff":"var(--g600)",
+                      fontWeight:isActive?800:600,fontSize:12,cursor:"pointer",
+                      fontFamily:"var(--font)",whiteSpace:"nowrap"}}>
+                    <span style={{fontSize:15}}>{t.icon}</span>
+                    <span>{t.label}</span>
+                    {isActive && <span style={{width:6,height:6,borderRadius:3,background:"#6EE7B7",flexShrink:0}}/>}
                   </button>
                 );
               })}
             </div>
-
-            {/* Tableau stats agents */}
-            {!agF && (
-              <div style={{overflowX:"auto",marginBottom:14}}>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:380}}>
-                  <thead>
-                    <tr style={{background:"var(--g50)"}}>
-                      {["Agent","Stock","Repr.","CA Stock","CA Réalisé","% Excl.","Tx comm."].map(function(h){
-                        return <th key={h} style={{padding:"6px 8px",fontWeight:700,color:"var(--g500)",textAlign:h==="Agent"?"left":"right",whiteSpace:"nowrap"}}>{h}</th>;
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {agents.map(function(a){
-                      var aAct  = myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="mandat";});
-                      var aVend = myMandats.filter(function(m){return m.agentId===a.id&&m.statut==="vendu";});
-                      var aExcl = aAct.filter(function(m){return m.typeMandat==="exclusif";});
-                      var aCaS  = aAct.reduce(function(s,m){return s+commHT(m.commission||0,m.typeBien);},0);
-                      var aCaR  = aVend.reduce(function(s,m){return s+commHT(m.commission||0,m.typeBien);},0);
-                      var aTxC  = aVend.filter(function(m){return m.prix>0&&m.commission>0;});
-                      var aTxCm = aTxC.length>0?Math.round(aTxC.reduce(function(s,m){return s+m.commission/m.prix*100;},0)/aTxC.length*100)/100:0;
-                      var tot   = active.length||1;
-                      var repr  = Math.round(aAct.length/tot*100);
-                      if(aAct.length===0&&aVend.length===0) return null;
-                      return(
-                        <tr key={a.id} style={{borderBottom:"1px solid var(--g50)",cursor:"pointer"}} onClick={function(){setFiltreAgentKpi(a.id);}}>
-                          <td style={{padding:"7px 8px"}}>
-                            <div style={{display:"flex",alignItems:"center",gap:6}}>
-                              {a.photo?<img src={a.photo} style={{width:22,height:22,borderRadius:11,objectFit:"cover"}} alt=""/>:<div style={{width:22,height:22,borderRadius:11,background:a.couleur||"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:9,fontWeight:900,flexShrink:0}}>{a.avatar}</div>}
-                              <span style={{fontWeight:700,color:"var(--navy)"}}>{a.nom.split(" ")[0]}</span>
-                            </div>
-                          </td>
-                          <td style={{padding:"7px 8px",textAlign:"right",fontWeight:700}}>{aAct.length}</td>
-                          <td style={{padding:"7px 8px",textAlign:"right"}}>
-                            <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end"}}>
-                              <div style={{width:40,height:6,background:"var(--g100)",borderRadius:3,overflow:"hidden"}}>
-                                <div style={{width:repr+"%",height:"100%",background:a.couleur||"var(--navy)",borderRadius:3}}/>
-                              </div>
-                              <span style={{fontSize:10,color:"var(--g400)"}}>{repr+"%"}</span>
-                            </div>
-                          </td>
-                          <td style={{padding:"7px 8px",textAlign:"right",color:"var(--purple)",fontWeight:700}}>{aCaS>0?fmt(aCaS):"—"}</td>
-                          <td style={{padding:"7px 8px",textAlign:"right",color:"var(--green)",fontWeight:700}}>{aCaR>0?fmt(aCaR):"—"}</td>
-                          <td style={{padding:"7px 8px",textAlign:"right",color:aAct.length>0&&aExcl.length/aAct.length>=0.5?"var(--green)":"var(--amber)",fontWeight:700}}>{aAct.length>0?Math.round(aExcl.length/aAct.length*100)+"%":"—"}</td>
-                          <td style={{padding:"7px 8px",textAlign:"right",color:"var(--blue)",fontWeight:700}}>{aTxCm>0?aTxCm+"%":"—"}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Liste biens */}
-            {k.items.length===0&&<div style={{textAlign:"center",color:"var(--g400)",padding:"20px",fontSize:13}}>{"Aucun élément"+(agentSelec?" pour "+agentSelec.nom:"")}</div>}
-            {k.items.map(function(item,i){
-              var ag=users.find(function(u){return u.id===item.agentId;});
-              return(
-                <div key={item.id||i} onClick={function(){setDetailMandat(item);setShowKpiDetail(null);setFiltreAgentKpi("");}}
-                  style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--g50)",cursor:"pointer"}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                      {ag&&ag.photo?<img src={ag.photo} style={{width:18,height:18,borderRadius:9,objectFit:"cover"}} alt=""/>:ag&&<div style={{width:18,height:18,borderRadius:9,background:ag.couleur||"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:900,flexShrink:0}}>{ag.avatar}</div>}
-                      <div style={{fontWeight:700,color:"var(--navy)",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.ref||item.adresse}</div>
-                      {item.typeMandat==="exclusif"&&<span style={{background:"#FEF3C7",color:"#92400E",borderRadius:8,padding:"1px 5px",fontSize:9,fontWeight:800,flexShrink:0}}>{"⭐"}</span>}
-                    </div>
-                    <div style={{fontSize:11,color:"var(--g400)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{k.extra(item)+(ag?" · "+ag.nom:"")}</div>
-                  </div>
-                  <span style={{fontSize:18,color:"var(--g300)",flexShrink:0,marginLeft:8}}>{"›"}</span>
-                </div>
-              );
-            })}
-
-            <div style={{marginTop:14}}>
-              <button className="btn btn-secondary" style={{width:"100%"}} onClick={function(){setShowKpiDetail(null);setFiltreAgentKpi("");}}>{"Fermer"}</button>
-            </div>
-          </Modal>
+          </div>
         );
       })()}
     </AppShell>
-  );
-}
-
-// ─── LOCATION FORM ─────────────────────────────────────────────────────────────
-function LocForm({ initial, agents, agenceId, onSave, onCancel }) {
-  var init = initial || {};
-  var [f, setF] = useState({ref:"",adresse:"",loyer:"",commission:"",agentId:"",agenceId:agenceId,dateSignature:"",locataireNom:"",locatairePrenom:"",locataireTel:"",locataireMail:"",locataireTrouve:false,...init});
-  function set(k,v){setF(function(p){return{...p,[k]:v};});}
-  return (
-    <Modal title={init.id?"✏️ Modifier la location":"➕ Nouvelle location"} onClose={onCancel}
-      footer={<div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onCancel}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={function(){onSave(f);}}>{"Enregistrer"}</button></div>}>
-      <div className="form-grid">
-        <div className="form-group"><label className="form-label">{"Référence"}</label><input className="form-input" value={f.ref} onChange={function(e){set("ref",e.target.value);}} placeholder="LOC-009"/></div>
-        <div className="form-group"><label className="form-label">{"Agent"}</label><select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}><option value="">{"— Choisir —"}</option>{agents.map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}</select></div>
-        <div className="form-group form-full"><label className="form-label">{"Adresse"}</label><input className="form-input" value={f.adresse} onChange={function(e){set("adresse",e.target.value);}} placeholder="5 Rue de la Paix, Amiens"/></div>
-        <div className="form-group"><label className="form-label">{"Loyer (€/mois)"}</label><input className="form-input" type="number" value={f.loyer} onChange={function(e){set("loyer",Number(e.target.value));}} placeholder="750"/></div>
-        <div className="form-group"><label className="form-label">{"Commission (€)"}</label><input className="form-input" type="number" value={f.commission} onChange={function(e){set("commission",Number(e.target.value));}} placeholder="750"/></div>
-        <div className="form-group"><label className="form-label">{"Date signature"}</label><input className="form-input" type="date" value={f.dateSignature||""} onChange={function(e){set("dateSignature",e.target.value);}}/></div>
-        <div className="checkbox-row form-full" onClick={function(){set("locataireTrouve",!f.locataireTrouve);}}>
-          <input type="checkbox" checked={!!f.locataireTrouve} onChange={function(){}}/><label>{"✅ Locataire trouvé"}</label>
-        </div>
-        {f.locataireTrouve && (
-          <div className="form-group form-full">
-            <div className="form-grid">
-              <div className="form-group"><label className="form-label">{"Nom locataire"}</label><input className="form-input" value={f.locataireNom} onChange={function(e){set("locataireNom",e.target.value);}}/></div>
-              <div className="form-group"><label className="form-label">{"Prénom"}</label><input className="form-input" value={f.locatairePrenom} onChange={function(e){set("locatairePrenom",e.target.value);}}/></div>
-              <div className="form-group"><label className="form-label">{"Téléphone"}</label><input className="form-input" value={f.locataireTel} onChange={function(e){set("locataireTel",e.target.value);}}/></div>
-              <div className="form-group"><label className="form-label">{"Email"}</label><input className="form-input" type="email" value={f.locataireMail} onChange={function(e){set("locataireMail",e.target.value);}}/></div>
-            </div>
-          </div>
-        )}
-      </div>
-    </Modal>
-  );
-}
-
-// ─── GESTION FORM ──────────────────────────────────────────────────────────────
-function GestForm({ initial, agents, agenceId, onSave, onCancel }) {
-  var init = initial || {};
-  var [f, setF] = useState({ref:"",adresse:"",loyer:"",commissionPct:8,commissionMensuelle:"",agentId:"",agenceId:agenceId,proprietaireNom:"",proprietairePrenom:"",dateDebutGestion:"",actif:true,...init});
-  function set(k,v){setF(function(p){return{...p,[k]:v};});}
-  return (
-    <Modal title={init.id?"✏️ Modifier":"➕ Nouveau bien en gestion"} onClose={onCancel}
-      footer={<div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onCancel}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={function(){onSave(f);}}>{"Enregistrer"}</button></div>}>
-      <div className="form-grid">
-        <div className="form-group"><label className="form-label">{"Référence"}</label><input className="form-input" value={f.ref} onChange={function(e){set("ref",e.target.value);}}/></div>
-        <div className="form-group"><label className="form-label">{"Agent"}</label><select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}><option value="">{"— Choisir —"}</option>{agents.map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}</select></div>
-        <div className="form-group form-full"><label className="form-label">{"Adresse"}</label><input className="form-input" value={f.adresse} onChange={function(e){set("adresse",e.target.value);}}/></div>
-        <div className="form-group"><label className="form-label">{"Propriétaire (Nom)"}</label><input className="form-input" value={f.proprietaireNom} onChange={function(e){set("proprietaireNom",e.target.value);}}/></div>
-        <div className="form-group"><label className="form-label">{"Prénom"}</label><input className="form-input" value={f.proprietairePrenom} onChange={function(e){set("proprietairePrenom",e.target.value);}}/></div>
-        <div className="form-group"><label className="form-label">{"Loyer (€/mois)"}</label><input className="form-input" type="number" value={f.loyer} onChange={function(e){set("loyer",Number(e.target.value));}}/></div>
-        <div className="form-group"><label className="form-label">{"Commission (%)"}</label><input className="form-input" type="number" value={f.commissionPct} onChange={function(e){set("commissionPct",Number(e.target.value));}}/></div>
-        <div className="form-group"><label className="form-label">{"Commission mensuelle (€)"}</label><input className="form-input" type="number" value={f.commissionMensuelle} onChange={function(e){set("commissionMensuelle",Number(e.target.value));}}/></div>
-        <div className="form-group"><label className="form-label">{"Début gestion"}</label><input className="form-input" type="date" value={f.dateDebutGestion||""} onChange={function(e){set("dateDebutGestion",e.target.value);}}/></div>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── INVITE MODAL ─────────────────────────────────────────────────────────────
-function InviteModal({ agents, agenceId, onInvite, onClose, result, setResult }) {
-  var [f,   setF]   = useState({nom:"", email:"", niveau:"junior", motDePasse:""});
-  var [err, setErr] = useState("");
-  function set(k,v){setF(function(p){return{...p,[k]:v};});}
-  function genPwd() {
-    var chars = "abcdefghjkmnpqrstuvwxyz23456789";
-    var pwd = "";
-    for (var i=0;i<6;i++) pwd += chars[Math.floor(Math.random()*chars.length)];
-    set("motDePasse", pwd);
-  }
-  function send() {
-    if (!f.nom.trim())       { setErr("Le nom est requis"); return; }
-    if (!f.email.trim())     { setErr("L'email est requis"); return; }
-    if (!f.motDePasse.trim()){ setErr("Définissez un mot de passe temporaire"); return; }
-    var r = onInvite(f, agenceId);
-    if (!r.success) { setErr(r.error||"Erreur"); return; }
-    setResult(r);
-  }
-  function copyMsg() {
-    if (result && result.emailMessage) {
-      navigator.clipboard.writeText(result.emailMessage).then(function(){alert("✅ Copié !");}).catch(function(){});
-    }
-  }
-  return (
-    <Modal title={"👤 Créer un compte agent"} onClose={onClose}
-      footer={!result && <div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onClose}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={send}>{"Créer le compte"}</button></div>}>
-      {!result ? (
-        <div>
-          {err && <div className="alert alert-danger" style={{marginBottom:12}}>{"⚠️ "+err}</div>}
-          <div className="form-grid">
-            <div className="form-group form-full"><label className="form-label">{"Nom complet *"}</label><input className="form-input" value={f.nom} onChange={function(e){set("nom",e.target.value);setErr("");}} placeholder="Prénom Nom" autoFocus/></div>
-            <div className="form-group form-full"><label className="form-label">{"Email *"}</label><input className="form-input" type="email" value={f.email} onChange={function(e){set("email",e.target.value);setErr("");}} placeholder="prenom.nom@orpi.com"/></div>
-            <div className="form-group"><label className="form-label">{"Niveau"}</label><select className="form-select" value={f.niveau} onChange={function(e){set("niveau",e.target.value);}}><option value="junior">{"🌱 Junior"}</option><option value="senior">{"🏆 Senior"}</option></select></div>
-            <div className="form-group">
-              <label className="form-label">{"Mot de passe temporaire *"}</label>
-              <div style={{display:"flex",gap:6}}>
-                <input className="form-input" value={f.motDePasse} onChange={function(e){set("motDePasse",e.target.value);setErr("");}} placeholder="Ex: orpi2024" style={{flex:1,fontFamily:"monospace",letterSpacing:2}}/>
-                <button onClick={genPwd} className="btn btn-secondary btn-sm" style={{flexShrink:0}}>{"🎲"}</button>
-              </div>
-              <div style={{fontSize:11,color:"var(--g400)",marginTop:4}}>{"À communiquer à l'agent — il pourra le changer"}</div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div>
-          <div style={{background:"#F0FDF4",border:"1px solid #A7F3D0",borderRadius:12,padding:"16px",marginBottom:14}}>
-            <div style={{fontWeight:800,color:"#065F46",fontSize:14,marginBottom:12}}>{"✅ Compte créé pour "+f.nom}</div>
-            <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"8px 12px",fontSize:13}}>
-              <span style={{color:"var(--g400)"}}>{"🌐 Application :"}</span>
-              <strong style={{color:"var(--navy)",wordBreak:"break-all"}}>{result.appUrl}</strong>
-              <span style={{color:"var(--g400)"}}>{"📧 Email :"}</span>
-              <strong style={{color:"var(--navy)"}}>{f.email}</strong>
-              <span style={{color:"var(--g400)"}}>{"🔑 Mot de passe :"}</span>
-              <strong style={{color:"var(--red)",fontSize:16,letterSpacing:2,fontFamily:"monospace"}}>{result.motDePasse}</strong>
-            </div>
-          </div>
-          <div style={{background:"var(--g50)",border:"1px solid var(--g200)",borderRadius:10,padding:"12px 14px",marginBottom:12}}>
-            <div style={{fontWeight:700,fontSize:12,color:"var(--g500)",marginBottom:6}}>{"📋 Message prêt à envoyer :"}</div>
-            <pre style={{fontSize:12,color:"var(--g700)",whiteSpace:"pre-wrap",fontFamily:"inherit",lineHeight:1.7}}>{result.emailMessage}</pre>
-          </div>
-          <div style={{display:"flex",gap:8}}>
-            <button className="btn btn-primary btn-sm" style={{flex:1}} onClick={copyMsg}>{"📋 Copier le message"}</button>
-            <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={onClose}>{"Fermer"}</button>
-          </div>
-        </div>
-      )}
-    </Modal>
-  );
-}
-
-// ─── OBJECTIFS MODAL ──────────────────────────────────────────────────────────
-function ObjectifsModal({ agents, objectifs, setObjectifs, onClose }) {
-  var annee = new Date().getFullYear();
-  function updateObj(agentId, montant) {
-    setObjectifs(function(prev) {
-      var ex = prev.find(function(o){return o.agentId===agentId && o.annee===annee;});
-      if (ex) return prev.map(function(o){return (o.agentId===agentId&&o.annee===annee)?{...o,montantHT:Number(montant)}:o;});
-      return [...prev, {agentId:agentId, agenceId:agents[0]&&agents[0].agenceId, annee:annee, montantHT:Number(montant)}];
-    });
-  }
-  return (
-    <Modal title={"🎯 Objectifs "+annee} onClose={onClose} footer={<button className="btn btn-primary" style={{width:"100%"}} onClick={onClose}>{"Fermer"}</button>}>
-      {agents.map(function(a) {
-        var obj = objectifs.find(function(o){return o.agentId===a.id&&o.annee===annee;});
-        return (
-          <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:"1px solid var(--g100)"}}>
-            <div className="avatar" style={{background:avatarColor(a.nom),width:34,height:34,fontSize:12}}>{a.avatar}</div>
-            <div style={{flex:1}}><div style={{fontWeight:700}}>{a.nom}</div><div style={{fontSize:12,color:"var(--g400)"}}>{a.niveau}</div></div>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <input type="number" defaultValue={obj?obj.montantHT:""} onBlur={function(e){updateObj(a.id,e.target.value);}} className="form-input" style={{width:110,textAlign:"right"}} placeholder="Ex: 40000"/>
-              <span style={{fontSize:13,color:"var(--g400)"}}>{"€ HT"}</span>
-            </div>
-          </div>
-        );
-      })}
-    </Modal>
-  );
-}
-
-// ─── TASK FORM ────────────────────────────────────────────────────────────────
-function TaskForm({ agents, agenceId, setTasks, onClose }) {
-  var [f, setF] = useState({titre:"", description:"", agentId:"", priorite:"normale", echeance:"", statut:"en_attente"});
-  function set(k,v){setF(function(p){return{...p,[k]:v};});}
-  function save() {
-    if (!f.titre) return;
-    var newTask = {...f, id:"t-"+Date.now(), agenceId:agenceId, createdAt:new Date().toISOString().slice(0,10)};
-    setTasks(function(prev){return [...prev, newTask];});
-    if (newTask.agentId) { notifTacheConfiee(newTask); }
-    onClose();
-  }
-  return (
-    <Modal title={"✅ Nouvelle tâche"} onClose={onClose}
-      footer={<div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onClose}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={save}>{"Créer la tâche"}</button></div>}>
-      <div className="form-grid">
-        <div className="form-group form-full"><label className="form-label">{"Titre *"}</label><input className="form-input" value={f.titre} onChange={function(e){set("titre",e.target.value);}} placeholder="Ex: Relancer les mandats expirant..."/></div>
-        <div className="form-group form-full"><label className="form-label">{"Description"}</label><textarea className="form-input" rows={3} value={f.description} onChange={function(e){set("description",e.target.value);}} style={{resize:"vertical",fontFamily:"var(--font)"}}></textarea></div>
-        <div className="form-group"><label className="form-label">{"Agent (vide = tous)"}</label><select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}><option value="">{"Tous les agents"}</option>{agents.map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}</select></div>
-        <div className="form-group"><label className="form-label">{"Priorité"}</label><select className="form-select" value={f.priorite} onChange={function(e){set("priorite",e.target.value);}}><option value="basse">{"🔵 Basse"}</option><option value="normale">{"🟡 Normale"}</option><option value="haute">{"🔴 Haute"}</option></select></div>
-        <div className="form-group"><label className="form-label">{"Échéance"}</label><input className="form-input" type="date" value={f.echeance} onChange={function(e){set("echeance",e.target.value);}}/></div>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── MANDAT DETAIL MODAL ──────────────────────────────────────────────────────
-
-
-// ─── CONFIGURATION SEUILS KPI ─────────────────────────────────────────────────
-function ConfigKPI({ onClose }) {
-  var ctx = useApp();
-  var cfg = ctx.kpiConfig || {};
-  var setKpiConfig = ctx.setKpiConfig;
-
-  var [f, setF] = useState({
-    txCommBon:          cfg.txCommBon         != null ? cfg.txCommBon         : 4.0,
-    txCommExcellent:    cfg.txCommExcellent   != null ? cfg.txCommExcellent   : 4.5,
-    txCommAlerte:       cfg.txCommAlerte      != null ? cfg.txCommAlerte      : 3.0,
-    txConvBon:          cfg.txConvBon         != null ? cfg.txConvBon         : 25,
-    txConvExcellent:    cfg.txConvExcellent   != null ? cfg.txConvExcellent   : 40,
-    txConvAlerte:       cfg.txConvAlerte      != null ? cfg.txConvAlerte      : 15,
-    ratioProspBon:      cfg.ratioProspBon     != null ? cfg.ratioProspBon     : 0.15,
-    ratioProspExcellent:cfg.ratioProspExcellent!=null ? cfg.ratioProspExcellent: 0.3,
-    stockBon:           cfg.stockBon          != null ? cfg.stockBon          : 8,
-    stockAlerte:        cfg.stockAlerte       != null ? cfg.stockAlerte       : 2,
-    exclExcellent:      cfg.exclExcellent     != null ? cfg.exclExcellent     : 60,
-    exclBon:            cfg.exclBon           != null ? cfg.exclBon           : 40,
-    exclAlerte:         cfg.exclAlerte        != null ? cfg.exclAlerte        : 25,
-    delaiExcellent:     cfg.delaiExcellent    != null ? cfg.delaiExcellent    : 60,
-    delaiBon:           cfg.delaiBon          != null ? cfg.delaiBon          : 90,
-    delaiAlerte:        cfg.delaiAlerte       != null ? cfg.delaiAlerte       : 150,
-    objAvancePts:       cfg.objAvancePts      != null ? cfg.objAvancePts      : 15,
-    objRetardPts:       cfg.objRetardPts      != null ? cfg.objRetardPts      : 20,
-    connexionsBon:      cfg.connexionsBon     != null ? cfg.connexionsBon     : 10,
-    connexionsAlerte:   cfg.connexionsAlerte  != null ? cfg.connexionsAlerte  : 3,
-    secteursMin:        cfg.secteursMin       != null ? cfg.secteursMin       : 4,
-    recherchesMin:      cfg.recherchesMin     != null ? cfg.recherchesMin     : 5,
-  });
-  var [saved, setSaved] = useState(false);
-  function set(k,v){ setF(function(p){ return {...p,[k]:Number(v)}; }); setSaved(false); }
-  function save() {
-    setKpiConfig(f);
-    setSaved(true);
-    setTimeout(function(){ setSaved(false); }, 2500);
-  }
-  function reset() {
-    var defaults = {txCommBon:4.0,txCommExcellent:4.5,txCommAlerte:3.0,txConvBon:25,txConvExcellent:40,txConvAlerte:15,ratioProspBon:0.15,ratioProspExcellent:0.3,stockBon:8,stockAlerte:2,exclExcellent:60,exclBon:40,exclAlerte:25,delaiExcellent:60,delaiBon:90,delaiAlerte:150,objAvancePts:15,objRetardPts:20,connexionsBon:10,connexionsAlerte:3,secteursMin:4,recherchesMin:5};
-    setF(defaults);
-    setKpiConfig(defaults);
-    setSaved(true);
-    setTimeout(function(){ setSaved(false); }, 2500);
-  }
-
-  var sections = [
-    {
-      titre:"📐 Taux de commission (%)",
-      desc:"Sur le prix de vente",
-      fields:[
-        {key:"txCommExcellent",label:"Excellent ≥",unit:"%",step:0.1},
-        {key:"txCommBon",label:"Bon ≥",unit:"%",step:0.1},
-        {key:"txCommAlerte",label:"Alerte <",unit:"%",step:0.1},
-      ]
-    },
-    {
-      titre:"🎯 Taux de conversion mandat → vente (%)",
-      desc:"Mandats aboutissant à compromis ou vente",
-      fields:[
-        {key:"txConvExcellent",label:"Excellent ≥",unit:"%",step:1},
-        {key:"txConvBon",label:"Bon ≥",unit:"%",step:1},
-        {key:"txConvAlerte",label:"Alerte <",unit:"%",step:1},
-      ]
-    },
-    {
-      titre:"🚶 Ratio prospection / mandat",
-      desc:"Mandats pris par action de prospection",
-      fields:[
-        {key:"ratioProspExcellent",label:"Excellent ≥",unit:" mandat/contact",step:0.01},
-        {key:"ratioProspBon",label:"Bon ≥",unit:" mandat/contact",step:0.01},
-      ]
-    },
-    {
-      titre:"📦 Stock de mandats actifs",
-      desc:"Nombre de mandats actifs en portefeuille",
-      fields:[
-        {key:"stockBon",label:"Bon ≥",unit:" mandats",step:1},
-        {key:"stockAlerte",label:"Alerte ≤",unit:" mandats",step:1},
-      ]
-    },
-    {
-      titre:"⭐ Taux d'exclusivité (%)",
-      desc:"Part des mandats exclusifs",
-      fields:[
-        {key:"exclExcellent",label:"Excellent ≥",unit:"%",step:1},
-        {key:"exclBon",label:"Bon ≥",unit:"%",step:1},
-        {key:"exclAlerte",label:"Alerte <",unit:"%",step:1},
-      ]
-    },
-    {
-      titre:"⏱ Délai moyen mandat → acte (jours)",
-      desc:"Plus c'est bas, mieux c'est",
-      fields:[
-        {key:"delaiExcellent",label:"Excellent ≤",unit:" jours",step:5},
-        {key:"delaiBon",label:"Bon ≤",unit:" jours",step:5},
-        {key:"delaiAlerte",label:"Alerte >",unit:" jours",step:5},
-      ]
-    },
-    {
-      titre:"🏆 Progression objectif annuel (points)",
-      desc:"Écart entre progression réelle et attendue",
-      fields:[
-        {key:"objAvancePts",label:"Force si avance ≥",unit:" pts",step:1},
-        {key:"objRetardPts",label:"Alerte si retard ≥",unit:" pts",step:1},
-      ]
-    },
-    {
-      titre:"📱 Connexions à l'app / mois",
-      desc:"Nombre de connexions enregistrées",
-      fields:[
-        {key:"connexionsBon",label:"Bon ≥",unit:" connexions",step:1},
-        {key:"connexionsAlerte",label:"Alerte <",unit:" connexions",step:1},
-      ]
-    },
-    {
-      titre:"🗺️ Diversification géographique",
-      desc:"Minimum de secteurs différents couverts",
-      fields:[
-        {key:"secteursMin",label:"Objectif ≥",unit:" secteurs",step:1},
-      ]
-    },
-    {
-      titre:"🔍 Recherches acheteurs enregistrées",
-      desc:"Nombre de fiches acquéreurs actives",
-      fields:[
-        {key:"recherchesMin",label:"Objectif ≥",unit:" recherches",step:1},
-      ]
-    },
-  ];
-
-  return (
-    <Modal title={"⚙️ Paramétrer les seuils KPI"} onClose={onClose} wide
-      footer={
-        <div style={{display:"flex",gap:8,width:"100%",alignItems:"center"}}>
-          <button className="btn btn-secondary btn-sm" onClick={reset}>{"↺ Réinitialiser par défaut"}</button>
-          <div style={{flex:1}}/>
-          {saved && <span style={{fontSize:12,color:"var(--green)",fontWeight:700}}>{"✅ Enregistré !"}</span>}
-          <button className="btn btn-primary" onClick={save}>{"💾 Enregistrer"}</button>
-        </div>
-      }
-    >
-      <div style={{marginBottom:14,background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#1D4ED8"}}>
-        {"Ces seuils s'appliquent à toutes les fiches KPI agents de l'agence. Ils définissent ce qui est affiché en 💪 Force (vert) ou 🎯 Axe de progression (orange)."}
-      </div>
-      {sections.map(function(sec) {
-        return (
-          <div key={sec.titre} style={{background:"#fff",borderRadius:12,border:"1px solid var(--g200)",overflow:"hidden",marginBottom:12}}>
-            <div style={{background:"var(--g50)",borderBottom:"1px solid var(--g100)",padding:"10px 14px"}}>
-              <div style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{sec.titre}</div>
-              <div style={{fontSize:11,color:"var(--g400)",marginTop:2}}>{sec.desc}</div>
-            </div>
-            <div style={{padding:"12px 14px",display:"grid",gridTemplateColumns:"repeat("+Math.min(sec.fields.length,3)+",1fr)",gap:10}}>
-              {sec.fields.map(function(field) {
-                var isAlerte = field.label.toLowerCase().includes("alerte");
-                var isExcellent = field.label.toLowerCase().includes("excellent");
-                var borderCol = isExcellent?"#A7F3D0":isAlerte?"#FECACA":"#BFDBFE";
-                var labelCol  = isExcellent?"#059669":isAlerte?"#EF4444":"#2563EB";
-                return (
-                  <div key={field.key} style={{background:isExcellent?"#F0FDF4":isAlerte?"#FEF2F2":"#EFF6FF",borderRadius:10,padding:"10px 12px",border:"1px solid "+borderCol}}>
-                    <label style={{fontSize:11,fontWeight:700,color:labelCol,display:"block",marginBottom:6}}>{field.label}</label>
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <input
-                        type="number"
-                        step={field.step}
-                        value={f[field.key]}
-                        onChange={function(e){set(field.key,e.target.value);}}
-                        style={{width:"100%",padding:"6px 8px",border:"1px solid "+borderCol,borderRadius:8,fontSize:14,fontWeight:800,color:labelCol,background:"#fff",outline:"none"}}
-                      />
-                      <span style={{fontSize:10,color:labelCol,fontWeight:600,whiteSpace:"nowrap"}}>{field.unit}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </Modal>
-  );
-}
-
-// ─── CO-AGENT (partage mandat 25%/25%) ───────────────────────────────────────
-function CoAgentSection({ m, users, onUpdate }) {
-  var ctx2 = useApp();
-  var agenceId = ctx2.currentUser.agenceId;
-  var coAgents = m.coAgents || [];
-  var [showAdd, setShowAdd] = useState(false);
-  var [selAgent, setSelAgent] = useState("");
-  var [pctEntree, setPctEntree] = useState(25);
-  var [pctSortie, setPctSortie] = useState(25);
-
-  var agentsDispos = (users||[]).filter(function(u){
-    return u.actif && (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.agenceId===agenceId
-      && u.id !== m.agentId
-      && !coAgents.find(function(ca){ return ca.agentId===u.id; });
-  });
-
-  function addCoAgent() {
-    if (!selAgent) return;
-    var updated = {...m, coAgents:[...coAgents,{agentId:selAgent,pctEntree:Number(pctEntree),pctSortie:Number(pctSortie),dateAjout:new Date().toISOString().slice(0,10)}]};
-    onUpdate(updated);
-    setShowAdd(false); setSelAgent(""); setPctEntree(25); setPctSortie(25);
-  }
-  function removeCoAgent(agentId) {
-    var updated = {...m, coAgents:coAgents.filter(function(ca){return ca.agentId!==agentId;})};
-    onUpdate(updated);
-  }
-
-  // Commission co-agent calculée
-  function commCoAgent(ca) {
-    if (!m.commission) return null;
-    // Entrée = % des hono si mandat rentré ensemble, Sortie = % si vente apportée par co-agent
-    var partEntree = Math.round(m.commission * ca.pctEntree / 100);
-    var partSortie = Math.round(m.commission * ca.pctSortie / 100);
-    return {partEntree, partSortie};
-  }
-
-  return (
-    <div style={{background:"#F5F3FF",border:"1px solid #DDD6FE",borderRadius:12,overflow:"hidden",marginBottom:12}}>
-      <div style={{background:"#7C3AED",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:16}}>{"🤝"}</span>
-          <span style={{fontWeight:800,color:"#fff",fontSize:13}}>{"Partage de mandat (co-agent)"}</span>
-          {coAgents.length>0 && <span style={{background:"rgba(255,255,255,0.2)",color:"#fff",borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:700}}>{coAgents.length+" co-agent"+(coAgents.length>1?"s":"")}</span>}
-        </div>
-        {!showAdd && agentsDispos.length>0 && (
-          <button onClick={function(){setShowAdd(true);}} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{"+ Ajouter"}</button>
-        )}
-      </div>
-      <div style={{padding:"12px 14px"}}>
-        {/* Formulaire ajout */}
-        {showAdd && (
-          <div style={{background:"#fff",borderRadius:10,padding:"12px",marginBottom:12,border:"1px solid #DDD6FE"}}>
-            <div style={{fontWeight:700,color:"var(--navy)",fontSize:13,marginBottom:10}}>{"Ajouter un co-agent"}</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-              <div className="form-group" style={{gridColumn:"1/-1"}}>
-                <label className="form-label">{"Agent"}</label>
-                <select className="form-select" value={selAgent} onChange={function(e){setSelAgent(e.target.value);}}>
-                  <option value="">{"— Choisir un agent —"}</option>
-                  {agentsDispos.map(function(u){ return <option key={u.id} value={u.id}>{u.nom}</option>; })}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">{"% Entrée (apport mandat)"}</label>
-                <select className="form-select" value={pctEntree} onChange={function(e){setPctEntree(Number(e.target.value));}}>
-                  {[0,10,15,20,25,30,33,40,50].map(function(v){ return <option key={v} value={v}>{v+"%"}</option>; })}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">{"% Sortie (apport acheteur)"}</label>
-                <select className="form-select" value={pctSortie} onChange={function(e){setPctSortie(Number(e.target.value));}}>
-                  {[0,10,15,20,25,30,33,40,50].map(function(v){ return <option key={v} value={v}>{v+"%"}</option>; })}
-                </select>
-              </div>
-            </div>
-            {m.commission && selAgent && (
-              <div style={{background:"#F5F3FF",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:"#7C3AED",fontWeight:700}}>
-                {"Commission totale : "+(m.commission||0).toLocaleString("fr-FR")+"€ · Entrée co-agent : "+Math.round((m.commission||0)*pctEntree/100).toLocaleString("fr-FR")+"€ · Sortie : "+Math.round((m.commission||0)*pctSortie/100).toLocaleString("fr-FR")+"€"}
-              </div>
-            )}
-            <div style={{display:"flex",gap:8}}>
-              <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setShowAdd(false);}}>{"Annuler"}</button>
-              <button className="btn btn-primary btn-sm" style={{flex:2,background:"#7C3AED",border:"none"}} onClick={addCoAgent}>{"💾 Confirmer le partage"}</button>
-            </div>
-          </div>
-        )}
-
-        {/* Liste co-agents */}
-        {coAgents.length===0 && !showAdd && (
-          <div style={{textAlign:"center",padding:"12px 0",color:"#7C3AED",fontSize:12,opacity:.7}}>{"Aucun co-agent sur ce mandat"}</div>
-        )}
-        {coAgents.map(function(ca) {
-          var agent = (users||[]).find(function(u){return u.id===ca.agentId;});
-          var comm  = commCoAgent(ca);
-          return (
-            <div key={ca.agentId} style={{background:"#fff",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #DDD6FE"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                <div>
-                  <div style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{agent?agent.nom:"Agent inconnu"}</div>
-                  <div style={{fontSize:11,color:"var(--g400)",marginTop:2}}>
-                    {"Entrée "+ca.pctEntree+"% · Sortie "+ca.pctSortie+"% · Ajouté le "+fmtDate(ca.dateAjout)}
-                  </div>
-                  {comm && (
-                    <div style={{display:"flex",gap:6,marginTop:4}}>
-                      <span style={{fontSize:11,background:"#F0FDF4",color:"var(--green)",borderRadius:20,padding:"1px 8px",fontWeight:700}}>{"Entrée : "+(comm.partEntree).toLocaleString("fr-FR")+"€"}</span>
-                      <span style={{fontSize:11,background:"#EFF6FF",color:"var(--blue)",borderRadius:20,padding:"1px 8px",fontWeight:700}}>{"Sortie : "+(comm.partSortie).toLocaleString("fr-FR")+"€"}</span>
-                    </div>
-                  )}
-                </div>
-                <button onClick={function(){removeCoAgent(ca.agentId);}} style={{background:"#FEF2F2",border:"none",color:"var(--red)",borderRadius:8,padding:"4px 8px",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>{"Retirer"}</button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function MandatDetail({ mandat, users, onEdit, onDelete, onClose, onUpdateMandat }) {
-  var m = mandat;
-  var agent = users.find(function(u){return u.id===m.agentId;});
-  var [photoIdx,    setPhotoIdx]    = useState(0);
-  var [sweepTab,    setSweepTab]    = useState("view");   // view | url | upload
-  var [detailTab,   setDetailTab]   = useState("infos"); // infos | visites | commentaires
-  var [newVisite,   setNewVisite]   = useState({date:"",acheteur:"",telephone:"",retour:"",suite:"interesse"});
-  var [newComm,     setNewComm]     = useState("");
-  var ctx2 = useApp();
-  var [sweepUrlIn,  setSweepUrlIn]  = useState(m.sweepUrl||"");
-  var [sweepMsg,    setSweepMsg]    = useState("");
-  var photos = m.photos || [];
-
-  function saveSweepUrl() {
-    if (!sweepUrlIn.trim()) { setSweepMsg("❌ URL vide"); return; }
-    var updated = {...m, sweepUrl: sweepUrlIn.trim(), sweepPdf: null};
-    if (onUpdateMandat) onUpdateMandat(updated);
-    setSweepMsg("✅ Lien enregistré !");
-    setSweepTab("view");
-    setTimeout(function(){ setSweepMsg(""); }, 3000);
-  }
-
-  function handlePdfUpload(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5*1024*1024) { setSweepMsg("❌ Fichier trop lourd (max 5 Mo)"); return; }
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      var updated = {...m, sweepPdf: ev.target.result, sweepPdfName: file.name, sweepUrl: null};
-      if (onUpdateMandat) onUpdateMandat(updated);
-      setSweepMsg("✅ Fiche PDF chargée !");
-      setSweepTab("view");
-      setTimeout(function(){ setSweepMsg(""); }, 3000);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function removeSweep() {
-    if (!window.confirm("Supprimer la fiche SweepBright ?")) return;
-    var updated = {...m, sweepUrl: null, sweepPdf: null, sweepPdfName: null};
-    if (onUpdateMandat) onUpdateMandat(updated);
-  }
-
-  function openSweep() {
-    if (m.sweepUrl) { window.open(m.sweepUrl, "_blank"); return; }
-    if (m.sweepPdf) {
-      var a = document.createElement("a");
-      a.href = m.sweepPdf;
-      a.download = m.sweepPdfName || "fiche-sweepbright-"+m.ref+".pdf";
-      a.click();
-    }
-  }
-
-  function saveVisite() {
-    if (!newVisite.date || !newVisite.acheteur) return;
-    var visites = [...(m.visites||[]), {...newVisite, id:"vis-"+Date.now(), addedBy:ctx2.currentUser.nom, addedAt:new Date().toISOString()}];
-    onUpdateMandat({...m, visites});
-    setNewVisite({date:"",acheteur:"",telephone:"",retour:"",suite:"interesse"});
-  }
-
-  function saveCommentaire() {
-    if (!newComm.trim()) return;
-    var commentaires = [...(m.commentaires||[]), {id:"com-"+Date.now(), texte:newComm.trim(), auteur:ctx2.currentUser.nom, ts:new Date().toISOString()}];
-    onUpdateMandat({...m, commentaires});
-    setNewComm("");
-  }
-
-  function deleteCommentaire(id) {
-    var commentaires = (m.commentaires||[]).filter(function(c){ return c.id!==id; });
-    onUpdateMandat({...m, commentaires});
-  }
-
-  function partagerFiche() {
-    var agenceInfo = (ctx2.agences||[]).find(function(a){return a.id===m.agenceId;});
-    var photoSrc = m.photoBase64||m.photoUrl||"";
-    var commHTVal = Math.round((m.commission||0)/1.2);
-    var rows = [
-      m.surface?"📐 Surface : "+m.surface+" m²":"",
-      m.nbPieces?"🛏️ Pièces : "+m.nbPieces:"",
-      m.nbChambres?"🛏️ Chambres : "+m.nbChambres:"",
-      m.dpe?"🌿 DPE : "+m.dpe:"",
-      m.avecJardin?"🌿 Jardin : Oui":"",
-      m.avecGarage?"🚗 Garage : Oui":"",
-      m.avecTerrasse?"☀️ Terrasse : Oui":"",
-    ].filter(Boolean);
-    var html = "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+m.ref+"</title>"
-      +"<style>*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;}body{background:#f0f4f8;padding:16px;}"
-      +".c{background:#fff;border-radius:16px;overflow:hidden;max-width:560px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,.12);}"
-      +".h{background:linear-gradient(135deg,#1D3557,#2a4a7a);padding:20px;color:#fff;}"
-      +".ref{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}"
-      +".adr{font-size:18px;font-weight:900;margin-bottom:8px;}"
-      +".bdg{display:inline-block;background:rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;margin:2px;}"
-      +".photo{width:100%;max-height:260px;object-fit:cover;}"
-      +".prix{background:#F0FDF4;border-left:4px solid #059669;padding:14px 18px;}"
-      +".pv{font-size:28px;font-weight:900;color:#059669;}"
-      +".ps{font-size:11px;color:#6B7280;margin-top:3px;}"
-      +".sec{padding:14px 18px;border-bottom:1px solid #F1F5F9;}"
-      +".st{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94A3B8;margin-bottom:10px;}"
-      +".grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}"
-      +".it{background:#F8FAFC;border-radius:8px;padding:8px 10px;}"
-      +".il{font-size:10px;color:#94A3B8;font-weight:700;}"
-      +".iv{font-size:13px;font-weight:700;color:#1D3557;}"
-      +".ag{display:flex;align-items:center;gap:10px;padding:14px 18px;background:#EFF6FF;}"
-      +".av{width:40px;height:40px;border-radius:20px;background:#1D3557;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;}"
-      +".ft{padding:10px 18px;background:#F8FAFC;text-align:center;font-size:10px;color:#94A3B8;}"
-      +"@media print{body{background:#fff;}}"
-      +"</style></head><body><div class='c'>"
-      +"<div class='h'><div class='ref'>"+m.ref+" · "+(m.typeMandat==="exclusif"?"⭐ Exclusif":"Simple")+"</div>"
-      +"<div class='adr'>"+m.adresse+"</div>"
-      +(m.typeBien?"<span class='bdg'>"+(m.typeBien.charAt(0).toUpperCase()+m.typeBien.slice(1).replace(/_/g," "))+"</span>":"")
-      +(m.surface?"<span class='bdg'>"+m.surface+" m²</span>":"")
-      +(m.nbPieces?"<span class='bdg'>"+m.nbPieces+"P</span>":"")
-      +(m.statut==="sous_offre"?"<span class='bdg'>🤝 Sous offre</span>":"")
-      +"</div>"
-      +(photoSrc?"<img class='photo' src='"+photoSrc+"' alt=''/>" : "")
-      +"<div class='prix'><div class='pv'>"+(m.prix?m.prix.toLocaleString("fr-FR")+"€"+(isTVA(m.typeBien)?" HT":""):"Prix sur demande")+"</div>"
-      +(m.commission?"<div class='ps'>Honoraires : "+m.commission.toLocaleString("fr-FR")+"€ TTC ("+commHTVal.toLocaleString("fr-FR")+"€ HT)</div>":"")
-      +"</div>"
-      +(rows.length?"<div class='sec'><div class='st'>Caractéristiques</div><div class='grid'>"+rows.map(function(r){var p=r.split(" : ");return "<div class='it'><div class='il'>"+p[0]+"</div><div class='iv'>"+(p[1]||"")+"</div></div>";}).join("")+"</div></div>":"")
-      +(m.dpe?"<div class='sec'><div class='st'>DPE</div><span style='background:#059669;color:#fff;border-radius:6px;padding:3px 10px;font-weight:900;'>"+m.dpe+"</span></div>":"")
-      +(m.notes?"<div class='sec'><div class='st'>Description</div><p style='font-size:13px;color:#4B5563;line-height:1.7;'>"+m.notes+"</p></div>":"")
-      +(agent?"<div class='ag'><div class='av'>"+(agent.avatar||"?")+"</div><div><div style='font-weight:800;font-size:13px;'>"+agent.nom+"</div>"+(agent.telephone?"<div style='font-size:12px;color:#4B5563;'>"+agent.telephone+"</div>":"")+( agenceInfo?"<div style='font-size:11px;color:#94A3B8;'>"+agenceInfo.nom+"</div>":"")+"</div></div>":"")
-      +"<div class='ft'>"+(agenceInfo?agenceInfo.nom+" — ":"")+"Fiche du "+new Date().toLocaleDateString("fr-FR")+"</div>"
-      +"</div></body></html>";
-    var w=window.open("","_blank");
-    if(w){w.document.write(html);w.document.close();w.focus();setTimeout(function(){try{w.print();}catch(e){}},600);}
-  }
-
-  // ─── DUMMY (ancien code remplacé) ───
-  function _old_partage_unused() {
-    var texte = [
-      "🏠 FICHE BIEN — "+m.ref,
-      "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-      "📍 "+m.adresse,
-      "🏷️ Type : "+(m.typeMandat==="exclusif"?"⭐ Mandat exclusif":"Mandat simple"),
-      "💰 Prix de vente : "+(m.prix?m.prix.toLocaleString("fr-FR")+"€":"—"),
-      m.surface ? "📐 Surface : "+m.surface+" m²" : "",
-      m.nbPieces ? "🛏️ Pièces : "+m.nbPieces : "",
-      m.dpe ? "🌿 DPE : "+m.dpe : "",
-      "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-      agent ? "👤 Agent : "+agent.nom : "",
-      "📅 Mandat signé le : "+(m.dateMandat||"—"),
-      m.dateExpiration ? "⏳ Expiration : "+m.dateExpiration : "",
-      "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-      m.notes ? "📝 "+m.notes : "",
-      "",
-      "ORPI Pro Amiens — TEAM DECLIC IMMO"
-    ].filter(Boolean).join("\n");
-
-    if (navigator.share) {
-      navigator.share({ title:"Fiche mandat "+m.ref, text:texte }).catch(function(){});
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(texte).then(function(){
-        alert("✅ Fiche copiée dans le presse-papier !");
-      });
-    } else {
-      var w = window.open("","_blank");
-      w.document.write("<pre style='font-family:monospace;padding:20px'>"+texte+"</pre>");
-    }
-  }
-
-  return (
-    <Modal title={m.ref+" — Fiche détail"} onClose={onClose} wide
-      footer={
-        <div style={{display:"flex",gap:8,width:"100%",flexWrap:"wrap"}}>
-          <button className="btn btn-sm" style={{background:"#FEF2F2",color:"var(--red)",border:"none"}} onClick={function(){if(window.confirm("Supprimer ce mandat ?")) onDelete(m.id);}}>{"🗑 Supprimer"}</button>
-          <div style={{flex:1}}></div>
-          <button className="btn btn-secondary" onClick={partagerFiche}>{"📤 Partager la fiche"}</button>
-          <button className="btn btn-primary" onClick={function(){onEdit(m);}}>{"✏️ Modifier"}</button>
-        </div>
-      }>
-
-      {/* Tabs navigation */}
-      <div style={{display:"flex",gap:4,background:"var(--g100)",borderRadius:10,padding:4,marginBottom:14}}>
-        {[["infos","📋 Infos"],["visites","🚪 Visites ("+(m.visites||[]).length+")"],["commentaires","💬 Notes ("+(m.commentaires||[]).length+")"]].map(function(t){
-          return <button key={t[0]} onClick={function(){setDetailTab(t[0]);}} style={{flex:1,padding:"8px 4px",borderRadius:8,border:"none",background:detailTab===t[0]?"#fff":"transparent",color:detailTab===t[0]?"var(--navy)":"var(--g400)",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font)",boxShadow:detailTab===t[0]?"0 1px 4px rgba(0,0,0,0.08)":"none"}}>{t[1]}</button>;
-        })}
-      </div>
-
-      {/* ─── ONGLET VISITES ─── */}
-      {detailTab==="visites" && (
-        <div>
-          <div style={{background:"var(--g50)",borderRadius:10,padding:"14px",marginBottom:14,border:"1px solid var(--g200)"}}>
-            <div style={{fontWeight:700,color:"var(--navy)",fontSize:13,marginBottom:10}}>{"+ Enregistrer une visite"}</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              <div className="form-group"><label className="form-label">{"Date *"}</label><input className="form-input" type="date" value={newVisite.date} onChange={function(e){setNewVisite(function(p){return{...p,date:e.target.value};});}}/></div>
-              <div className="form-group"><label className="form-label">{"Acheteur *"}</label><input className="form-input" value={newVisite.acheteur} onChange={function(e){setNewVisite(function(p){return{...p,acheteur:e.target.value};});}} placeholder="Nom prénom"/></div>
-              <div className="form-group"><label className="form-label">{"Téléphone"}</label><input className="form-input" value={newVisite.telephone} onChange={function(e){setNewVisite(function(p){return{...p,telephone:e.target.value};});}}/></div>
-              <div className="form-group"><label className="form-label">{"Suite donnée"}</label>
-                <select className="form-select" value={newVisite.suite} onChange={function(e){setNewVisite(function(p){return{...p,suite:e.target.value};});}}>
-                  <option value="interesse">{"Intéressé"}</option>
-                  <option value="offre">{"Offre à venir"}</option>
-                  <option value="sans_suite">{"Sans suite"}</option>
-                  <option value="2eme_visite">{"2ème visite prévue"}</option>
-                </select>
-              </div>
-              <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">{"Retour / commentaire"}</label><textarea className="form-input" rows={2} value={newVisite.retour} onChange={function(e){setNewVisite(function(p){return{...p,retour:e.target.value};});}}/></div>
-            </div>
-            <button className="btn btn-primary btn-sm" style={{width:"100%",marginTop:6}} onClick={saveVisite}>{"💾 Enregistrer la visite"}</button>
-          </div>
-          {(m.visites||[]).length===0 && <div style={{textAlign:"center",padding:"20px",color:"var(--g400)",fontSize:13}}>{"Aucune visite enregistrée"}</div>}
-          {[...(m.visites||[])].reverse().map(function(v) {
-            var suiteCol = {interesse:"#FEF3C7",offre:"#D1FAE5",sans_suite:"#FEE2E2","2eme_visite":"#EFF6FF"};
-            var suiteLabel = {interesse:"Intéressé",offre:"Offre à venir",sans_suite:"Sans suite","2eme_visite":"2ème visite"};
-            return (
-              <div key={v.id} style={{padding:"12px",background:"var(--g50)",borderRadius:10,marginBottom:8,border:"1px solid var(--g200)"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-                  <div>
-                    <div style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{v.acheteur}</div>
-                    <div style={{fontSize:11,color:"var(--g400)",marginTop:2}}>{fmtDate(v.date)+(v.addedBy?" · par "+v.addedBy:"")}</div>
-                  </div>
-                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                    {v.telephone && <a href={"tel:"+v.telephone.replace(/\s/g,"")} style={{background:"#059669",color:"#fff",borderRadius:8,padding:"4px 8px",fontSize:11,fontWeight:800,textDecoration:"none"}}>{"📞"}</a>}
-                    <span style={{background:suiteCol[v.suite]||"var(--g100)",color:"var(--navy)",borderRadius:20,padding:"2px 10px",fontSize:10,fontWeight:700}}>{suiteLabel[v.suite]||v.suite}</span>
-                  </div>
-                </div>
-                {v.retour && <div style={{fontSize:12,color:"var(--g600)",fontStyle:"italic"}}>{v.retour}</div>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ─── ONGLET COMMENTAIRES ─── */}
-      {detailTab==="commentaires" && (
-        <div>
-          <div style={{display:"flex",gap:8,marginBottom:14}}>
-            <input className="form-input" value={newComm} onChange={function(e){setNewComm(e.target.value);}} placeholder="Ajouter une note interne…" onKeyDown={function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();saveCommentaire();}}}/>
-            <button className="btn btn-primary btn-sm" onClick={saveCommentaire}>{"Envoyer"}</button>
-          </div>
-          {(m.commentaires||[]).length===0 && <div style={{textAlign:"center",padding:"20px",color:"var(--g400)",fontSize:13}}>{"Aucune note interne"}</div>}
-          {[...(m.commentaires||[])].reverse().map(function(com) {
-            var isMine = com.auteur===ctx2.currentUser.nom;
-            return (
-              <div key={com.id} style={{marginBottom:10,display:"flex",flexDirection:isMine?"row-reverse":"row",gap:8,alignItems:"flex-start"}}>
-                <div style={{width:30,height:30,borderRadius:15,background:isMine?"var(--blue)":"var(--g300)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:11,flexShrink:0}}>
-                  {com.auteur.split(" ").map(function(n){return n[0]||"";}).join("").slice(0,2).toUpperCase()}
-                </div>
-                <div style={{background:isMine?"#EFF6FF":"var(--g50)",borderRadius:10,padding:"9px 12px",maxWidth:"80%",border:"1px solid "+(isMine?"#BFDBFE":"var(--g200)")}}>
-                  <div style={{fontSize:10,color:"var(--g400)",marginBottom:4}}>{com.auteur+" · "+new Date(com.ts).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</div>
-                  <div style={{fontSize:13,color:"var(--navy)"}}>{com.texte}</div>
-                </div>
-                {isMine && <button onClick={function(){deleteCommentaire(com.id);}} style={{background:"none",border:"none",color:"var(--g300)",cursor:"pointer",fontSize:14,alignSelf:"center",padding:"4px"}}>{"×"}</button>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ─── ONGLET INFOS (conditionnel) ─── */}
-      {detailTab==="infos" && (
-        <div>
-
-      {/* Galerie photos */}
-      {photos.length>0 && (
-        <div style={{marginBottom:16}}>
-          <div style={{borderRadius:12,overflow:"hidden",height:220,background:"var(--g100)",position:"relative",marginBottom:8}}>
-            <img src={photos[photoIdx]} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            {photos.length>1 && (
-              <div>
-                <button onClick={function(){setPhotoIdx(function(i){return(i-1+photos.length)%photos.length;});}} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.5)",border:"none",color:"#fff",width:34,height:34,borderRadius:17,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>{"‹"}</button>
-                <button onClick={function(){setPhotoIdx(function(i){return(i+1)%photos.length;});}} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.5)",border:"none",color:"#fff",width:34,height:34,borderRadius:17,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>{"›"}</button>
-                <div style={{position:"absolute",bottom:10,right:10,background:"rgba(0,0,0,0.55)",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{(photoIdx+1)+"/"+photos.length}</div>
-              </div>
-            )}
-          </div>
-          {photos.length>1 && (
-            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
-              {photos.map(function(p,i){
-                return (
-                  <img key={i} src={p} alt="" onClick={function(){setPhotoIdx(i);}} style={{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",border:i===photoIdx?"3px solid var(--red)":"2px solid transparent",flexShrink:0,opacity:i===photoIdx?1:0.7}}/>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-      {photos.length===0 && (
-        <div style={{borderRadius:12,height:100,background:"var(--g50)",border:"2px dashed var(--g200)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,flexDirection:"column",gap:6}}>
-          <span style={{fontSize:28,opacity:0.3}}>{"🏠"}</span>
-          <span style={{fontSize:12,color:"var(--g400)"}}>{"Aucune photo — ajoutez-en via Modifier"}</span>
-        </div>
-      )}
-
-      {/* Infos bien */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-        {[
-          ["📍","Adresse",m.adresse],
-          ["🏷️","Type",m.typeMandat==="exclusif"?"⭐ Exclusif":"Simple"],
-          ["📊","Statut",m.statut.charAt(0).toUpperCase()+m.statut.slice(1)],
-          ["💰","Prix",m.prix?m.prix.toLocaleString("fr-FR")+"€":"—"],
-          ["💎","Commission",m.commission?m.commission.toLocaleString("fr-FR")+"€ HT":"—"],
-          ["📐","Surface",m.surface?m.surface+" m²":"—"],
-          ["🛏️","Pièces",m.nbPieces||"—"],
-          ["🌿","DPE",m.dpe||"—"],
-          ["📞","Tél. agent",agent&&agent.telephone?agent.telephone:"—"],
-          ["👤","Agent",agent?agent.nom:"—"],
-          ["📅","Date mandat",m.dateMandat||"—"],
-          ["⏳","Expiration",m.dateExpiration||"—"],
-          ["✅","CS levées",m.clausesSuspensivesLevees?"Oui":"Non"],
-        ].map(function(row){
-          var isAdresse = row[1]==="Adresse";
-          return (
-            <div key={row[1]} style={{background:"var(--g50)",borderRadius:9,padding:"9px 12px",gridColumn:isAdresse?"1 / -1":"auto"}}>
-              <div style={{fontSize:10,color:"var(--g400)",fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:2}}>{row[0]+" "+row[1]}</div>
-              <div style={{fontSize:13,fontWeight:700,color:"var(--navy)"}}>{row[2]}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Notes */}
-      {m.notes && (
-        <div style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:10,padding:"10px 14px",marginBottom:12}}>
-          <div style={{fontSize:10,color:"var(--amber)",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>{"📝 Notes"}</div>
-          <div style={{fontSize:13,color:"var(--g700)",lineHeight:1.6}}>{m.notes}</div>
-        </div>
-      )}
-
-      </div>)} {/* fin onglet infos */}
-
-      {/* ─── PARTAGE CO-AGENT ─── */}
-      {detailTab==="infos" && (
-        <CoAgentSection m={m} users={users} onUpdate={onUpdateMandat}/>
-      )}
-
-      {/* ─── FICHE SWEEPBRIGHT ─── */}
-      <div style={{background:"#F8FAFF",border:"1px solid #BFDBFE",borderRadius:12,overflow:"hidden",marginBottom:4}}>
-        <div style={{background:"linear-gradient(90deg,#1D3557,#2563EB)",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:18}}>{"🏷️"}</span>
-            <span style={{fontWeight:800,color:"#fff",fontSize:13}}>{"Fiche SweepBright"}</span>
-            {(m.sweepUrl||m.sweepPdf) && <span style={{background:"#22C55E",color:"#fff",borderRadius:20,padding:"1px 8px",fontSize:10,fontWeight:800}}>{"✓ Chargée"}</span>}
-          </div>
-          {!(m.sweepUrl||m.sweepPdf) && sweepTab==="view" && (
-            <div style={{display:"flex",gap:6}}>
-              <button onClick={function(){setSweepTab("url");}} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{"🔗 URL"}</button>
-              <button onClick={function(){setSweepTab("upload");}} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{"📄 PDF"}</button>
-            </div>
-          )}
-          {(m.sweepUrl||m.sweepPdf) && (
-            <div style={{display:"flex",gap:6}}>
-              <button onClick={function(){setSweepTab(sweepTab==="view"?"url":"view");}} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{"✏️"}</button>
-              <button onClick={removeSweep} style={{background:"rgba(239,68,68,0.3)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>{"🗑"}</button>
-            </div>
-          )}
-        </div>
-
-        <div style={{padding:"14px 16px"}}>
-          {sweepMsg && <div style={{marginBottom:10,fontSize:12,fontWeight:700,color:sweepMsg.startsWith("✅")?"#059669":"#EF4444"}}>{sweepMsg}</div>}
-
-          {/* Vue : fiche chargée */}
-          {sweepTab==="view" && (m.sweepUrl||m.sweepPdf) && (
-            <div>
-              {m.sweepUrl && (
-                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#EFF6FF",borderRadius:9,marginBottom:10}}>
-                  <span style={{fontSize:20}}>{"🔗"}</span>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:11,color:"var(--g400)",fontWeight:700,marginBottom:2}}>{"Lien SweepBright"}</div>
-                    <div style={{fontSize:12,color:"#2563EB",wordBreak:"break-all",fontWeight:600}}>{m.sweepUrl}</div>
-                  </div>
-                </div>
-              )}
-              {m.sweepPdf && (
-                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#FFF7ED",borderRadius:9,marginBottom:10}}>
-                  <span style={{fontSize:24}}>{"📄"}</span>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:11,color:"var(--g400)",fontWeight:700,marginBottom:2}}>{"Fiche PDF"}</div>
-                    <div style={{fontSize:12,color:"var(--navy)",fontWeight:600}}>{m.sweepPdfName||"fiche-sweepbright.pdf"}</div>
-                  </div>
-                </div>
-              )}
-              <button onClick={openSweep} style={{width:"100%",background:"#2563EB",color:"#fff",border:"none",borderRadius:10,padding:"11px",fontWeight:800,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                {m.sweepUrl ? "🔗 Ouvrir dans SweepBright" : "📥 Télécharger la fiche PDF"}
-              </button>
-            </div>
-          )}
-
-          {/* Vue : pas encore de fiche */}
-          {sweepTab==="view" && !m.sweepUrl && !m.sweepPdf && (
-            <div style={{textAlign:"center",padding:"14px 0",color:"var(--g400)"}}>
-              <div style={{fontSize:32,marginBottom:6}}>{"📋"}</div>
-              <div style={{fontWeight:700,fontSize:13,color:"var(--navy)",marginBottom:4}}>{"Aucune fiche SweepBright"}</div>
-              <div style={{fontSize:12,marginBottom:12}}>{"Ajoutez un lien de partage ou uploadez le PDF exporté depuis SweepBright"}</div>
-              <div style={{display:"flex",gap:8,justifyContent:"center"}}>
-                <button onClick={function(){setSweepTab("url");}} style={{background:"#EFF6FF",color:"#2563EB",border:"1px solid #BFDBFE",borderRadius:8,padding:"8px 16px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{"🔗 Coller un lien"}</button>
-                <button onClick={function(){setSweepTab("upload");}} style={{background:"#FFF7ED",color:"#EA580C",border:"1px solid #FED7AA",borderRadius:8,padding:"8px 16px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{"📄 Uploader un PDF"}</button>
-              </div>
-            </div>
-          )}
-
-          {/* Formulaire URL */}
-          {sweepTab==="url" && (
-            <div>
-              <div style={{fontSize:12,color:"var(--g400)",marginBottom:8}}>{"Collez ici le lien de partage SweepBright (ex: https://app.sweepbright.com/...)"}</div>
-              <input
-                className="form-input"
-                type="url"
-                value={sweepUrlIn}
-                onChange={function(e){setSweepUrlIn(e.target.value);}}
-                placeholder="https://app.sweepbright.com/publication/..."
-                style={{marginBottom:10}}
-                autoFocus
-              />
-              <div style={{display:"flex",gap:8}}>
-                <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setSweepTab("view");setSweepUrlIn(m.sweepUrl||"");}}>{"Annuler"}</button>
-                <button className="btn btn-primary btn-sm" style={{flex:2}} onClick={saveSweepUrl}>{"💾 Enregistrer le lien"}</button>
-              </div>
-            </div>
-          )}
-
-          {/* Formulaire upload PDF */}
-          {sweepTab==="upload" && (
-            <div>
-              <div style={{fontSize:12,color:"var(--g400)",marginBottom:10}}>{"Exportez la fiche depuis SweepBright en PDF, puis uploadez-la ici (max 5 Mo)"}</div>
-              <label style={{display:"block",border:"2px dashed #BFDBFE",borderRadius:10,padding:"24px 16px",textAlign:"center",cursor:"pointer",background:"#EFF6FF",marginBottom:10}}>
-                <input type="file" accept="application/pdf" style={{display:"none"}} onChange={handlePdfUpload}/>
-                <div style={{fontSize:28,marginBottom:6}}>{"📄"}</div>
-                <div style={{fontWeight:700,color:"#2563EB",fontSize:13}}>{"Cliquez pour choisir un PDF"}</div>
-                <div style={{fontSize:11,color:"var(--g400)",marginTop:4}}>{"ou glissez-déposez le fichier ici"}</div>
-              </label>
-              <button className="btn btn-secondary btn-sm" style={{width:"100%"}} onClick={function(){setSweepTab("view");}}>{"Annuler"}</button>
-            </div>
-          )}
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── DEMANDES RESET MOT DE PASSE ─────────────────────────────────────────────
-function DemandesReset({ resets, resetMdpParManager }) {
-  var enAttente = (resets||[]).filter(function(r){ return !r.traite; });
-  var [nouveauMdp, setNouveauMdp] = useState({});
-
-  if (enAttente.length === 0) return null;
-
-  return (
-    <div style={{background:"#FEF2F2",border:"2px solid #E63946",borderRadius:12,overflow:"hidden",marginTop:16}}>
-      <div style={{background:"#E63946",padding:"10px 16px",display:"flex",alignItems:"center",gap:8}}>
-        <span style={{fontSize:16}}>{"🔑"}</span>
-        <span style={{fontWeight:800,color:"#fff",fontSize:13}}>{enAttente.length+" demande(s) de réinitialisation de mot de passe"}</span>
-      </div>
-      <div style={{padding:"12px 16px"}}>
-        {enAttente.map(function(r) {
-          return (
-            <div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #FECACA",flexWrap:"wrap"}}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:700,color:"#1D3557",fontSize:13}}>{r.userNom}</div>
-                <div style={{fontSize:11,color:"#94A3B8"}}>{r.userEmail}</div>
-                <div style={{fontSize:11,color:"#94A3B8",marginTop:2}}>{"Demande : "+new Date(r.ts).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</div>
-              </div>
-              <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Nouveau mot de passe"
-                  value={nouveauMdp[r.userId]||""}
-                  onChange={function(e){ var v=e.target.value; setNouveauMdp(function(p){return{...p,[r.userId]:v};}); }}
-                  style={{width:160,fontSize:12}}
-                />
-                <button
-                  className="btn btn-primary btn-sm"
-                  disabled={!(nouveauMdp[r.userId]&&nouveauMdp[r.userId].length>=4)}
-                  onClick={function(){
-                    resetMdpParManager(r.userId, nouveauMdp[r.userId]);
-                    setNouveauMdp(function(p){return{...p,[r.userId]:""};});
-                  }}>
-                  {"✅ Réinitialiser"}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-        <div style={{fontSize:11,color:"#94A3B8",marginTop:8}}>
-          {"Communiquez le nouveau mot de passe à l'agent par téléphone ou SMS — il pourra le changer depuis Mon Profil."}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── JOURNAL D'ACTIVITÉ ───────────────────────────────────────────────────────
-function JournalActivite({ journal, users, agenceId }) {
-  var [filtre,    setFiltre]    = useState(""); // agentId
-  var [filtreType,setFiltreType]= useState(""); // type action
-  var [limite,    setLimite]    = useState(30);
-
-  var agents = users.filter(function(u){ return u.agenceId===agenceId && u.actif; });
-
-  var filtered = journal.filter(function(e){
-    if (filtre     && e.userId !== filtre)     return false;
-    if (filtreType && e.type   !== filtreType) return false;
-    return true;
-  });
-  var visible = filtered.slice(0, limite);
-
-  var TYPE_CONFIG = {
-    "creation":     { label:"Création",     color:"#059669", bg:"#F0FDF4", icon:"✨" },
-    "modification": { label:"Modification", color:"#D97706", bg:"#FFFBEB", icon:"✏️" },
-    "suppression":  { label:"Suppression",  color:"#DC2626", bg:"#FEF2F2", icon:"🗑️" },
-  };
-
-  function fmtTs(ts) {
-    var d = new Date(ts);
-    var now = new Date();
-    var diffH = Math.floor((now-d)/3600000);
-    var diffJ = Math.floor(diffH/24);
-    if (diffH < 1)  return "Il y a moins d'1h";
-    if (diffH < 24) return "Il y a "+diffH+"h";
-    if (diffJ === 1) return "Hier à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-    return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"})+" à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-  }
-
-  return (
-    <div style={{background:"#fff",borderRadius:12,border:"1px solid var(--g200)",overflow:"hidden",marginTop:16}}>
-      {/* Header */}
-      <div style={{background:"var(--g50)",borderBottom:"1px solid var(--g100)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-        <span style={{fontWeight:800,color:"var(--navy)",fontSize:13,flex:"0 0 auto"}}>{"📋 Historique des modifications"}</span>
-        <span style={{fontSize:11,color:"var(--g400)",background:"var(--g100)",borderRadius:20,padding:"2px 10px",fontWeight:700}}>{filtered.length+" entrée(s)"}</span>
-        <div style={{flex:1}}></div>
-        {/* Filtre agent */}
-        <select value={filtre} onChange={function(e){setFiltre(e.target.value);setLimite(30);}} className="form-select" style={{width:"auto",fontSize:12,padding:"5px 10px"}}>
-          <option value="">{"Tous les agents"}</option>
-          {agents.map(function(a){ return <option key={a.id} value={a.id}>{a.nom}</option>; })}
-        </select>
-        {/* Filtre type */}
-        <select value={filtreType} onChange={function(e){setFiltreType(e.target.value);setLimite(30);}} className="form-select" style={{width:"auto",fontSize:12,padding:"5px 10px"}}>
-          <option value="">{"Toutes actions"}</option>
-          <option value="creation">{"✨ Créations"}</option>
-          <option value="modification">{"✏️ Modifications"}</option>
-          <option value="suppression">{"🗑️ Suppressions"}</option>
-        </select>
-      </div>
-
-      {/* Liste */}
-      {visible.length === 0 ? (
-        <div style={{textAlign:"center",padding:"32px 16px",color:"var(--g400)"}}>
-          <div style={{fontSize:32,marginBottom:8}}>{"📋"}</div>
-          <div style={{fontWeight:700}}>{"Aucune activité enregistrée"}</div>
-          <div style={{fontSize:12,marginTop:4}}>{"Les modifications apparaîtront ici en temps réel"}</div>
-        </div>
-      ) : (
-        <div>
-          {visible.map(function(e) {
-            var cfg  = TYPE_CONFIG[e.type] || { label:e.type, color:"var(--g400)", bg:"var(--g50)", icon:"•" };
-            var user = users.find(function(u){ return u.id===e.userId; });
-            var uCol = user ? avatarColor(user.nom) : "var(--g300)";
-            return (
-              <div key={e.id} style={{display:"flex",gap:12,padding:"11px 16px",borderBottom:"1px solid var(--g50)",alignItems:"flex-start"}}>
-                {/* Avatar utilisateur */}
-                <div style={{width:32,height:32,borderRadius:16,background:uCol,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:11,flexShrink:0,marginTop:1}}>
-                  {user ? user.avatar : "?"}
-                </div>
-                {/* Contenu */}
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:3}}>
-                    <span style={{fontWeight:700,fontSize:12,color:"var(--navy)"}}>{e.userNom}</span>
-                    <span style={{background:cfg.bg,color:cfg.color,fontSize:10,fontWeight:700,padding:"1px 8px",borderRadius:20,flexShrink:0}}>{cfg.icon+" "+cfg.label}</span>
-                    <span style={{fontSize:10,color:"var(--g400)",marginLeft:"auto",flexShrink:0}}>{fmtTs(e.ts)}</span>
-                  </div>
-                  <div style={{fontSize:12,color:"var(--g600)",lineHeight:1.4}}>{e.description}</div>
-                </div>
-              </div>
-            );
-          })}
-          {/* Voir plus */}
-          {filtered.length > limite && (
-            <div style={{padding:"10px 16px",textAlign:"center"}}>
-              <button onClick={function(){setLimite(function(l){return l+30;});}} className="btn btn-secondary btn-sm">
-                {"Voir plus ("+(filtered.length-limite)+" restantes)"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── PROFIL MANAGER ───────────────────────────────────────────────────────────
-function ProfilManager({ currentUser, users, changerMotDePasse }) {
-  var [ancien,   setAncien]   = useState("");
-  var [nouveau,  setNouveau]  = useState("");
-  var [confirm,  setConfirm]  = useState("");
-  var [darkMode, setDarkMode] = useState(function(){ return document.body.classList.contains("dark-mode"); });
-  function toggleDark() {
-    var next = !darkMode;
-    setDarkMode(next);
-    if (next) document.body.classList.add("dark-mode");
-    else document.body.classList.remove("dark-mode");
-    try { localStorage.setItem("orpi_dark_mode", next?"1":"0"); } catch(e) {}
-  }
-  var [msg,     setMsg]     = useState(null);
-
-  function sauvegarder() {
-    if (!ancien)                          { setMsg({type:"err", text:"Saisissez votre mot de passe actuel"}); return; }
-    var userReel = (users||[]).find(function(u){return u.id===currentUser.id;}) || currentUser;
-    if (ancien !== userReel.password)  { setMsg({type:"err", text:"Mot de passe actuel incorrect"}); return; }
-    if (nouveau.length < 4)              { setMsg({type:"err", text:"Le nouveau mot de passe doit faire au moins 4 caractères"}); return; }
-    if (nouveau !== confirm)              { setMsg({type:"err", text:"Les mots de passe ne correspondent pas"}); return; }
-    changerMotDePasse(currentUser.id, nouveau);
-    setMsg({type:"ok", text:"✅ Mot de passe modifié avec succès !"});
-    setAncien(""); setNouveau(""); setConfirm("");
-  }
-
-  return (
-    <div>
-      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px",marginBottom:16,display:"flex",alignItems:"center",gap:16}}>
-        <div style={{width:56,height:56,borderRadius:28,background:"var(--red)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:20,flexShrink:0}}>
-          {currentUser.avatar}
-        </div>
-        <div>
-          <div style={{fontWeight:900,fontSize:17,color:"var(--navy)"}}>{currentUser.nom}</div>
-          <div style={{fontSize:13,color:"var(--g400)",marginTop:2}}>{currentUser.email}</div>
-          <div style={{fontSize:11,marginTop:4,background:"#EFF6FF",borderRadius:20,padding:"2px 10px",display:"inline-block",color:"var(--blue)",fontWeight:700}}>{"Manager"}</div>
-        </div>
-      </div>
-
-      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px"}}>
-        <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:16}}>{"🔑 Changer mon mot de passe"}</div>
-        {msg && (
-          <div style={{background:msg.type==="ok"?"#F0FDF4":"#FEF2F2",border:"1px solid "+(msg.type==="ok"?"#A7F3D0":"#FECACA"),borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.type==="ok"?"#065F46":"#DC2626",fontWeight:600}}>
-            {msg.text}
-          </div>
-        )}
-        <div className="form-group" style={{marginBottom:12}}>
-          <label className="form-label">{"Mot de passe actuel"}</label>
-          <input type="password" className="form-input" placeholder="Votre mot de passe actuel"
-            value={ancien} onChange={function(e){setAncien(e.target.value);setMsg(null);}}/>
-        </div>
-        <div className="form-group" style={{marginBottom:12}}>
-          <label className="form-label">{"Nouveau mot de passe"}</label>
-          <input type="password" className="form-input" placeholder="Minimum 4 caractères"
-            value={nouveau} onChange={function(e){setNouveau(e.target.value);setMsg(null);}}/>
-        </div>
-        <div className="form-group" style={{marginBottom:20}}>
-          <label className="form-label">{"Confirmer"}</label>
-          <input type="password" className="form-input" placeholder="Répétez le nouveau mot de passe"
-            value={confirm} onChange={function(e){setConfirm(e.target.value);setMsg(null);}}
-            onKeyDown={function(e){if(e.key==="Enter")sauvegarder();}}/>
-        </div>
-        <button className="btn btn-primary" style={{width:"100%",justifyContent:"center"}} onClick={sauvegarder}>
-          {"💾 Enregistrer le nouveau mot de passe"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── RECOMMANDATIONS ÉQUIPE (vue manager) ─────────────────────────────────────
-function RecommandationsEquipe({ agents, mandats, locations, gestion, objectifs }) {
-  var now = new Date();
-  var annee = now.getFullYear();
-  var mois  = now.getMonth();
-
-  // Même logique que genererRecommandations côté agent
-  function getConseils(agent) {
-    var myM   = mandats.filter(function(m){return m.agentId===agent.id;});
-    var active= myM.filter(function(m){return m.statut==="mandat";});
-    var vendus= myM.filter(function(m){return m.statut==="vendu";});
-    var compromis= myM.filter(function(m){return m.statut==="compromis";});
-    var totalPris = active.length+compromis.length+vendus.length;
-    var txTransfo = totalPris > 0 ? vendus.length/totalPris : 0;
-    var activeMoyen = mandats.filter(function(m){return m.statut==="mandat";}).length / Math.max(1, agents.length);
-    var obj = objectifs.find(function(o){return o.agentId===agent.id&&o.annee===annee;});
-    var caReal = vendus.reduce(function(s,m){return s+(m.commission||0);},0);
-    var pctObj = obj&&obj.montantHT>0 ? caReal/obj.montantHT : null;
-
-    var mandatsAnciens = active.filter(function(m){
-      if(!m.dateMandat) return false;
-      return Math.floor((now-new Date(m.dateMandat))/86400000) > 90;
-    });
-
-    var alertes = [];
-    if (active.length===0 && compromis.length===0) alertes.push("🗺️ Stock vide — prospection recommandée");
-    else if (active.length < activeMoyen*0.6 && activeMoyen>2) alertes.push("📋 Stock sous la moyenne agence");
-    if (active.length>=5 && vendus.length===0) alertes.push("📸 Beaucoup de mandats, peu de ventes — travailler la visibilité ou les prix");
-    if (mandatsAnciens.length>0) alertes.push("⏰ "+mandatsAnciens.length+" mandat"+(mandatsAnciens.length>1?"s":"")+" sans activité > 3 mois");
-    if (pctObj!==null && pctObj<0.4 && mois>=6) alertes.push("🎯 Objectif en retard — "+Math.round(pctObj*100)+"% atteint");
-    if (txTransfo>0.45&&vendus.length>=2) alertes.push("🌟 Excellent taux de transformation : "+Math.round(txTransfo*100)+"%");
-    if (pctObj!==null && pctObj>=1) alertes.push("🎉 Objectif annuel dépassé !");
-
-    return alertes;
-  }
-
-  var lignes = agents.map(function(a){ return {agent:a, conseils:getConseils(a)}; })
-    .filter(function(l){ return l.conseils.length > 0; });
-
-  if (lignes.length === 0) return null;
-
-  return (
-    <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",overflow:"hidden",marginBottom:16}}>
-      <div style={{background:"var(--g50)",borderBottom:"1px solid var(--g100)",padding:"10px 16px"}}>
-        <span style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{"💡 Recommandations par agent"}</span>
-      </div>
-      <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
-        {lignes.map(function(l) {
-          return (
-            <div key={l.agent.id} style={{borderRadius:10,border:"1px solid var(--g100)",padding:"10px 14px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <div style={{width:28,height:28,borderRadius:14,background:"var(--red)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:11}}>{l.agent.avatar}</div>
-                <span style={{fontWeight:700,color:"var(--navy)",fontSize:13}}>{l.agent.nom}</span>
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                {l.conseils.map(function(txt, i){
-                  var isPositif = txt.startsWith("🌟")||txt.startsWith("🎉");
-                  return (
-                    <div key={i} style={{fontSize:12,color:isPositif?"#065F46":"#92400E",background:isPositif?"#F0FDF4":"#FFFBEB",borderRadius:6,padding:"5px 10px"}}>
-                      {txt}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

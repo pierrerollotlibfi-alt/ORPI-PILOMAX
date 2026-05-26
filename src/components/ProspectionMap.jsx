@@ -46,7 +46,7 @@ export default function ProspectionMap({ currentUser, isManager }) {
   var delai  = (prospConfig && prospConfig.delaiRappelMois) || 2;
   var agents = users.filter(function(u){ return (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.actif && u.agenceId===currentUser.agenceId; });
   // Prospection filtrée par agent
-  var prospectionFiltree = filtreAgentProsp==="all" ? prospection : prospection.filter(function(a){ return a.agentId===filtreAgentProsp; });
+  var prospectionFiltree = filtreAgentProsp==="all" ? prospection : prospection.filter(function(a){ return a.agentId===filtreAgentProsp || a.coAgentId===filtreAgentProsp; });
   var actionsRue = selectedRue ? prospectionFiltree.filter(function(a){ return a.rueId===selectedRue.id; }).sort(function(a,b){ return b.date.localeCompare(a.date); }) : [];
 
   // Charge Mapbox GL JS
@@ -156,12 +156,18 @@ export default function ProspectionMap({ currentUser, isManager }) {
 
   function handleSaveAction(action) {
     setProspection(function(prev) {
-      return [...prev, {
-        ...action, id:"p-"+Date.now(),
-        rueId: selectedRue.id, rueNom: selectedRue.nom,
-        coords: selectedRue.coords,
-        agenceId: currentUser.agenceId,
-      }];
+      var base = {
+        ...action, rueId: selectedRue.id, rueNom: selectedRue.nom,
+        coords: selectedRue.coords, agenceId: currentUser.agenceId,
+      };
+      var entries = [{...base, id:"p-"+Date.now()}];
+      // Si co-agent : créer une entrée séparée créditée à lui aussi
+      if (action.coAgentId) {
+        entries.push({...base, id:"p-"+Date.now()+"-co",
+          agentId: action.coAgentId, coAgentId: action.agentId, isCoAgent:true,
+        });
+      }
+      return [...prev, ...entries];
     });
     setShowActionForm(false);
   }
@@ -372,6 +378,7 @@ function ActionsRecentes({ prospection, agents, currentUser, isManager, setProsp
           <tbody>
             {recentes.map(function(a) {
               var agent  = agents.find(function(x){return x.id===a.agentId;});
+              var coAgent = a.coAgentId ? agents.find(function(x){return x.id===a.coAgentId;}) : null;
               var type   = TYPES_ACTION.find(function(t){return t.id===a.type;});
               var canDel = isManager || a.agentId===currentUser.id;
               return (
@@ -414,6 +421,7 @@ function ActionForm({ rue, agents, currentUser, isManager, onSave, onClose }) {
   var [f, setF] = useState({
     type:"boitage", date:today2,
     agentId: isManager ? "" : currentUser.id,
+    coAgentId: "",
     notes:"", photos:[],
   });
   var [uploading, setUploading] = useState(false);
@@ -464,6 +472,17 @@ function ActionForm({ rue, agents, currentUser, isManager, onSave, onClose }) {
           ) : (
             <input className="form-input" value={currentUser.nom} disabled style={{background:"var(--g100)",color:"var(--g500)"}}/>
           )}
+        </div>
+        {/* Co-agent */}
+        <div className="form-group form-full">
+          <label className="form-label">{"👥 Co-agent (optionnel)"}</label>
+          <select className="form-select" value={f.coAgentId} onChange={function(e){set("coAgentId",e.target.value);}}>
+            <option value="">{"— Pas de co-agent —"}</option>
+            {agents.filter(function(a){return a.id!==f.agentId;}).map(function(a){
+              return <option key={a.id} value={a.id}>{a.nom}</option>;
+            })}
+          </select>
+          {f.coAgentId && <div style={{fontSize:11,color:"var(--g400)",marginTop:3}}>{"La rue sera créditée aux deux agents dans les stats"}</div>}
         </div>
         <div className="form-group form-full">
           <label className="form-label">{"Notes (optionnel)"}</label>

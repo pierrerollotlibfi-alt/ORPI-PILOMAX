@@ -11,6 +11,7 @@ import StatsComparatives from "./StatsComparatives";
 import { checkMatchesNouveauMandat, checkMatchesNouvelleRecherche } from "../matchingAuto";
 import Outils from "./Outils";
 import CarteInteractive from "./CarteInteractive";
+import PwaInstallButton from "./PwaInstallButton";
 import {
   AppShell, KpiCard, MandatForm, BadgeStatut, BadgeType,
   fmt, fmtDate, diffDays, todayStr,
@@ -723,27 +724,42 @@ export default function AgentApp() {
           {confirmMandat.isNew && <div style={{fontSize:11,opacity:.7,marginTop:4}}>{"Votre manager a été notifié"}</div>}
         </div>
       )}
-      {showMoreMenuA && (
-        <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",borderTop:"1px solid var(--g200)",boxShadow:"0 -8px 30px rgba(0,0,0,0.12)",padding:"14px 14px 10px"}} onClick={function(){setShowMoreMenuA(false);}}>
-          <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:10,textTransform:"uppercase",letterSpacing:.8}}>{"Tous les onglets"}</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
-            {NAV_SECONDARY_A.map(function(id){
-              var t = ALL_TABS_A[id]||{};
-              return (
-                <button key={id} onClick={function(e){e.stopPropagation();setTab(id);setShowMoreMenuA(false);}} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"2px solid "+(tab===id?"var(--navy)":"var(--g200)"),background:tab===id?"var(--navy)":"#fff",color:tab===id?"#fff":"var(--g600)",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left",fontFamily:"var(--font)"}}>
-                  <span style={{fontSize:18}}>{t.icon}</span>
-                  <span>{t.shortLabel||t.label}</span>
-                </button>
-              );
-            })}
+
+      {activeThemeA && (function(){
+        var theme = THEMES_A.find(function(t){return t.id===activeThemeA;});
+        if(!theme) return null;
+        return (
+          <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",
+            borderTop:"2px solid var(--navy)",boxShadow:"0 -4px 20px rgba(0,0,0,0.15)",padding:"10px 12px 8px"}}
+            onClick={function(e){e.stopPropagation();}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <span style={{fontSize:16}}>{theme.icon}</span>
+              <span style={{fontWeight:900,color:"var(--navy)",fontSize:13}}>{theme.label}</span>
+              <button onClick={function(){setActiveThemeA(null);}} style={{marginLeft:"auto",background:"var(--g100)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:12,color:"var(--g500)"}}>{"✕"}</button>
+            </div>
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2,scrollbarWidth:"none"}}>
+              {theme.tabs.map(function(t){
+                var isActive = tab===t.id;
+                return(
+                  <button key={t.id} onClick={function(){setTab(t.id);setActiveThemeA(null);}}
+                    style={{flexShrink:0,display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
+                      borderRadius:20,border:"2px solid "+(isActive?"var(--navy)":"var(--g200)"),
+                      background:isActive?"var(--navy)":"#fff",color:isActive?"#fff":"var(--g600)",
+                      fontWeight:isActive?800:600,fontSize:12,cursor:"pointer",fontFamily:"var(--font)",whiteSpace:"nowrap"}}>
+                    <span style={{fontSize:15}}>{t.icon}</span>
+                    <span>{t.label}</span>
+                    {isActive&&<span style={{width:6,height:6,borderRadius:3,background:"#6EE7B7",flexShrink:0}}/>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </AppShell>
   );
 }
 
-// ─── PROFIL AGENT ─────────────────────────────────────────────────────────────
 function ProfilAgent({ currentUser, changerMotDePasse }) {
   var ctx    = useApp();
   var [ancien,   setAncien]   = useState("");

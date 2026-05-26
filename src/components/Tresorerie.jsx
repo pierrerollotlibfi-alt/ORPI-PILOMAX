@@ -43,6 +43,41 @@ var STATUTS = [
   { id:"annule",     label:"❌ Annulé",           color:"#FCA5A5", bg:"#FEF2F2" },
 ];
 
+
+// ─── MonthPicker Firefox-compatible ─────────────────────────────────────────
+// input[type=month] non supporté Firefox → sélecteurs séparés
+function MonthPicker({ value, onChange, style }) {
+  var parts = value ? value.split("-") : [new Date().getFullYear().toString(), "01"];
+  var y = parts[0] || new Date().getFullYear().toString();
+  var m = parts[1] || "01";
+  var years = [];
+  var now = new Date().getFullYear();
+  for (var i = now-1; i <= now+2; i++) years.push(i);
+  var months = [
+    {v:"01",l:"Janvier"},{v:"02",l:"Février"},{v:"03",l:"Mars"},
+    {v:"04",l:"Avril"},{v:"05",l:"Mai"},{v:"06",l:"Juin"},
+    {v:"07",l:"Juillet"},{v:"08",l:"Août"},{v:"09",l:"Septembre"},
+    {v:"10",l:"Octobre"},{v:"11",l:"Novembre"},{v:"12",l:"Décembre"},
+  ];
+  // Firefox supporte input[type=month] depuis FF 126 (2024) — on garde le natif avec fallback
+  var isFirefox = /Firefox/.test(navigator.userAgent);
+  if (!isFirefox) {
+    return <input type="month" value={value} onChange={onChange} style={style||{padding:"5px 8px",borderRadius:8,border:"1.5px solid #94A3B8",fontSize:12,fontFamily:"var(--font)"}}/>;
+  }
+  return (
+    <div style={{display:"flex",gap:4,...(style||{})}}>
+      <select value={m} onChange={function(e){onChange({target:{value:y+"-"+e.target.value}});}}
+        style={{padding:"5px 8px",borderRadius:8,border:"1.5px solid #94A3B8",fontSize:12,fontFamily:"var(--font)",flex:2}}>
+        {months.map(function(mo){ return <option key={mo.v} value={mo.v}>{mo.l}</option>; })}
+      </select>
+      <select value={y} onChange={function(e){onChange({target:{value:e.target.value+"-"+m}});}}
+        style={{padding:"5px 8px",borderRadius:8,border:"1.5px solid #94A3B8",fontSize:12,fontFamily:"var(--font)",flex:1}}>
+        {years.map(function(yr){ return <option key={yr} value={yr}>{yr}</option>; })}
+      </select>
+    </div>
+  );
+}
+
 export default function Tresorerie() {
   var ctx = useApp();
   var mandats   = ctx.mandats   || [];
@@ -306,9 +341,9 @@ export default function Tresorerie() {
       <div style={{background:"#fff",borderRadius:12,border:"1px solid var(--g200)",padding:"10px 14px",marginBottom:12,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
         <span style={{fontSize:11,color:"var(--g400)",fontWeight:700}}>{"Période :"}</span>
         <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
-          <input type="month" value={periodeDebut} onChange={function(e){setPeriodeDebut(e.target.value);}} style={{flex:1,padding:"5px 8px",borderRadius:8,border:"1px solid var(--g200)",fontSize:12}}/>
+          <MonthPicker value={periodeDebut} onChange={function(e){setPeriodeDebut(e.target.value);}} style={{flex:1}}/>
           <span style={{color:"var(--g400)"}}>{"→"}</span>
-          <input type="month" value={periodeFin} onChange={function(e){setPeriodeFin(e.target.value);}} style={{flex:1,padding:"5px 8px",borderRadius:8,border:"1px solid var(--g200)",fontSize:12}}/>
+          <MonthPicker value={periodeFin} onChange={function(e){setPeriodeFin(e.target.value);}} style={{flex:1}}/>
         </div>
         {isSuper && (
           <div style={{display:"flex",gap:6}}>
@@ -416,7 +451,7 @@ export default function Tresorerie() {
             )}
             <div>
               <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"MOIS D'ENCAISSEMENT"}</label>
-              <input type="month" className="form-input" value={f.moisEncaissement} onChange={function(e){setFField("moisEncaissement",e.target.value);}}/>
+              <MonthPicker value={f.moisEncaissement} onChange={function(e){setFField("moisEncaissement",e.target.value);}}/>
             </div>
             <div>
               <label style={{fontSize:10,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:4}}>{"RÉF. MANDAT (optionnel)"}</label>

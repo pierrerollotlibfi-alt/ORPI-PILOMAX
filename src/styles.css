@@ -78,24 +78,24 @@ html, body { font-family: var(--font); background: #F0F4F8; color: var(--g900); 
 /* ── KPI CARDS ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .kpi-card { background: #fff; border-radius: var(--r); padding: 16px; box-shadow: var(--sh); border-left: 4px solid var(--g200); }
-.kpi-label { font-size: 10px; font-weight: 700; color: var(--g400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.kpi-label { font-size: 10px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
 .kpi-value { font-size: 22px; font-weight: 900; color: var(--navy); line-height: 1; }
-.kpi-sub { font-size: 11px; color: var(--g400); margin-top: 4px; }
+.kpi-sub { font-size: 11px; color: #475569; margin-top: 4px; font-weight: 600; }
 
 /* ── BADGES ── */
 .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-.badge-mandat    { background: #EFF6FF; color: var(--blue); border: 1px solid #BFDBFE; }
-.badge-compromis { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
-.badge-vendu     { background: #F0FDF4; color: #059669; border: 1px solid #A7F3D0; }
+.badge-mandat    { background: #DBEAFE; color: #1D4ED8; border: 1px solid #93C5FD; }
+.badge-compromis { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+.badge-vendu     { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
 .badge-exclusif  { background: #FEF2F2; color: var(--red); border: 1px solid #FECACA; }
-.badge-simple    { background: var(--g100); color: var(--g500); border: 1px solid var(--g200); }
-.badge-senior    { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
-.badge-junior    { background: #EFF6FF; color: var(--blue); border: 1px solid #BFDBFE; }
+.badge-simple    { background: #E2E8F0; color: #334155; border: 1px solid #94A3B8; }
+.badge-senior    { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+.badge-junior    { background: #DBEAFE; color: #1D4ED8; border: 1px solid #93C5FD; }
 
 /* ── TABLE ── */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { padding: 9px 12px; text-align: left; font-size: 10px; color: var(--g400); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; border-bottom: 1px solid var(--g100); background: var(--g50); white-space: nowrap; }
+th { padding: 9px 12px; text-align: left; font-size: 10px; color: #334155; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; border-bottom: 1px solid var(--g100); background: var(--g50); white-space: nowrap; }
 td { padding: 11px 12px; border-bottom: 1px solid var(--g100); vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--g50); }
@@ -104,7 +104,7 @@ tr:hover td { background: var(--g50); }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 5px; }
-.form-label { font-size: 11px; font-weight: 700; color: var(--g500); text-transform: uppercase; letter-spacing: 0.8px; }
+.form-label { font-size: 11px; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.8px; }
 .form-input { border: 1.5px solid var(--g200); border-radius: 9px; padding: 10px 12px; font-size: 14px; font-family: var(--font); outline: none; width: 100%; transition: border 0.15s; }
 .form-input:focus { border-color: var(--navy); }
 .form-select { border: 1.5px solid var(--g200); border-radius: 9px; padding: 10px 12px; font-size: 14px; font-family: var(--font); background: #fff; outline: none; width: 100%; cursor: pointer; }
@@ -114,9 +114,12 @@ tr:hover td { background: var(--g50); }
 
 /* ── BUTTONS ── */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 9px; border: none; font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
-.btn:disabled { opacity: 0.5; cursor: default; }
-.btn-primary   { background: var(--red); color: #fff; }
-.btn-secondary { background: var(--g100); color: var(--g700); border: 1px solid var(--g200); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn-primary:hover:not(:disabled) { background: #A8171F; }
+.btn-secondary:hover:not(:disabled) { background: #E2E8F0; border-color: #64748B; }
+.btn-navy:hover:not(:disabled) { background: #162840; }
+.btn-primary   { background: #C0212C; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.btn-secondary { background: #F1F5F9; color: #1E293B; border: 1.5px solid #94A3B8; }
 .btn-navy      { background: var(--navy); color: #fff; }
 .btn-green     { background: var(--green); color: #fff; }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
@@ -417,4 +420,142 @@ input[type="color"] {
 /* Firefox date input */
 input[type="date"]::-moz-calendar-picker-indicator {
   cursor: pointer;
+}
+
+/* ─── FIREFOX COMPATIBILITY COMPLÈTE ─────────────────────────────────────────── */
+
+/* 1. Inputs — appearance */
+input, select, textarea, button {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="checkbox"], input[type="radio"] {
+  -moz-appearance: auto;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+input[type="file"] {
+  -moz-appearance: auto;
+}
+
+/* 2. Input date Firefox — fallback visuel cohérent */
+input[type="date"],
+input[type="time"] {
+  -moz-appearance: textfield;
+  font-family: var(--font);
+  font-size: 14px;
+  color: #1E293B;
+}
+input[type="date"]::-moz-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+/* 3. Input month — Firefox ne supporte pas nativement → style textfield */
+input[type="month"] {
+  -moz-appearance: textfield;
+  font-family: var(--font);
+  font-size: 14px;
+  color: #1E293B;
+  background: #fff;
+}
+
+/* 4. Select Firefox */
+select.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23334155' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px !important;
+}
+
+/* 5. Scrollbar Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #94A3B8 transparent;
+}
+
+/* 6. Focus visible Firefox */
+:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* 7. Flex gap Firefox < 63 fallback */
+.nav-bottom { gap: 0; }
+.nav-bottom-item { margin: 0 2px; }
+
+/* 8. Position sticky Firefox */
+.app-shell-header {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* 9. Grid Firefox */
+.kpi-grid {
+  display: -ms-grid;
+  display: grid;
+}
+
+/* 10. Font smoothing Firefox */
+* {
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 11. Overflow scroll Firefox */
+.app-content,
+.modal-body,
+[class*="overflow"] {
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* 12. Input color Firefox */
+input[type="color"] {
+  -moz-appearance: none;
+  border: 1.5px solid #94A3B8;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 2px;
+  height: 32px;
+}
+
+/* 13. Animations Firefox */
+@-moz-keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@-moz-keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@-moz-keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* 14. Placeholder color Firefox */
+::placeholder {
+  color: #94A3B8;
+  opacity: 1;
+}
+::-moz-placeholder {
+  color: #94A3B8;
+  opacity: 1;
+}
+
+/* 15. Touch action Firefox Android */
+button, a, [role="button"] {
+  touch-action: manipulation;
+  -moz-user-select: none;
+  user-select: none;
+}
+input, textarea, select {
+  -moz-user-select: text;
+  user-select: text;
 }
