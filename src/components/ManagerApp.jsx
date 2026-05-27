@@ -170,10 +170,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var ventesMoisCourant  = myMandats.filter(function(m){ return m.statut==="vendu" && _inMoisCourant(m.dateSignature||m.dateCompromis); });
   var caOffresMois       = offresMoisCourant.reduce(function(s,m){return s+(m.commission||0);},0);
   var caVentesMois       = ventesMoisCourant.reduce(function(s,m){return s+(m.commission||0);},0);
-  var caStock   = active.reduce(function(s,m){return s+m.commission;},0);
-  var caSigne   = compromis.reduce(function(s,m){return s+m.commission;},0);
-  var caEnc     = compromis.filter(function(m){return m.clausesSuspensivesLevees;}).reduce(function(s,m){return s+m.commission;},0);
-  var caReal    = vendus.reduce(function(s,m){return s+m.commission;},0);
+  var caStock   = active.reduce(function(s,m){return s + (m.commission||0);},0);
+  var caSigne   = compromis.reduce(function(s,m){return s + (m.commission||0);},0);
+  var caEnc     = compromis.filter(function(m){return m.clausesSuspensivesLevees;}).reduce(function(s,m){return s + (m.commission||0);},0);
+  var caReal    = vendus.reduce(function(s,m){return s + (m.commission||0);},0);
   var lt1m = active.filter(function(m){return diffDays(m.dateMandat,todayStr)<=30;});
   var lt3m = active.filter(function(m){return diffDays(m.dateMandat,todayStr)<=90;});
   var lt6m = active.filter(function(m){return diffDays(m.dateMandat,todayStr)<=180;});
@@ -185,10 +185,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   // Stats location
   var locTrouvees = myLocs.filter(function(l){return l.locataireTrouve;});
   var locEnCours  = myLocs.filter(function(l){return !l.locataireTrouve;});
-  var caLocation  = locTrouvees.reduce(function(s,l){return s+l.commission;},0);
+  var caLocation  = locTrouvees.reduce(function(s,l){return s + (l.commission||0);},0);
 
   // Stats gestion
-  var caGestionMensuel = myGestion.reduce(function(s,g){return s+g.commissionMensuelle;},0);
+  var caGestionMensuel = myGestion.reduce(function(s,g){return s + (g.commissionMensuelle||0);},0);
   var caGestionAnnuel  = caGestionMensuel * 12;
 
   // Classement
@@ -212,7 +212,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     var act  = myM.filter(function(m){return m.statut==="mandat";});
     var myL  = myLocs.filter(function(l){return l.agentId===a.id && l.locataireTrouve;});
     var obj  = objectifs.find(function(o){return o.agentId===a.id && o.annee===new Date().getFullYear();});
-    var caRealise = vend.reduce(function(s,m){return s+m.commission;},0);
+    var caRealise = vend.reduce(function(s,m){return s + (m.commission||0);},0);
 
     // Indicateurs MENSUELS spécifiques (toujours sur mois en cours)
     var allAgentMandats = myMandats.filter(function(m){return m.agentId===a.id;});
@@ -249,10 +249,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     return {
       ...a,
       caRealise,
-      caSigne:       comp.reduce(function(s,m){return s+m.commission;},0),
-      caEncaissable: comp.filter(function(m){return m.clausesSuspensivesLevees;}).reduce(function(s,m){return s+m.commission;},0),
-      caStock:       act.reduce(function(s,m){return s+m.commission;},0),
-      caLocation:    myL.reduce(function(s,l){return s+l.commission;},0),
+      caSigne:       comp.reduce(function(s,m){return s + (m.commission||0);},0),
+      caEncaissable: comp.filter(function(m){return m.clausesSuspensivesLevees;}).reduce(function(s,m){return s + (m.commission||0);},0),
+      caStock:       act.reduce(function(s,m){return s + (m.commission||0);},0),
+      caLocation:    myL.reduce(function(s,l){return s + (l.commission||0);},0),
       nbVendus:vend.length, nbCompromis:comp.length, nbMandats:act.length,
       exclusifs:myM.filter(function(m){return m.typeMandat==="exclusif";}).length,
       nbLocations:myL.length,

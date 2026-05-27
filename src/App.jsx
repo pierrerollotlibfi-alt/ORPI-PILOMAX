@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, createContext, useContext } from "react";
+import React, { useState, useEffect, useCallback, useMemo, createContext, useContext } from "react";
 import Login from "./components/Login";
 import ManagerApp from "./components/ManagerApp";
 import AgentApp from "./components/AgentApp";
@@ -2668,6 +2668,41 @@ function makeInvitationEmail(nom, agence, link) {
 }
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error("ORPI ERROR:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        React.createElement('div', {style:{padding:20,background:"#FEF2F2",minHeight:"100vh",fontFamily:"monospace"}},
+          React.createElement('h2', {style:{color:"#DC2626"}}, "Erreur de rendu"),
+          React.createElement('pre', {style:{fontSize:12,color:"#7F1D1D",whiteSpace:"pre-wrap"}},
+            this.state.error && this.state.error.toString()
+          ),
+          React.createElement('pre', {style:{fontSize:11,color:"#991B1B",whiteSpace:"pre-wrap"}},
+            this.state.errorInfo && this.state.errorInfo.componentStack
+          ),
+          React.createElement('button', {
+            onClick: function(){window.location.reload();},
+            style:{marginTop:16,padding:"8px 16px",background:"#DC2626",color:"#fff",border:"none",borderRadius:8,cursor:"pointer"}
+          }, "Recharger")
+        )
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   // Restaurer le mode sombre
   (function(){
@@ -3100,10 +3135,12 @@ export default function App() {
     </AppContext.Provider>
   );
   return (
+    <ErrorBoundary>
     <AppContext.Provider value={ctx}>
       {currentUser.role==="superadmin" && <SuperAdminApp/>}
       {currentUser.role==="manager" && <ManagerApp/>}
       {currentUser.role==="agent"   && <AgentApp/>}
     </AppContext.Provider>
+    </ErrorBoundary>
   );
 }
