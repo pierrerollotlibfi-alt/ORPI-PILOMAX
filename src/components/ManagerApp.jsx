@@ -84,7 +84,8 @@ function AgentEditModal({ agent, currentUser, setUsers, onClose }) {
 
 export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var ctx = useApp();
-  var { currentUser, users, agences, mandats, setMandats, locations, setLocations, gestion, setGestion, setUsers, inviterAgent, invitations, objectifs, setObjectifs, tasks, setTasks, addJournal, journal, resets, resetMdpParManager, changerMotDePasse, prospection, kpiConfig, setKpiConfig, offmarket, recherches, feedback, tresorerie, setTresorerie } = ctx;
+  var { currentUser, users, agences, mandats, setMandats, locations, setLocations, gestion, setGestion, setUsers, inviterAgent, invitations, objectifs, setObjectifs, tasks, setTasks, addJournal, journal, resets, resetMdpParManager, changerMotDePasse, prospection, kpiConfig, setKpiConfig, offmarket, recherches, feedback, tresorerie, setTresorerie, notifPerm,
+} = ctx;
 
   var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_manager")||"dashboard"; }catch(e){ return "dashboard"; } });
   function setTab(v){ try{ localStorage.setItem("orpi_tab_manager",v); }catch(e){} _setTabRaw(v); }
@@ -137,7 +138,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   // Taux commission moyen agence (tous agents)
   var agenceVendus = myMandats.filter(function(m){ return m.statut==="vendu" && m.prix>0 && m.commission>0; });
   // Leads confiés par agent
-  var leads = ctx.tasks ? ctx.tasks.filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; }) : [];
+  var leads = (tasks||[]).filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; });
   var leadsParAgent = agents.map(function(a){
     return { ...a, nbLeads: (leads||[]).filter(function(l){ return l.agentId===a.id && l.agenceId===agenceId; }).length };
   });
