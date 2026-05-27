@@ -70,8 +70,8 @@ export default function SuperAdminApp() {
       var l   = (locations||[]).filter(function(x){ return x.agenceId===ag.id; });
       var g   = (gestion||[]).filter(function(x){ return x.agenceId===ag.id && x.actif; });
       var om  = (offmarket||[]).filter(function(x){ return x.agenceId===ag.id && x.actif; });
-      var agts= _(users||[]).filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="agent"||u.role==="manager"); });
-      var mgrs= _(users||[]).filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="manager"); });
+      var agts= (users||[]).filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="agent"||u.role==="manager"); });
+      var mgrs= (users||[]).filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="manager"); });
 
       var actifs    = m.filter(function(x){ return x.statut==="mandat"; });
       var compromis = m.filter(function(x){ return x.statut==="compromis"; });

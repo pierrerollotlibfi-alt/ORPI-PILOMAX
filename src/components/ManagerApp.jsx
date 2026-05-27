@@ -126,6 +126,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [prixMax,     setPrixMax]     = useState("");
 
   var agenceId  = agenceIdOverride || currentUser.agenceId;
+  var agents    = (users||[]).filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin"||u.role==="admin") && u.agenceId===agenceId && u.actif;});
+  var myMandats = (mandats||[]).filter(function(m){return m.agenceId===agenceId;});
+  var myLocs    = (locations||[]).filter(function(l){return l.agenceId===agenceId;});
+  var myGestion = (gestion||[]).filter(function(g){return g.agenceId===agenceId && g.actif;});
 
   // Stats transaction
   var active    = myMandats.filter(function(m){return m.statut==="mandat";});
