@@ -50,7 +50,7 @@ export default function SuperAdminApp() {
   var [showCreateAgence, setShowCreateAgence] = useState(false);
   var [createMsg, setCreateMsg] = useState(null);
 
-  var agencesActives = agences.filter(function(a){ return a.actif; });
+  var agencesActives = (agences||[]).filter(function(a){ return a.actif; });
 
   // ─── FILTRAGE PAR PÉRIODE ─────────────────────────────────────────────────
   function inPeriode(d) {
@@ -65,7 +65,7 @@ export default function SuperAdminApp() {
 
   // ─── STATS PAR AGENCE ────────────────────────────────────────────────────
   var statsParAgence = useMemo(function() {
-    return agencesActives.map(function(ag) {
+    return (agencesActives||[]).map(function(ag) {
       var m   = (mandats||[]).filter(function(x){ return x.agenceId===ag.id; });
       var l   = (locations||[]).filter(function(x){ return x.agenceId===ag.id; });
       var g   = (gestion||[]).filter(function(x){ return x.agenceId===ag.id && x.actif; });
@@ -112,16 +112,16 @@ export default function SuperAdminApp() {
   // ─── STATS CONSOLIDÉES ───────────────────────────────────────────────────
   var consolide = useMemo(function() {
     return {
-      caStock:   statsParAgence.reduce(function(s,a){return s+a.caStock;},0),
-      caSigne:   statsParAgence.reduce(function(s,a){return s+a.caSigne;},0),
-      caRealise: statsParAgence.reduce(function(s,a){return s+a.caRealise;},0),
-      caGestion: statsParAgence.reduce(function(s,a){return s+a.caGestion;},0),
-      caP:       statsParAgence.reduce(function(s,a){return s+a.caP;},0),
-      nbMandats: statsParAgence.reduce(function(s,a){return s+a.nbMandats;},0),
-      nbCompromis:statsParAgence.reduce(function(s,a){return s+a.nbCompromis;},0),
-      nbVendus:  statsParAgence.reduce(function(s,a){return s+a.nbVendus;},0),
-      nbAgents:  statsParAgence.reduce(function(s,a){return s+a.agents.length;},0),
-      nbExpirants:statsParAgence.reduce(function(s,a){return s+a.expirants.length;},0),
+      caStock:   (statsParAgence||[]).reduce(function(s,a){return s+a.caStock;},0),
+      caSigne:   (statsParAgence||[]).reduce(function(s,a){return s+a.caSigne;},0),
+      caRealise: (statsParAgence||[]).reduce(function(s,a){return s+a.caRealise;},0),
+      caGestion: (statsParAgence||[]).reduce(function(s,a){return s+a.caGestion;},0),
+      caP:       (statsParAgence||[]).reduce(function(s,a){return s+a.caP;},0),
+      nbMandats: (statsParAgence||[]).reduce(function(s,a){return s+a.nbMandats;},0),
+      nbCompromis:(statsParAgence||[]).reduce(function(s,a){return s+a.nbCompromis;},0),
+      nbVendus:  (statsParAgence||[]).reduce(function(s,a){return s+a.nbVendus;},0),
+      nbAgents:  (statsParAgence||[]).reduce(function(s,a){return s+a.agents.length;},0),
+      nbExpirants:(statsParAgence||[]).reduce(function(s,a){return s+a.expirants.length;},0),
     };
   }, [statsParAgence]);
 
@@ -266,7 +266,7 @@ export default function SuperAdminApp() {
             <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginBottom:4}}>{"RÉSEAU ORPI DÉCLIC IMMO — SUPER ADMIN"}</div>
             <div style={{fontSize:20,fontWeight:900,marginBottom:8}}>{"Bonjour "+currentUser.nom.split(" ")[0]+" 👋"}</div>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              {agencesActives.map(function(ag,i){
+              {(agencesActives||[]).map(function(ag,i){
                 return <span key={ag.id} style={{fontSize:12,color:"rgba(255,255,255,0.8)",background:"rgba(255,255,255,0.1)",borderRadius:20,padding:"2px 10px"}}>{"📍 "+ag.ville}</span>;
               })}
             </div>
@@ -284,7 +284,7 @@ export default function SuperAdminApp() {
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
             <KpiCard label="CA Stock total" value={fmt(consolide.caStock)} color="var(--purple)" icon="📦" sub={consolide.nbMandats+" mandats actifs"}/>
             <KpiCard label="CA Signé total" value={fmt(consolide.caSigne)} color="var(--amber)" icon="✍️" sub={consolide.nbCompromis+" compromis"}/>
-            <KpiCard label={"CA Période"} value={fmt(consolide.caP)} color="var(--green)" icon="💰" sub={statsParAgence.reduce(function(s,a){return s+a.vendusP.length;},0)+" ventes"}/>
+            <KpiCard label={"CA Période"} value={fmt(consolide.caP)} color="var(--green)" icon="💰" sub={(statsParAgence||[]).reduce(function(s,a){return s+a.vendusP.length;},0)+" ventes"}/>
             <KpiCard label="Gestion locative" value={fmt(consolide.caGestion)+"/mois"} color="var(--navy)" icon="🔑" sub={"Réseau complet"}/>
           </div>
 
@@ -302,7 +302,7 @@ export default function SuperAdminApp() {
 
           {/* Cartes par agence */}
           <div style={{marginBottom:6,fontSize:11,color:"var(--g400)",fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginTop:16}}>{"🏢 Par agence"}</div>
-          {statsParAgence.map(function(s, i) {
+          {(statsParAgence||[]).map(function(s, i) {
             var col = AGENCE_COLORS[i % AGENCE_COLORS.length];
             var pctTotal = consolide.caP > 0 ? Math.round(s.caP/consolide.caP*100) : 0;
             return (
@@ -356,7 +356,7 @@ export default function SuperAdminApp() {
             <button className="btn btn-primary btn-sm" onClick={function(){setShowCreateAgence(true);}}>{"+ Nouvelle agence"}</button>
           </div>
           <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-            {agencesActives.map(function(ag, i){
+            {(agencesActives||[]).map(function(ag, i){
               var col = AGENCE_COLORS[i%AGENCE_COLORS.length];
               return (
                 <button key={ag.id} onClick={function(){setAgenceMode(ag.id);}} style={{padding:"10px 20px",borderRadius:12,border:"2px solid "+col,background:col+"18",color:col,fontWeight:800,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
@@ -374,7 +374,7 @@ export default function SuperAdminApp() {
       {tab==="mandats" && (
         <div>
           <div style={{marginBottom:12,fontSize:12,color:"var(--g400)"}}>{"Tous les mandats de toutes les agences · "+mandats.length+" au total"}</div>
-          {agencesActives.map(function(ag, i) {
+          {(agencesActives||[]).map(function(ag, i) {
             var col = AGENCE_COLORS[i%AGENCE_COLORS.length];
             var agM = (mandats||[]).filter(function(m){return m.agenceId===ag.id && m.statut==="mandat";});
             if (agM.length===0) return null;
@@ -385,7 +385,7 @@ export default function SuperAdminApp() {
                   {ag.nom+" — "+agM.length+" mandat"+(agM.length>1?"s":"")}
                 </div>
                 {agM.map(function(m) {
-                  var ag2 = users.find(function(u){return u.id===m.agentId;});
+                  var ag2 = (users||[]).find(function(u){return u.id===m.agentId;});
                   return (
                     <div key={m.id} style={{background:"#fff",borderRadius:10,border:"1px solid var(--g200)",borderLeft:"4px solid "+col,padding:"10px 14px",marginBottom:8}}>
                       <div style={{display:"flex",justifyContent:"space-between"}}>
@@ -448,7 +448,7 @@ export default function SuperAdminApp() {
             <div style={{background:"var(--g50)",padding:"10px 14px",borderBottom:"1px solid var(--g100)"}}>
               <span style={{fontWeight:800,color:"var(--navy)",fontSize:13}}>{"📊 Comparatif détaillé"}</span>
             </div>
-            {statsParAgence.map(function(s, i) {
+            {(statsParAgence||[]).map(function(s, i) {
               var col = AGENCE_COLORS[i%AGENCE_COLORS.length];
               return (
                 <div key={s.agence.id} style={{padding:"12px 14px",borderBottom:"1px solid var(--g50)"}}>
@@ -508,7 +508,7 @@ function CarteGroupe({ agences, mandats, locations, offmarket, users }) {
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap",maxZoom:19}).addTo(map);
 
       // Marqueurs agences
-      agences.forEach(function(ag, i) {
+      (agences||[]).forEach(function(ag, i) {
         var c = COORDS[ag.id] || [49.894,2.296];
         var col = AGENCE_COLORS[i%AGENCE_COLORS.length];
         var icon = L.divIcon({
@@ -547,7 +547,7 @@ function CarteGroupe({ agences, mandats, locations, offmarket, users }) {
   return (
     <div>
       <div style={{marginBottom:10,display:"flex",gap:8,flexWrap:"wrap"}}>
-        {agences.map(function(ag,i){
+        {(agences||[]).map(function(ag,i){
           return <span key={ag.id} style={{background:AGENCE_COLORS[i%AGENCE_COLORS.length]+"22",color:AGENCE_COLORS[i%AGENCE_COLORS.length],borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:800}}>{"🏢 "+ag.ville}</span>;
         })}
       </div>

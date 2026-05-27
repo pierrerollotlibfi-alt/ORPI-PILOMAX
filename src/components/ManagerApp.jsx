@@ -211,7 +211,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     var comp = myM.filter(function(m){return m.statut==="compromis";});
     var act  = myM.filter(function(m){return m.statut==="mandat";});
     var myL  = myLocs.filter(function(l){return l.agentId===a.id && l.locataireTrouve;});
-    var obj  = objectifs.find(function(o){return o.agentId===a.id && o.annee===new Date().getFullYear();});
+    var obj  = (objectifs||[]).find(function(o){return o.agentId===a.id && o.annee===new Date().getFullYear();});
     var caRealise = vend.reduce(function(s,m){return s + (m.commission||0);},0);
 
     // Indicateurs MENSUELS spécifiques (toujours sur mois en cours)
@@ -315,7 +315,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     else {
       if (editingMandat && editingMandat.prix && data.prix < editingMandat.prix) { notifBaissePrix(data, editingMandat.prix, data.prix); }
       if (editingMandat && editingMandat.statut !== "compromis" && data.statut === "compromis") {
-        var agentM = users.find(function(u){ return u.id===data.agentId; });
+        var agentM = (users||[]).find(function(u){ return u.id===data.agentId; });
         notifNouveauCompromis(data, agentM ? agentM.nom : "");
       }
     }
@@ -323,7 +323,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   }
   function deleteMandat(id) {
     if (!window.confirm("Supprimer ce mandat ?")) return;
-    var m2del = mandats.find(function(m){return m.id===id;});
+    var m2del = (mandats||[]).find(function(m){return m.id===id;});
     setMandats(function(prev){return prev.filter(function(m){return m.id!==id;});});
     if (addJournal) addJournal({ type:"suppression", description:"Mandat supprimé : "+(m2del?m2del.ref+" — "+m2del.adresse:id), cible:"mandat", cibleId:id });
   }
@@ -336,7 +336,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   }
   function deleteLoc(id) {
     if (!window.confirm("Supprimer cette location ?")) return;
-    var l2del = locations.find(function(l){return l.id===id;});
+    var l2del = (locations||[]).find(function(l){return l.id===id;});
     setLocations(function(prev){return prev.filter(function(l){return l.id!==id;});});
     if (addJournal) addJournal({ type:"suppression", description:"Location supprimée : "+(l2del?l2del.ref+" — "+l2del.adresse:id), cible:"location", cibleId:id });
   }
@@ -349,12 +349,12 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   }
   function deleteGest(id) {
     if (!window.confirm("Supprimer ce bien en gestion ?")) return;
-    var g2del = gestion.find(function(g){return g.id===id;});
+    var g2del = (gestion||[]).find(function(g){return g.id===id;});
     setGestion(function(prev){return prev.filter(function(g){return g.id!==id;});});
     if (addJournal) addJournal({ type:"suppression", description:"Gestion supprimée : "+(g2del?g2del.ref+" — "+g2del.adresse:id), cible:"gestion", cibleId:id });
   }
   function celebrerOffreAcceptee(mandat) {
-    var agent = users.find(function(u){ return u.id===mandat.agentId; });
+    var agent = (users||[]).find(function(u){ return u.id===mandat.agentId; });
     jouerApplaudissements();
     setShowBravo({ mandatRef: mandat.ref, adresse: mandat.adresse, agentNom: agent?agent.nom:"", commission: mandat.commission });
     setTimeout(function(){ setShowBravo(null); }, 5000);
@@ -507,8 +507,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
           {signaturesProches.length>0 && (
             <div style={{background:"#F0FDF4",border:"1px solid #A7F3D0",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
               <div style={{fontWeight:800,color:"#065F46",fontSize:13,marginBottom:8}}>{"🖊️ "+signaturesProches.length+" signature"+(signaturesProches.length>1?"s":"")+" programmée"+(signaturesProches.length>1?"s":"")+" dans les 30 jours"}</div>
-              {signaturesProches.map(function(m){
-                var a = users.find(function(u){return u.id===m.agentId;});
+              {(signaturesProches||[]).map(function(m){
+                var a = (users||[]).find(function(u){return u.id===m.agentId;});
                 var j = diffDays(todayStr,m.dateSignature);
                 return (
                   <div key={m.id} onClick={function(){setDetailMandat(m);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #D1FAE5",cursor:"pointer"}}>
@@ -531,7 +531,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
               <div style={{fontWeight:800,color:"#9A3412",fontSize:13,marginBottom:4}}>{"📉 "+mandatsAnciensAlerte.length+" mandat"+(mandatsAnciensAlerte.length>1?"s":"")+" > 3 mois — baisse de prix à envisager"}</div>
               <div style={{fontSize:11,color:"#C2410C",marginBottom:8}}>{"Contactez le propriétaire pour réévaluer le prix de vente."}</div>
               {mandatsAnciensAlerte.slice(0,5).map(function(m){
-                var a = users.find(function(u){return u.id===m.agentId;});
+                var a = (users||[]).find(function(u){return u.id===m.agentId;});
                 var age = diffDays(m.dateMandat, todayStr);
                 return (
                   <div key={m.id} onClick={function(){setDetailMandat(m);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #FDE68A",cursor:"pointer"}}>
@@ -573,7 +573,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                   <thead><tr>{["Réf","Type","Adresse","Agent","Commission","CS","Date sig.","J-"].map(function(h){return <th key={h}>{h}</th>;})}</tr></thead>
                   <tbody>
                     {upcomingSig.map(function(m) {
-                      var a = users.find(function(u){return u.id===m.agentId;});
+                      var a = (users||[]).find(function(u){return u.id===m.agentId;});
                       var j = diffDays(todayStr, m.dateSignature);
                       return (
                         <tr key={m.id}>
@@ -765,8 +765,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
           </div>
           {/* Cartes mandats cliquables avec miniature */}
           <div>
-            {filteredMandats.map(function(m) {
-              var a    = users.find(function(u){return u.id===m.agentId;});
+            {(filteredMandats||[]).map(function(m) {
+              var a    = (users||[]).find(function(u){return u.id===m.agentId;});
               var exp  = m.dateExpiration && diffDays(todayStr,m.dateExpiration)>=0 && diffDays(todayStr,m.dateExpiration)<=14;
               var bord = m.statut==="vendu"?"var(--green)":m.statut==="compromis"?"var(--amber)":"var(--blue)";
               var thumb= (m.photos&&m.photos.length>0) ? m.photos[0] : null;
@@ -828,7 +828,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             <KpiCard label="Total locations" value={myLocs.length} color="var(--navy)" icon="🏠"/>
           </div>
           {myLocs.map(function(l) {
-            var a = users.find(function(u){return u.id===l.agentId;});
+            var a = (users||[]).find(function(u){return u.id===l.agentId;});
             return (
               <div key={l.id} className="m-card" style={{borderLeft:"4px solid "+(l.locataireTrouve?"var(--green)":"var(--amber)"),marginBottom:10}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
@@ -1075,7 +1075,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
               <div className="card-header"><span className="card-title">{"📩 Invitations en attente"}</span></div>
               <div className="card-body">
                 {(invitations||[]).filter(function(i){return !i.used;}).map(function(inv) {
-                  var u = users.find(function(x){return x.id===inv.userId;});
+                  var u = (users||[]).find(function(x){return x.id===inv.userId;});
                   return (
                     <div key={inv.token} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--g100)"}}>
                       <div>
@@ -1094,7 +1094,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
           <DemandesReset resets={(resets||[])} resetMdpParManager={resetMdpParManager}/>
 
           {/* ── JOURNAL D'ACTIVITÉ ── */}
-          <JournalActivite journal={journal||[]} users={users} agenceId={agenceId}/>
+          <JournalActivite journal={journal||[]} users={users||[]} agenceId={agenceId}/>
         </div>
       )}
 
@@ -1111,7 +1111,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             <KpiCard label="Terminées" value={(tasks||[]).filter(function(t){return t.agenceId===agenceId&&t.statut==="terminee";}).length} color="var(--green)" icon="✅"/>
           </div>
           {pendingTasks.map(function(t) {
-            var a = users.find(function(u){return u.id===t.agentId;});
+            var a = (users||[]).find(function(u){return u.id===t.agentId;});
             var ech = t.echeance ? diffDays(todayStr, t.echeance) : null;
             return (
               <div key={t.id} className="m-card" style={{borderLeft:"4px solid "+(t.priorite==="haute"?"var(--red)":t.priorite==="moyenne"?"var(--amber)":"var(--blue)"),marginBottom:10}}>
@@ -1128,7 +1128,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                   {"→ "+(a&&a.nom||"Tous")+(ech!==null?(" · "+(ech<0?"⚠️ Dépassé":"J+"+ech)):"")+" · Priorité : "+(t.priorite||"normale")}
                 </div>
                 <div style={{display:"flex",gap:8}}>
-                  <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setTasks(function(prev){return prev.map(function(x){return x.id===t.id?{...x,statut:"terminee"}:x;});});var ag=users.find(function(u){return u.id===t.agentId;});notifTacheTerminee(t,ag?ag.nom:"");}}>{"✅ Marquer terminée"}</button>
+                  <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setTasks(function(prev){return prev.map(function(x){return x.id===t.id?{...x,statut:"terminee"}:x;});});var ag=(users||[]).find(function(u){return u.id===t.agentId;});notifTacheTerminee(t,ag?ag.nom:"");}}>{"✅ Marquer terminée"}</button>
                   <button className="btn btn-sm" style={{background:"#FEF2F2",color:"var(--red)",border:"none"}} onClick={function(){setTasks(function(prev){return prev.filter(function(x){return x.id!==t.id;});});}}>{"🗑"}</button>
                 </div>
               </div>
@@ -1144,7 +1144,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       {tab==="leads" && <Leads/>}
       {tab==="recherches" && <Recherches/>}
       {tab==="messagerie" && <Messagerie/>}
-      {tab==="profil" && <ProfilManager currentUser={currentUser} users={users} changerMotDePasse={changerMotDePasse}/>}
+      {tab==="profil" && <ProfilManager currentUser={currentUser} users={users||[]} changerMotDePasse={changerMotDePasse}/>}
 
             {detailMandat && (
         <MandatDetail
@@ -1296,7 +1296,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
 }
 
 function RecommandationsEquipe({ users, mandats, agenceId }) {
-  var nb = users.filter(function(u){return u.agenceId===agenceId&&u.actif;}).length;
+  var nb = (users||[]).filter(function(u){return u.agenceId===agenceId&&u.actif;}).length;
   return (
     <div style={{padding:"20px 0",textAlign:"center",color:"var(--g400)"}}>
       <div style={{fontSize:32,marginBottom:8}}>{"💡"}</div>
@@ -1312,7 +1312,7 @@ function DemandesReset({ resets, resetMdpParManager }) {
   );
   return (
     <div>
-      {resets.map(function(r){
+      {(resets||[]).map(function(r){
         return (
           <div key={r.agentId} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--g50)"}}>
             <div>
@@ -1368,7 +1368,7 @@ function JournalActivite({ journal, users, agenceId }) {
   var [filtreType,setFiltreType]= useState(""); // type action
   var [limite,    setLimite]    = useState(30);
 
-  var agents = users.filter(function(u){ return u.agenceId===agenceId && u.actif; });
+  var agents = (users||[]).filter(function(u){ return u.agenceId===agenceId && u.actif; });
 
   var filtered = (journal||[]).filter(function(e){
     if (filtre     && e.userId !== filtre)     return false;
@@ -1424,9 +1424,9 @@ function JournalActivite({ journal, users, agenceId }) {
         </div>
       ) : (
         <div>
-          {visible.map(function(e) {
+          {(visible||[]).map(function(e) {
             var cfg  = TYPE_CONFIG[e.type] || { label:e.type, color:"var(--g400)", bg:"var(--g50)", icon:"•" };
-            var user = users.find(function(u){ return u.id===e.userId; });
+            var user = (users||[]).find(function(u){ return u.id===e.userId; });
             var uCol = user ? avatarColor(user.nom) : "var(--g300)";
             return (
               <div key={e.id} style={{display:"flex",gap:12,padding:"11px 16px",borderBottom:"1px solid var(--g50)",alignItems:"flex-start"}}>
@@ -1462,7 +1462,7 @@ function JournalActivite({ journal, users, agenceId }) {
 
 function MandatDetail({ mandat, users, onEdit, onDelete, onClose }) {
   var m = mandat;
-  var agent = users.find(function(u){return u.id===m.agentId;});
+  var agent = (users||[]).find(function(u){return u.id===m.agentId;});
   var [photoIdx, setPhotoIdx] = useState(0);
   var photos = m.photos || [];
 
@@ -1721,7 +1721,7 @@ function ObjectifsModal({ agents, objectifs, setObjectifs, onClose }) {
   return (
     <Modal title={"🎯 Objectifs "+annee} onClose={onClose} footer={<button className="btn btn-primary" style={{width:"100%"}} onClick={onClose}>{"Fermer"}</button>}>
       {agents.map(function(a) {
-        var obj = objectifs.find(function(o){return o.agentId===a.id&&o.annee===annee;});
+        var obj = (objectifs||[]).find(function(o){return o.agentId===a.id&&o.annee===annee;});
         return (
           <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:"1px solid var(--g100)"}}>
             <div className="avatar" style={{background:avatarColor(a.nom),width:34,height:34,fontSize:12}}>{a.avatar}</div>

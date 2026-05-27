@@ -85,7 +85,7 @@ export default function AgentApp() {
   var caReal    = vendus.reduce(function(s,m){return s+m.commission;},0);
   var caLoc     = myLocs.filter(function(l){return l.locataireTrouve;}).reduce(function(s,l){return s+l.commission;},0);
   var caGest    = myGestion.reduce(function(s,g){return s+g.commissionMensuelle;},0);
-  var obj       = objectifs.find(function(o){return o.agentId===currentUser.id && o.annee===new Date().getFullYear();});
+  var obj       = (objectifs||[]).find(function(o){return o.agentId===currentUser.id && o.annee===new Date().getFullYear();});
   var progress  = obj && obj.montantHT>0 ? Math.min(100, Math.round(caReal/obj.montantHT*100)) : 0;
 
   // Taux commission moyen agent
@@ -95,7 +95,7 @@ export default function AgentApp() {
     : null;
 
   // Moyenne agence (tous agents vendus)
-  var agenceVendus = agenceMandats.filter(function(m){ return m.statut==="vendu" && m.prix>0 && m.commission>0; });
+  var agenceVendus = (agenceMandats||[]).filter(function(m){ return m.statut==="vendu" && m.prix>0 && m.commission>0; });
   var txCommAgence = agenceVendus.length > 0
     ? Math.round(agenceVendus.reduce(function(s,m){ return s+(m.commission/m.prix*100); },0)/agenceVendus.length*100)/100
     : null;
@@ -134,7 +134,7 @@ export default function AgentApp() {
       var msgs = JSON.parse(localStorage.getItem(SK)||"[]");
       var managers = (ctx.users||[]).filter(function(u){ return u.agenceId===agenceId && u.actif && (u.role==="manager"||u.role==="superadmin"); });
       var labels = { compromis:"🤝 Offre acceptée / Compromis", vendu:"✅ Acte définitif signé", sous_offre:"📝 Sous offre", mandat:"📋 Retour en mandat" };
-      managers.forEach(function(mgr){
+      (managers||[]).forEach(function(mgr){
         msgs.push({ id:"statut-"+Date.now()+mgr.id, channelId:"priv-match-"+mgr.id, senderId:currentUser.id, senderNom:currentUser.nom, senderAvatar:currentUser.avatar||"👤",
           content:(labels[nouveauStatut]||nouveauStatut)+"\n\nMandat : "+mandat.ref+" — "+mandat.adresse+"\nPrix : "+(mandat.prix||0).toLocaleString("fr-FR")+"€\n\nMis à jour par "+currentUser.nom,
           ts:new Date().toISOString(), type:"statut_mandat", read:[], targetAgentId:mgr.id });
@@ -170,7 +170,7 @@ export default function AgentApp() {
       try {
         var msgs = JSON.parse(localStorage.getItem(SK_MSG)||"[]");
         var managers = (ctx.users||[]).filter(function(u){ return u.agenceId===agenceId && u.actif && (u.role==="manager"||u.role==="superadmin"); });
-        managers.forEach(function(mgr){
+        (managers||[]).forEach(function(mgr){
           msgs.push({
             id:"new-mandat-"+Date.now()+"-"+mgr.id,
             channelId:"priv-match-"+mgr.id,
@@ -340,7 +340,7 @@ export default function AgentApp() {
     );
   }
 
-  var sweepMandat = sweepOpen ? agenceMandats.find(function(m){ return m.id===sweepOpen; }) : null;
+  var sweepMandat = sweepOpen ? (agenceMandats||[]).find(function(m){ return m.id===sweepOpen; }) : null;
   return (
     <AppShell navItems={navItems} title={tab==="mandats"?"📋 Mandats agence":tab==="locations"?"🏠 Mes locations":tab==="gestion"?"🔑 Mes gestions":tab==="gestion-loc"?"🏘️ Parc locatif":tab==="offmarket"?"🔒 Off Market":tab==="outils"?"🛠️ Outils":tab==="feedback"?"💡 Suggestions":tab==="carte"?"🗺️ Carte interactive":tab==="prospection"?"🗺️ Prospection":tab==="taches"?"✅ Mes tâches":tab==="stats"?"📊 Mes stats":tab==="leads"?"📥 Mes leads":tab==="recherches"?"🔍 Recherches":tab==="profil"?"👤 Mon profil":"💬 Messagerie"}
       topbarActions={
@@ -375,9 +375,9 @@ export default function AgentApp() {
             <span style={{fontSize:11,background:"#EFF6FF",color:"var(--blue)",padding:"3px 10px",borderRadius:20,fontWeight:700}}>{"📋 Mes mandats : "+myMandats.length}</span>
             <span style={{fontSize:11,background:"var(--g100)",color:"var(--g500)",padding:"3px 10px",borderRadius:20,fontWeight:700}}>{"👥 Équipe : "+(agenceMandats.length-myMandats.length)}}</span>
           </div>
-          {agenceMandats.map(function(m) {
+          {(agenceMandats||[]).map(function(m) {
             var isMine = m.agentId === currentUser.id;
-            var agentProp = ctx.users.find(function(u){return u.id===m.agentId;});
+            var agentProp = (ctx.users||[]).find(function(u){return u.id===m.agentId;});
             var exp = m.dateExpiration && diffDays(todayStr,m.dateExpiration)>=0 && diffDays(todayStr,m.dateExpiration)<=14;
             return (
               <SwipeCard key={m.id}
@@ -549,7 +549,7 @@ export default function AgentApp() {
               <div style={{fontWeight:700,fontSize:15,color:"var(--navy)"}}>{"Aucune tâche en cours"}</div>
               <div style={{fontSize:13,marginTop:6}}>{"Votre manager vous assignera des tâches ici"}</div>
             </div>
-          ) : myTasks.map(function(t) {
+          ) : (myTasks||[]).map(function(t) {
             var ech = t.echeance ? diffDays(todayStr,t.echeance) : null;
             return (
               <div key={t.id} className="m-card" style={{borderLeft:"4px solid "+(t.priorite==="haute"?"var(--red)":t.priorite==="moyenne"?"var(--amber)":"var(--blue)"),marginBottom:10}}>
@@ -690,10 +690,10 @@ export default function AgentApp() {
       {showKpiDetailA && (function(){
         var agentMandats = (mandats||[]).filter(function(m){return m.agentId===currentUser.id;});
         var kpiMapA = {
-          mandats_actifs: {titre:"📋 Mandats actifs",   items:agentMandats.filter(function(m){return m.statut==="mandat";}),   extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
-          compromis:      {titre:"🤝 Compromis",         items:agentMandats.filter(function(m){return m.statut==="compromis";}), extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" comm.";}},
-          vendus:         {titre:"✅ Ventes actées",      items:agentMandats.filter(function(m){return m.statut==="vendu";}),     extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
-          ca_realise:     {titre:"🏆 CA Réalisé",        items:agentMandats.filter(function(m){return m.statut==="vendu";}),     extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" TTC";}},
+          mandats_actifs: {titre:"📋 Mandats actifs",   items:(agentMandats||[]).filter(function(m){return m.statut==="mandat";}),   extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
+          compromis:      {titre:"🤝 Compromis",         items:(agentMandats||[]).filter(function(m){return m.statut==="compromis";}), extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" comm.";}},
+          vendus:         {titre:"✅ Ventes actées",      items:(agentMandats||[]).filter(function(m){return m.statut==="vendu";}),     extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
+          ca_realise:     {titre:"🏆 CA Réalisé",        items:(agentMandats||[]).filter(function(m){return m.statut==="vendu";}),     extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" TTC";}},
           locations:      {titre:"🏠 Locations signées", items:myLocs.filter(function(l){return l.locataireTrouve;}),            extra:function(l){return l.adresse.split(",")[0]+" · "+(l.loyer||0)+"€/mois";}},
         };
         var k = kpiMapA[showKpiDetailA];
