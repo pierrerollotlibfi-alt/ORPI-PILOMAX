@@ -1177,6 +1177,541 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
           </div>
         );
       })()}
+
+      {/* ─── MODAL ÉDITION AGENT ─── */}
+      {editingAgent && (function(){
+        var [fa, setFa] = React.useState({...editingAgent});
+        function setA(k,v){ setFa(function(p){return{...p,[k]:v};}); }
+        var isMe = fa.id === currentUser.id;
+        return (
+          <Modal title={"✏️ Modifier — "+fa.nom} onClose={function(){setEditingAgent(null);}}>
+            <div className="form-grid">
+              <div className="form-group"><label className="form-label">{"Nom complet"}</label>
+                <input className="form-input" value={fa.nom||""} onChange={function(e){setA("nom",e.target.value);}}/></div>
+              <div className="form-group"><label className="form-label">{"Prénom"}</label>
+                <input className="form-input" value={fa.prenom||""} onChange={function(e){setA("prenom",e.target.value);}}/></div>
+              <div className="form-group"><label className="form-label">{"Email"}</label>
+                <input className="form-input" type="email" value={fa.email||""} onChange={function(e){setA("email",e.target.value);}}/></div>
+              <div className="form-group"><label className="form-label">{"Téléphone"}</label>
+                <input className="form-input" value={fa.telephone||""} onChange={function(e){setA("telephone",e.target.value);}}/></div>
+
+              {/* Rôle — superadmin peut changer n'importe quel rôle, manager peut donner admin */}
+              {!isMe && (
+                <div className="form-group form-full">
+                  <label className="form-label">{"🔑 Niveau d'accès"}</label>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginTop:4}}>
+                    {[
+                      {id:"agent",      label:"👤 Agent",          sub:"Accès à ses propres données",         color:"var(--navy)"},
+                      {id:"admin",      label:"🔧 Administrateur", sub:"Gestion mandats + agents de l'agence",color:"var(--blue)"},
+                      {id:"manager",    label:"⚙️ Manager",        sub:"Pilotage complet + trésorerie",        color:"var(--amber)"},
+                      {id:"superadmin", label:"🌟 Super Admin",    sub:"Accès total + configuration",         color:"var(--red)"},
+                    ].map(function(role){
+                      var actif = fa.role===role.id;
+                      // Seul superadmin peut accorder superadmin
+                      var disabled = role.id==="superadmin" && currentUser.role!=="superadmin";
+                      return (
+                        <button key={role.id} disabled={disabled} onClick={function(){if(!disabled)setA("role",role.id);}}
+                          style={{padding:"10px 12px",borderRadius:10,border:"2px solid "+(actif?role.color:"var(--g200)"),
+                            background:actif?role.color+"18":"#fff",cursor:disabled?"not-allowed":"pointer",
+                            textAlign:"left",opacity:disabled?0.4:1,fontFamily:"var(--font)"}}>
+                          <div style={{fontWeight:800,color:actif?role.color:"var(--navy)",fontSize:12}}>{role.label}</div>
+                          <div style={{fontSize:10,color:"var(--g400)",marginTop:2}}>{role.sub}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="form-group"><label className="form-label">{"Niveau"}</label>
+                <select className="form-select" value={fa.niveau||"junior"} onChange={function(e){setA("niveau",e.target.value);}}>
+                  <option value="junior">🌱 Junior</option><option value="senior">🏆 Senior</option>
+                </select></div>
+              <div className="form-group"><label className="form-label">{"Statut"}</label>
+                <select className="form-select" value={fa.actif?"actif":"inactif"} onChange={function(e){setA("actif",e.target.value==="actif");}}>
+                  <option value="actif">✅ Actif</option><option value="inactif">❌ Inactif</option>
+                </select></div>
+            </div>
+            <div style={{display:"flex",gap:8,marginTop:16}}>
+              <button className="btn btn-secondary" style={{flex:1}} onClick={function(){setEditingAgent(null);}}>{"Annuler"}</button>
+              <button className="btn btn-primary" style={{flex:2}} onClick={function(){
+                setUsers(function(prev){return prev.map(function(u){return u.id===fa.id?fa:u;});});
+                setEditingAgent(null);
+              }}>{"💾 Enregistrer"}</button>
+            </div>
+          </Modal>
+        );
+      })()}
     </AppShell>
   );
 }
+
+function RecommandationsEquipe({ users, mandats, agenceId }) {
+  var nb = users.filter(function(u){return u.agenceId===agenceId&&u.actif;}).length;
+  return (
+    <div style={{padding:"20px 0",textAlign:"center",color:"var(--g400)"}}>
+      <div style={{fontSize:32,marginBottom:8}}>{"💡"}</div>
+      <div style={{fontWeight:700,fontSize:13,color:"var(--navy)"}}>{"Recommandations équipe"}</div>
+      <div style={{fontSize:12,marginTop:4}}>{nb+" agents actifs dans votre agence"}</div>
+    </div>
+  );
+}
+
+function DemandesReset({ resets, resetMdpParManager }) {
+  if (!resets || resets.length===0) return (
+    <div style={{padding:"20px",textAlign:"center",color:"var(--g400)",fontSize:12}}>{"Aucune demande de réinitialisation en attente"}</div>
+  );
+  return (
+    <div>
+      {resets.map(function(r){
+        return (
+          <div key={r.agentId} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--g50)"}}>
+            <div>
+              <div style={{fontWeight:700,color:"var(--navy)",fontSize:13}}>{r.nom}</div>
+              <div style={{fontSize:11,color:"var(--g400)"}}>{r.email}</div>
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={function(){resetMdpParManager(r.agentId);}}>{"Réinitialiser"}</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProfilManager({ currentUser, users, changerMotDePasse }) {
+  var ctx = useApp();
+  var [ancien, setAncien] = useState("");
+  var [nouveau, setNouveau] = useState("");
+  var [confirm, setConfirm] = useState("");
+  var [msg, setMsg] = useState(null);
+  function save() {
+    if (!ancien || ancien!==currentUser.password) { setMsg({type:"err",text:"Mot de passe actuel incorrect"}); return; }
+    if (nouveau.length<6) { setMsg({type:"err",text:"Minimum 6 caractères"}); return; }
+    if (nouveau!==confirm) { setMsg({type:"err",text:"Ne correspond pas"}); return; }
+    changerMotDePasse(currentUser.id, nouveau);
+    setMsg({type:"ok",text:"✅ Mot de passe modifié !"});
+    setAncien(""); setNouveau(""); setConfirm("");
+  }
+  return (
+    <div>
+      <div style={{background:"linear-gradient(135deg,var(--navy),#2a4a7a)",borderRadius:14,padding:"20px",marginBottom:14,color:"#fff"}}>
+        <div style={{fontWeight:900,fontSize:18}}>{currentUser.nom}</div>
+        <div style={{fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:2}}>{currentUser.email}</div>
+        <div style={{marginTop:6,display:"flex",gap:6}}>
+          <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{"🌟 Super Admin"}</span>
+        </div>
+      </div>
+      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px"}}>
+        <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:14}}>{"🔑 Changer mon mot de passe"}</div>
+        {msg && <div style={{background:msg.type==="ok"?"#F0FDF4":"#FEF2F2",borderRadius:8,padding:"8px 12px",fontSize:12,color:msg.type==="ok"?"var(--green)":"var(--red)",fontWeight:700,marginBottom:10}}>{msg.text}</div>}
+        {[["Mot de passe actuel",ancien,setAncien],["Nouveau mot de passe",nouveau,setNouveau],["Confirmer",confirm,setConfirm]].map(function(f){
+          return <div key={f[0]} className="form-group" style={{marginBottom:10}}><label className="form-label">{f[0]}</label><input type="password" className="form-input" value={f[1]} onChange={function(e){f[2](e.target.value);setMsg(null);}}/></div>;
+        })}
+        <button className="btn btn-primary" style={{width:"100%"}} onClick={save}>{"💾 Enregistrer"}</button>
+      </div>
+    </div>
+  );
+}
+
+
+function JournalActivite({ journal, users, agenceId }) {
+  var [filtre,    setFiltre]    = useState(""); // agentId
+  var [filtreType,setFiltreType]= useState(""); // type action
+  var [limite,    setLimite]    = useState(30);
+
+  var agents = users.filter(function(u){ return u.agenceId===agenceId && u.actif; });
+
+  var filtered = journal.filter(function(e){
+    if (filtre     && e.userId !== filtre)     return false;
+    if (filtreType && e.type   !== filtreType) return false;
+    return true;
+  });
+  var visible = filtered.slice(0, limite);
+
+  var TYPE_CONFIG = {
+    "creation":     { label:"Création",     color:"#059669", bg:"#F0FDF4", icon:"✨" },
+    "modification": { label:"Modification", color:"#D97706", bg:"#FFFBEB", icon:"✏️" },
+    "suppression":  { label:"Suppression",  color:"#DC2626", bg:"#FEF2F2", icon:"🗑️" },
+  };
+
+  function fmtTs(ts) {
+    var d = new Date(ts);
+    var now = new Date();
+    var diffH = Math.floor((now-d)/3600000);
+    var diffJ = Math.floor(diffH/24);
+    if (diffH < 1)  return "Il y a moins d'1h";
+    if (diffH < 24) return "Il y a "+diffH+"h";
+    if (diffJ === 1) return "Hier à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+    return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"})+" à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  return (
+    <div style={{background:"#fff",borderRadius:12,border:"1px solid var(--g200)",overflow:"hidden",marginTop:16}}>
+      {/* Header */}
+      <div style={{background:"var(--g50)",borderBottom:"1px solid var(--g100)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+        <span style={{fontWeight:800,color:"var(--navy)",fontSize:13,flex:"0 0 auto"}}>{"📋 Historique des modifications"}</span>
+        <span style={{fontSize:11,color:"var(--g400)",background:"var(--g100)",borderRadius:20,padding:"2px 10px",fontWeight:700}}>{filtered.length+" entrée(s)"}</span>
+        <div style={{flex:1}}></div>
+        {/* Filtre agent */}
+        <select value={filtre} onChange={function(e){setFiltre(e.target.value);setLimite(30);}} className="form-select" style={{width:"auto",fontSize:12,padding:"5px 10px"}}>
+          <option value="">{"Tous les agents"}</option>
+          {agents.map(function(a){ return <option key={a.id} value={a.id}>{a.nom}</option>; })}
+        </select>
+        {/* Filtre type */}
+        <select value={filtreType} onChange={function(e){setFiltreType(e.target.value);setLimite(30);}} className="form-select" style={{width:"auto",fontSize:12,padding:"5px 10px"}}>
+          <option value="">{"Toutes actions"}</option>
+          <option value="creation">{"✨ Créations"}</option>
+          <option value="modification">{"✏️ Modifications"}</option>
+          <option value="suppression">{"🗑️ Suppressions"}</option>
+        </select>
+      </div>
+
+      {/* Liste */}
+      {visible.length === 0 ? (
+        <div style={{textAlign:"center",padding:"32px 16px",color:"var(--g400)"}}>
+          <div style={{fontSize:32,marginBottom:8}}>{"📋"}</div>
+          <div style={{fontWeight:700}}>{"Aucune activité enregistrée"}</div>
+          <div style={{fontSize:12,marginTop:4}}>{"Les modifications apparaîtront ici en temps réel"}</div>
+        </div>
+      ) : (
+        <div>
+          {visible.map(function(e) {
+            var cfg  = TYPE_CONFIG[e.type] || { label:e.type, color:"var(--g400)", bg:"var(--g50)", icon:"•" };
+            var user = users.find(function(u){ return u.id===e.userId; });
+            var uCol = user ? avatarColor(user.nom) : "var(--g300)";
+            return (
+              <div key={e.id} style={{display:"flex",gap:12,padding:"11px 16px",borderBottom:"1px solid var(--g50)",alignItems:"flex-start"}}>
+                {/* Avatar utilisateur */}
+                <div style={{width:32,height:32,borderRadius:16,background:uCol,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:900,fontSize:11,flexShrink:0,marginTop:1}}>
+                  {user ? user.avatar : "?"}
+                </div>
+                {/* Contenu */}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:3}}>
+                    <span style={{fontWeight:700,fontSize:12,color:"var(--navy)"}}>{e.userNom}</span>
+                    <span style={{background:cfg.bg,color:cfg.color,fontSize:10,fontWeight:700,padding:"1px 8px",borderRadius:20,flexShrink:0}}>{cfg.icon+" "+cfg.label}</span>
+                    <span style={{fontSize:10,color:"var(--g400)",marginLeft:"auto",flexShrink:0}}>{fmtTs(e.ts)}</span>
+                  </div>
+                  <div style={{fontSize:12,color:"var(--g600)",lineHeight:1.4}}>{e.description}</div>
+                </div>
+              </div>
+            );
+          })}
+          {/* Voir plus */}
+          {filtered.length > limite && (
+            <div style={{padding:"10px 16px",textAlign:"center"}}>
+              <button onClick={function(){setLimite(function(l){return l+30;});}} className="btn btn-secondary btn-sm">
+                {"Voir plus ("+(filtered.length-limite)+" restantes)"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MandatDetail({ mandat, users, onEdit, onDelete, onClose }) {
+  var m = mandat;
+  var agent = users.find(function(u){return u.id===m.agentId;});
+  var [photoIdx, setPhotoIdx] = useState(0);
+  var photos = m.photos || [];
+
+  function partagerFiche() {
+    var texte = [
+      "🏠 FICHE BIEN — "+m.ref,
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+      "📍 "+m.adresse,
+      "🏷️ Type : "+(m.typeMandat==="exclusif"?"⭐ Mandat exclusif":"Mandat simple"),
+      "💰 Prix de vente : "+(m.prix?m.prix.toLocaleString("fr-FR")+"€":"—"),
+      m.surface ? "📐 Surface : "+m.surface+" m²" : "",
+      m.nbPieces ? "🛏️ Pièces : "+m.nbPieces : "",
+      m.dpe ? "🌿 DPE : "+m.dpe : "",
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+      agent ? "👤 Agent : "+agent.nom : "",
+      "📅 Mandat signé le : "+(m.dateMandat||"—"),
+      m.dateExpiration ? "⏳ Expiration : "+m.dateExpiration : "",
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+      m.notes ? "📝 "+m.notes : "",
+      "",
+      "ORPI Pro Amiens — TEAM DECLIC IMMO"
+    ].filter(Boolean).join("\n");
+
+    if (navigator.share) {
+      navigator.share({ title:"Fiche mandat "+m.ref, text:texte }).catch(function(){});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(texte).then(function(){
+        alert("✅ Fiche copiée dans le presse-papier !");
+      });
+    } else {
+      var w = window.open("","_blank");
+      w.document.write("<pre style='font-family:monospace;padding:20px'>"+texte+"</pre>");
+    }
+  }
+
+  return (
+    <Modal title={m.ref+" — Fiche détail"} onClose={onClose} wide
+      footer={
+        <div style={{display:"flex",gap:8,width:"100%",flexWrap:"wrap"}}>
+          <button className="btn btn-sm" style={{background:"#FEF2F2",color:"var(--red)",border:"none"}} onClick={function(){if(window.confirm("Supprimer ce mandat ?")) onDelete(m.id);}}>{"🗑 Supprimer"}</button>
+          <div style={{flex:1}}></div>
+          <button className="btn btn-secondary" onClick={partagerFiche}>{"📤 Partager la fiche"}</button>
+          <button className="btn btn-primary" onClick={function(){onEdit(m);}}>{"✏️ Modifier"}</button>
+        </div>
+      }>
+
+      {/* Galerie photos */}
+      {photos.length>0 && (
+        <div style={{marginBottom:16}}>
+          <div style={{borderRadius:12,overflow:"hidden",height:220,background:"var(--g100)",position:"relative",marginBottom:8}}>
+            <img src={photos[photoIdx]} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            {photos.length>1 && (
+              <div>
+                <button onClick={function(){setPhotoIdx(function(i){return(i-1+photos.length)%photos.length;});}} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.5)",border:"none",color:"#fff",width:34,height:34,borderRadius:17,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>{"‹"}</button>
+                <button onClick={function(){setPhotoIdx(function(i){return(i+1)%photos.length;});}} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.5)",border:"none",color:"#fff",width:34,height:34,borderRadius:17,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>{"›"}</button>
+                <div style={{position:"absolute",bottom:10,right:10,background:"rgba(0,0,0,0.55)",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{(photoIdx+1)+"/"+photos.length}</div>
+              </div>
+            )}
+          </div>
+          {photos.length>1 && (
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
+              {photos.map(function(p,i){
+                return (
+                  <img key={i} src={p} alt="" onClick={function(){setPhotoIdx(i);}} style={{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",border:i===photoIdx?"3px solid var(--red)":"2px solid transparent",flexShrink:0,opacity:i===photoIdx?1:0.7}}/>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+      {photos.length===0 && (
+        <div style={{borderRadius:12,height:100,background:"var(--g50)",border:"2px dashed var(--g200)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,flexDirection:"column",gap:6}}>
+          <span style={{fontSize:28,opacity:0.3}}>{"🏠"}</span>
+          <span style={{fontSize:12,color:"var(--g400)"}}>{"Aucune photo — ajoutez-en via Modifier"}</span>
+        </div>
+      )}
+
+      {/* Infos bien */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {[
+          ["📍","Adresse",m.adresse],
+          ["🏷️","Type",m.typeMandat==="exclusif"?"⭐ Exclusif":"Simple"],
+          ["📊","Statut",m.statut.charAt(0).toUpperCase()+m.statut.slice(1)],
+          ["💰","Prix",m.prix?m.prix.toLocaleString("fr-FR")+"€":"—"],
+          ["💎","Commission",m.commission?m.commission.toLocaleString("fr-FR")+"€ HT":"—"],
+          ["📐","Surface",m.surface?m.surface+" m²":"—"],
+          ["🛏️","Pièces",m.nbPieces||"—"],
+          ["🌿","DPE",m.dpe||"—"],
+          ["👤","Agent",agent?agent.nom:"—"],
+          ["📅","Date mandat",m.dateMandat||"—"],
+          ["⏳","Expiration",m.dateExpiration||"—"],
+          ["✅","CS levées",m.clausesSuspensivesLevees?"Oui":"Non"],
+        ].map(function(row){
+          var isAdresse = row[1]==="Adresse";
+          return (
+            <div key={row[1]} style={{background:"var(--g50)",borderRadius:9,padding:"9px 12px",gridColumn:isAdresse?"1 / -1":"auto"}}>
+              <div style={{fontSize:10,color:"var(--g400)",fontWeight:700,textTransform:"uppercase",letterSpacing:.7,marginBottom:2}}>{row[0]+" "+row[1]}</div>
+              <div style={{fontSize:13,fontWeight:700,color:"var(--navy)"}}>{row[2]}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Notes */}
+      {m.notes && (
+        <div style={{background:"#FFFBEB",border:"1px solid #FDE68A",borderRadius:10,padding:"10px 14px",marginBottom:4}}>
+          <div style={{fontSize:10,color:"var(--amber)",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>{"📝 Notes"}</div>
+          <div style={{fontSize:13,color:"var(--g700)",lineHeight:1.6}}>{m.notes}</div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ─── JOURNAL D'ACTIVITÉ ───────────────────────────────────────────────────────
+
+function LocForm({ initial, agents, agenceId, onSave, onCancel }) {
+  var init = initial || {};
+  var [f, setF] = useState({ref:"",adresse:"",loyer:"",commission:"",agentId:"",agenceId:agenceId,dateSignature:"",locataireNom:"",locatairePrenom:"",locataireTel:"",locataireMail:"",locataireTrouve:false,...init});
+  function set(k,v){setF(function(p){return{...p,[k]:v};});}
+  return (
+    <Modal title={init.id?"✏️ Modifier la location":"➕ Nouvelle location"} onClose={onCancel}
+      footer={<div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onCancel}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={function(){onSave(f);}}>{"Enregistrer"}</button></div>}>
+      <div className="form-grid">
+        <div className="form-group"><label className="form-label">{"Référence"}</label><input className="form-input" value={f.ref} onChange={function(e){set("ref",e.target.value);}} placeholder="LOC-009"/></div>
+        <div className="form-group"><label className="form-label">{"Agent"}</label><select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}><option value="">{"— Choisir —"}</option>{agents.map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}</select></div>
+        <div className="form-group form-full"><label className="form-label">{"Adresse"}</label><input className="form-input" value={f.adresse} onChange={function(e){set("adresse",e.target.value);}} placeholder="5 Rue de la Paix, Amiens"/></div>
+        <div className="form-group"><label className="form-label">{"Loyer (€/mois)"}</label><input className="form-input" type="number" value={f.loyer} onChange={function(e){set("loyer",Number(e.target.value));}} placeholder="750"/></div>
+        <div className="form-group"><label className="form-label">{"Commission (€)"}</label><input className="form-input" type="number" value={f.commission} onChange={function(e){set("commission",Number(e.target.value));}} placeholder="750"/></div>
+        <div className="form-group"><label className="form-label">{"Date signature"}</label><input className="form-input" type="date" value={f.dateSignature||""} onChange={function(e){set("dateSignature",e.target.value);}}/></div>
+        <div className="checkbox-row form-full" onClick={function(){set("locataireTrouve",!f.locataireTrouve);}}>
+          <input type="checkbox" checked={!!f.locataireTrouve} onChange={function(){}}/><label>{"✅ Locataire trouvé"}</label>
+        </div>
+        {f.locataireTrouve && (
+          <div className="form-group form-full">
+            <div className="form-grid">
+              <div className="form-group"><label className="form-label">{"Nom locataire"}</label><input className="form-input" value={f.locataireNom} onChange={function(e){set("locataireNom",e.target.value);}}/></div>
+              <div className="form-group"><label className="form-label">{"Prénom"}</label><input className="form-input" value={f.locatairePrenom} onChange={function(e){set("locatairePrenom",e.target.value);}}/></div>
+              <div className="form-group"><label className="form-label">{"Téléphone"}</label><input className="form-input" value={f.locataireTel} onChange={function(e){set("locataireTel",e.target.value);}}/></div>
+              <div className="form-group"><label className="form-label">{"Email"}</label><input className="form-input" type="email" value={f.locataireMail} onChange={function(e){set("locataireMail",e.target.value);}}/></div>
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── GESTION FORM ──────────────────────────────────────────────────────────────
+
+function GestForm({ initial, agents, agenceId, onSave, onCancel }) {
+  var init = initial || {};
+  var [f, setF] = useState({ref:"",adresse:"",loyer:"",commissionPct:8,commissionMensuelle:"",agentId:"",agenceId:agenceId,proprietaireNom:"",proprietairePrenom:"",dateDebutGestion:"",actif:true,...init});
+  function set(k,v){setF(function(p){return{...p,[k]:v};});}
+  return (
+    <Modal title={init.id?"✏️ Modifier":"➕ Nouveau bien en gestion"} onClose={onCancel}
+      footer={<div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onCancel}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={function(){onSave(f);}}>{"Enregistrer"}</button></div>}>
+      <div className="form-grid">
+        <div className="form-group"><label className="form-label">{"Référence"}</label><input className="form-input" value={f.ref} onChange={function(e){set("ref",e.target.value);}}/></div>
+        <div className="form-group"><label className="form-label">{"Agent"}</label><select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}><option value="">{"— Choisir —"}</option>{agents.map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}</select></div>
+        <div className="form-group form-full"><label className="form-label">{"Adresse"}</label><input className="form-input" value={f.adresse} onChange={function(e){set("adresse",e.target.value);}}/></div>
+        <div className="form-group"><label className="form-label">{"Propriétaire (Nom)"}</label><input className="form-input" value={f.proprietaireNom} onChange={function(e){set("proprietaireNom",e.target.value);}}/></div>
+        <div className="form-group"><label className="form-label">{"Prénom"}</label><input className="form-input" value={f.proprietairePrenom} onChange={function(e){set("proprietairePrenom",e.target.value);}}/></div>
+        <div className="form-group"><label className="form-label">{"Loyer (€/mois)"}</label><input className="form-input" type="number" value={f.loyer} onChange={function(e){set("loyer",Number(e.target.value));}}/></div>
+        <div className="form-group"><label className="form-label">{"Commission (%)"}</label><input className="form-input" type="number" value={f.commissionPct} onChange={function(e){set("commissionPct",Number(e.target.value));}}/></div>
+        <div className="form-group"><label className="form-label">{"Commission mensuelle (€)"}</label><input className="form-input" type="number" value={f.commissionMensuelle} onChange={function(e){set("commissionMensuelle",Number(e.target.value));}}/></div>
+        <div className="form-group"><label className="form-label">{"Début gestion"}</label><input className="form-input" type="date" value={f.dateDebutGestion||""} onChange={function(e){set("dateDebutGestion",e.target.value);}}/></div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── INVITE MODAL ─────────────────────────────────────────────────────────────
+
+function InviteModal({ agents, agenceId, onInvite, onClose, result, setResult }) {
+  var [f,   setF]   = useState({nom:"", email:"", niveau:"junior", motDePasse:""});
+  var [err, setErr] = useState("");
+  function set(k,v){setF(function(p){return{...p,[k]:v};});}
+  function genPwd() {
+    var chars = "abcdefghjkmnpqrstuvwxyz23456789";
+    var pwd = "";
+    for (var i=0;i<6;i++) pwd += chars[Math.floor(Math.random()*chars.length)];
+    set("motDePasse", pwd);
+  }
+  function send() {
+    if (!f.nom.trim())       { setErr("Le nom est requis"); return; }
+    if (!f.email.trim())     { setErr("L'email est requis"); return; }
+    if (!f.motDePasse.trim()){ setErr("Définissez un mot de passe temporaire"); return; }
+    var r = onInvite(f, agenceId);
+    if (!r.success) { setErr(r.error||"Erreur"); return; }
+    setResult(r);
+  }
+  function copyMsg() {
+    if (result && result.emailMessage) {
+      navigator.clipboard.writeText(result.emailMessage).then(function(){alert("✅ Copié !");}).catch(function(){});
+    }
+  }
+  return (
+    <Modal title={"👤 Créer un compte agent"} onClose={onClose}
+      footer={!result && <div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onClose}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={send}>{"Créer le compte"}</button></div>}>
+      {!result ? (
+        <div>
+          {err && <div className="alert alert-danger" style={{marginBottom:12}}>{"⚠️ "+err}</div>}
+          <div className="form-grid">
+            <div className="form-group form-full"><label className="form-label">{"Nom complet *"}</label><input className="form-input" value={f.nom} onChange={function(e){set("nom",e.target.value);setErr("");}} placeholder="Prénom Nom" autoFocus/></div>
+            <div className="form-group form-full"><label className="form-label">{"Email *"}</label><input className="form-input" type="email" value={f.email} onChange={function(e){set("email",e.target.value);setErr("");}} placeholder="prenom.nom@orpi.com"/></div>
+            <div className="form-group"><label className="form-label">{"Niveau"}</label><select className="form-select" value={f.niveau} onChange={function(e){set("niveau",e.target.value);}}><option value="junior">{"🌱 Junior"}</option><option value="senior">{"🏆 Senior"}</option></select></div>
+            <div className="form-group">
+              <label className="form-label">{"Mot de passe temporaire *"}</label>
+              <div style={{display:"flex",gap:6}}>
+                <input className="form-input" value={f.motDePasse} onChange={function(e){set("motDePasse",e.target.value);setErr("");}} placeholder="Ex: orpi2024" style={{flex:1,fontFamily:"monospace",letterSpacing:2}}/>
+                <button onClick={genPwd} className="btn btn-secondary btn-sm" style={{flexShrink:0}}>{"🎲"}</button>
+              </div>
+              <div style={{fontSize:11,color:"var(--g400)",marginTop:4}}>{"À communiquer à l'agent — il pourra le changer"}</div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{background:"#F0FDF4",border:"1px solid #A7F3D0",borderRadius:12,padding:"16px",marginBottom:14}}>
+            <div style={{fontWeight:800,color:"#065F46",fontSize:14,marginBottom:12}}>{"✅ Compte créé pour "+f.nom}</div>
+            <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"8px 12px",fontSize:13}}>
+              <span style={{color:"var(--g400)"}}>{"🌐 Application :"}</span>
+              <strong style={{color:"var(--navy)",wordBreak:"break-all"}}>{result.appUrl}</strong>
+              <span style={{color:"var(--g400)"}}>{"📧 Email :"}</span>
+              <strong style={{color:"var(--navy)"}}>{f.email}</strong>
+              <span style={{color:"var(--g400)"}}>{"🔑 Mot de passe :"}</span>
+              <strong style={{color:"var(--red)",fontSize:16,letterSpacing:2,fontFamily:"monospace"}}>{result.motDePasse}</strong>
+            </div>
+          </div>
+          <div style={{background:"var(--g50)",border:"1px solid var(--g200)",borderRadius:10,padding:"12px 14px",marginBottom:12}}>
+            <div style={{fontWeight:700,fontSize:12,color:"var(--g500)",marginBottom:6}}>{"📋 Message prêt à envoyer :"}</div>
+            <pre style={{fontSize:12,color:"var(--g700)",whiteSpace:"pre-wrap",fontFamily:"inherit",lineHeight:1.7}}>{result.emailMessage}</pre>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button className="btn btn-primary btn-sm" style={{flex:1}} onClick={copyMsg}>{"📋 Copier le message"}</button>
+            <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={onClose}>{"Fermer"}</button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ─── OBJECTIFS MODAL ──────────────────────────────────────────────────────────
+
+function ObjectifsModal({ agents, objectifs, setObjectifs, onClose }) {
+  var annee = new Date().getFullYear();
+  function updateObj(agentId, montant) {
+    setObjectifs(function(prev) {
+      var ex = prev.find(function(o){return o.agentId===agentId && o.annee===annee;});
+      if (ex) return prev.map(function(o){return (o.agentId===agentId&&o.annee===annee)?{...o,montantHT:Number(montant)}:o;});
+      return [...prev, {agentId:agentId, agenceId:agents[0]&&agents[0].agenceId, annee:annee, montantHT:Number(montant)}];
+    });
+  }
+  return (
+    <Modal title={"🎯 Objectifs "+annee} onClose={onClose} footer={<button className="btn btn-primary" style={{width:"100%"}} onClick={onClose}>{"Fermer"}</button>}>
+      {agents.map(function(a) {
+        var obj = objectifs.find(function(o){return o.agentId===a.id&&o.annee===annee;});
+        return (
+          <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:"1px solid var(--g100)"}}>
+            <div className="avatar" style={{background:avatarColor(a.nom),width:34,height:34,fontSize:12}}>{a.avatar}</div>
+            <div style={{flex:1}}><div style={{fontWeight:700}}>{a.nom}</div><div style={{fontSize:12,color:"var(--g400)"}}>{a.niveau}</div></div>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <input type="number" defaultValue={obj?obj.montantHT:""} onBlur={function(e){updateObj(a.id,e.target.value);}} className="form-input" style={{width:110,textAlign:"right"}} placeholder="Ex: 40000"/>
+              <span style={{fontSize:13,color:"var(--g400)"}}>{"€ HT"}</span>
+            </div>
+          </div>
+        );
+      })}
+    </Modal>
+  );
+}
+
+// ─── TASK FORM ────────────────────────────────────────────────────────────────
+
+function TaskForm({ agents, agenceId, setTasks, onClose }) {
+  var [f, setF] = useState({titre:"", description:"", agentId:"", priorite:"normale", echeance:"", statut:"en_attente"});
+  function set(k,v){setF(function(p){return{...p,[k]:v};});}
+  function save() {
+    if (!f.titre) return;
+    var newTask = {...f, id:"t-"+Date.now(), agenceId:agenceId, createdAt:new Date().toISOString().slice(0,10)};
+    setTasks(function(prev){return [...prev, newTask];});
+    if (newTask.agentId) { notifTacheConfiee(newTask); }
+    onClose();
+  }
+  return (
+    <Modal title={"✅ Nouvelle tâche"} onClose={onClose}
+      footer={<div style={{display:"flex",gap:8,width:"100%"}}><button className="btn btn-secondary" onClick={onClose}>{"Annuler"}</button><button className="btn btn-primary" style={{flex:1}} onClick={save}>{"Créer la tâche"}</button></div>}>
+      <div className="form-grid">
+        <div className="form-group form-full"><label className="form-label">{"Titre *"}</label><input className="form-input" value={f.titre} onChange={function(e){set("titre",e.target.value);}} placeholder="Ex: Relancer les mandats expirant..."/></div>
+        <div className="form-group form-full"><label className="form-label">{"Description"}</label><textarea className="form-input" rows={3} value={f.description} onChange={function(e){set("description",e.target.value);}} style={{resize:"vertical",fontFamily:"var(--font)"}}></textarea></div>
+        <div className="form-group"><label className="form-label">{"Agent (vide = tous)"}</label><select className="form-select" value={f.agentId} onChange={function(e){set("agentId",e.target.value);}}><option value="">{"Tous les agents"}</option>{agents.map(function(a){return <option key={a.id} value={a.id}>{a.nom}</option>;})}</select></div>
+        <div className="form-group"><label className="form-label">{"Priorité"}</label><select className="form-select" value={f.priorite} onChange={function(e){set("priorite",e.target.value);}}><option value="basse">{"🔵 Basse"}</option><option value="normale">{"🟡 Normale"}</option><option value="haute">{"🔴 Haute"}</option></select></div>
+        <div className="form-group"><label className="form-label">{"Échéance"}</label><input className="form-input" type="date" value={f.echeance} onChange={function(e){set("echeance",e.target.value);}}/></div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── MANDAT DETAIL MODAL ──────────────────────────────────────────────────────
