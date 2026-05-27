@@ -2822,8 +2822,11 @@ export default function App() {
               dbSave(c.name, data);
             }
           }
-          c.setter(data);
-          lsave(c.sk, data);
+          var safeData = (c.name !== "tresorerie" && c.name !== "prospConfig") 
+            ? (Array.isArray(data) ? data : []) 
+            : (data || c.init || []);
+          c.setter(safeData);
+          lsave(c.sk, safeData);
         } else {
           // Supabase vide → initialiser avec les données init
           var local = c.init && c.init.length > 0 ? c.init : lload(c.sk, []);
@@ -2846,41 +2849,41 @@ export default function App() {
   useEffect(function() {
     if (!supabaseConfigured) return;
     var unsubs = [
-      dbSubscribe("users",       function(v){ setUsersRaw(v); lsave(SK.users, v); }),
-      dbSubscribe("mandats",     function(v){ setMandatsRaw(v); lsave(SK.mandats, v); }),
-      dbSubscribe("tresorerie",  function(v){ setTresoRaw(v);   lsave(SK.tresorerie, v); }),
-      dbSubscribe("locations",   function(v){ setLocsRaw(v); lsave(SK.locations, v); }),
-      dbSubscribe("gestion",     function(v){ setGestRaw(v); lsave(SK.gestion, v); }),
-      dbSubscribe("invitations", function(v){ setInvRaw(v); lsave(SK.invitations, v); }),
-      dbSubscribe("objectifs",   function(v){ setObjRaw(v); lsave(SK.objectifs, v); }),
-      dbSubscribe("prospection", function(v){ setProspRaw(v); lsave(SK.prospection, v); }),
-      dbSubscribe("tasks",       function(v){ setTasksRaw(v); lsave(SK.tasks, v); }),
-      dbSubscribe("recherches",  function(v){ setRechercheRaw(v); lsave(SK.recherches, v); }),
-      dbSubscribe("journal",      function(v){ setJournalRaw(v);  lsave(SK.journal, v);     }),
-      dbSubscribe("resets",       function(v){ setResetsRaw(v);  lsave(SK.resets, v);      }),
+      dbSubscribe("users",       function(v){ setUsersRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.users, v); }),
+      dbSubscribe("mandats",     function(v){ setMandatsRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.mandats, v); }),
+      dbSubscribe("tresorerie",  function(v){ setTresoRaw(v&&typeof v==="object"?v:{ecritures:[]});   lsave(SK.tresorerie, v); }),
+      dbSubscribe("locations",   function(v){ setLocsRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.locations, v); }),
+      dbSubscribe("gestion",     function(v){ setGestRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.gestion, v); }),
+      dbSubscribe("invitations", function(v){ setInvRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.invitations, v); }),
+      dbSubscribe("objectifs",   function(v){ setObjRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.objectifs, v); }),
+      dbSubscribe("prospection", function(v){ setProspRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.prospection, v); }),
+      dbSubscribe("tasks",       function(v){ setTasksRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.tasks, v); }),
+      dbSubscribe("recherches",  function(v){ setRechercheRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.recherches, v); }),
+      dbSubscribe("journal",      function(v){ setJournalRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.journal, v);     }),
+      dbSubscribe("resets",       function(v){ setResetsRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.resets, v);      }),
     ];
     return function() { unsubs.forEach(function(u){ u && u(); }); };
   }, []);
 
   // ─── SETTERS (écrivent local + Supabase) ─────────────────────────────────────
-  var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       setUsersRaw(v);    lsave(SK.users,v);       if(supabaseConfigured)dbSave("users",v);       },[users]);
+  var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       setUsersRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.users,v);       if(supabaseConfigured)dbSave("users",v);       },[users]);
   var setAgences     = useCallback(function(u){ var v=typeof u==="function"?u(agences):u;     setAgencesRaw(v);  lsave(SK.agences,v);     if(supabaseConfigured)dbSave("agences",v);     },[agences]);
-  var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     setMandatsRaw(v);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSave("mandats",v);     },[mandats]);
+  var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     setMandatsRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSave("mandats",v);     },[mandats]);
   var leads = useMemo(function(){
     return (tasks||[]).filter(function(t){ return t.type==="lead"||t.categorie==="lead"; });
   }, [tasks]);
 
-  var setTresorerie  = useCallback(function(u){ var v=typeof u==="function"?u(tresorerie):u;  setTresoRaw(v);    lsave(SK.tresorerie,v);  if(supabaseConfigured)dbSave("tresorerie",v);  },[tresorerie]);
-  var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   setLocsRaw(v);     lsave(SK.locations,v);   if(supabaseConfigured)dbSave("locations",v);   },[locations]);
-  var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     setGestRaw(v);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSave("gestion",v);     },[gestion]);
-  var setInvitations = useCallback(function(u){ var v=typeof u==="function"?u(invitations):u; setInvRaw(v);      lsave(SK.invitations,v); if(supabaseConfigured)dbSave("invitations",v); },[invitations]);
-  var setObjectifs   = useCallback(function(u){ var v=typeof u==="function"?u(objectifs):u;   setObjRaw(v);      lsave(SK.objectifs,v);   if(supabaseConfigured)dbSave("objectifs",v);   },[objectifs]);
-  var setProspection = useCallback(function(u){ var v=typeof u==="function"?u(prospection):u; setProspRaw(v);    lsave(SK.prospection,v); if(supabaseConfigured)dbSave("prospection",v); },[prospection]);
+  var setTresorerie  = useCallback(function(u){ var v=typeof u==="function"?u(tresorerie):u;  setTresoRaw(v&&typeof v==="object"?v:{ecritures:[]});    lsave(SK.tresorerie,v);  if(supabaseConfigured)dbSave("tresorerie",v);  },[tresorerie]);
+  var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   setLocsRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.locations,v);   if(supabaseConfigured)dbSave("locations",v);   },[locations]);
+  var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     setGestRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSave("gestion",v);     },[gestion]);
+  var setInvitations = useCallback(function(u){ var v=typeof u==="function"?u(invitations):u; setInvRaw(Array.isArray(v)?v:prev=>prev);      lsave(SK.invitations,v); if(supabaseConfigured)dbSave("invitations",v); },[invitations]);
+  var setObjectifs   = useCallback(function(u){ var v=typeof u==="function"?u(objectifs):u;   setObjRaw(Array.isArray(v)?v:prev=>prev);      lsave(SK.objectifs,v);   if(supabaseConfigured)dbSave("objectifs",v);   },[objectifs]);
+  var setProspection = useCallback(function(u){ var v=typeof u==="function"?u(prospection):u; setProspRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.prospection,v); if(supabaseConfigured)dbSave("prospection",v); },[prospection]);
   var setProspConfig = useCallback(function(u){ var v=typeof u==="function"?u(prospConfig):u; setProspCfgRaw(v); lsave(SK.prospConfig,v); if(supabaseConfigured)dbSave("prospConfig",v); },[prospConfig]);
-  var setTasks       = useCallback(function(u){ var v=typeof u==="function"?u(tasks):u;       setTasksRaw(v);    lsave(SK.tasks,v);       if(supabaseConfigured)dbSave("tasks",v);       },[tasks]);
-  var setRecherches  = useCallback(function(u){ var v=typeof u==="function"?u(recherches):u;  setRechercheRaw(v);lsave(SK.recherches,v);if(supabaseConfigured)dbSave("recherches",v);},[recherches]);
-  var setJournal     = useCallback(function(u){ var v=typeof u==="function"?u(journal):u;       setJournalRaw(v);  lsave(SK.journal,v);   if(supabaseConfigured)dbSave("journal",v);     },[journal]);
-  var setResets      = useCallback(function(u){ var v=typeof u==="function"?u(resets):u;        setResetsRaw(v);   lsave(SK.resets,v);    if(supabaseConfigured)dbSave("resets",v);      },[resets]);
+  var setTasks       = useCallback(function(u){ var v=typeof u==="function"?u(tasks):u;       setTasksRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.tasks,v);       if(supabaseConfigured)dbSave("tasks",v);       },[tasks]);
+  var setRecherches  = useCallback(function(u){ var v=typeof u==="function"?u(recherches):u;  setRechercheRaw(Array.isArray(v)?v:prev=>prev);lsave(SK.recherches,v);if(supabaseConfigured)dbSave("recherches",v);},[recherches]);
+  var setJournal     = useCallback(function(u){ var v=typeof u==="function"?u(journal):u;       setJournalRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.journal,v);   if(supabaseConfigured)dbSave("journal",v);     },[journal]);
+  var setResets      = useCallback(function(u){ var v=typeof u==="function"?u(resets):u;        setResetsRaw(Array.isArray(v)?v:prev=>prev);   lsave(SK.resets,v);    if(supabaseConfigured)dbSave("resets",v);      },[resets]);
   var setOffMarket   = useCallback(function(u){ var v=typeof u==="function"?u(offmarket):u;    setOffMktRaw(v);   lsave(SK.offmarket,v); if(supabaseConfigured)dbSave("offmarket",v);  },[offmarket]);
   var setKpiConfig   = useCallback(function(u){ var v=typeof u==="function"?u(kpiConfig):u;    setKpiCfgRaw(v);   lsave(SK.kpiConfig,v); if(supabaseConfigured)dbSave("kpiConfig",v); },[kpiConfig]);
   var setFeedback    = useCallback(function(u){ var v=typeof u==="function"?u(feedback):u;     setFeedbackRaw(v);  lsave(SK.feedback,v);  if(supabaseConfigured)dbSave("feedback",v);  },[feedback]);
