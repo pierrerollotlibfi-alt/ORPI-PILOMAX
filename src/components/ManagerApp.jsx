@@ -31,6 +31,57 @@ import {
 
 var MEDAL = ["🥇","🥈","🥉"];
 
+function AgentEditModal({ agent, currentUser, setUsers, onClose }) {
+  var [fa, setFa] = useState({...agent});
+  function setA(k,v){ setFa(function(p){return{...p,[k]:v};}); }
+  var isMe = fa.id === currentUser.id;
+  return (
+    <Modal title={"✏️ Modifier — "+fa.nom} onClose={onClose}>
+      <div className="form-grid">
+        <div className="form-group"><label className="form-label">{"Nom complet"}</label>
+          <input className="form-input" value={fa.nom||""} onChange={function(e){setA("nom",e.target.value);}}/></div>
+        <div className="form-group"><label className="form-label">{"Email"}</label>
+          <input className="form-input" type="email" value={fa.email||""} onChange={function(e){setA("email",e.target.value);}}/></div>
+        <div className="form-group"><label className="form-label">{"Téléphone"}</label>
+          <input className="form-input" value={fa.telephone||""} onChange={function(e){setA("telephone",e.target.value);}}/></div>
+        {!isMe && (
+          <div className="form-group form-full">
+            <label className="form-label">{"Niveau d'accès"}</label>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginTop:4}}>
+              {[
+                {id:"agent",      label:"👤 Agent",          sub:"Accès à ses propres données",           color:"var(--navy)"},
+                {id:"admin",      label:"🔧 Administrateur", sub:"Gestion mandats et agents de l'agence", color:"var(--blue)"},
+                {id:"manager",    label:"⚙️ Manager",         sub:"Pilotage complet et trésorerie",         color:"var(--amber)"},
+                {id:"superadmin", label:"🌟 Super Admin",    sub:"Accès total et configuration",           color:"var(--red)"},
+              ].map(function(role){
+                var actif=fa.role===role.id;
+                var disabled=role.id==="superadmin"&&currentUser.role!=="superadmin";
+                return <button key={role.id} disabled={disabled} onClick={function(){if(!disabled)setA("role",role.id);}}
+                  style={{padding:"10px 12px",borderRadius:10,border:"2px solid "+(actif?role.color:"var(--g200)"),background:actif?role.color+"18":"#fff",cursor:disabled?"not-allowed":"pointer",textAlign:"left",opacity:disabled?0.4:1,fontFamily:"var(--font)"}}>
+                  <div style={{fontWeight:800,color:actif?role.color:"var(--navy)",fontSize:12}}>{role.label}</div>
+                  <div style={{fontSize:10,color:"var(--g400)",marginTop:2}}>{role.sub}</div>
+                </button>;
+              })}
+            </div>
+          </div>
+        )}
+        <div className="form-group"><label className="form-label">{"Niveau"}</label>
+          <select className="form-select" value={fa.niveau||"junior"} onChange={function(e){setA("niveau",e.target.value);}}>
+            <option value="junior">{"🌱 Junior"}</option><option value="senior">{"🏆 Senior"}</option>
+          </select></div>
+        <div className="form-group"><label className="form-label">{"Statut"}</label>
+          <select className="form-select" value={fa.actif?"actif":"inactif"} onChange={function(e){setA("actif",e.target.value==="actif");}}>
+            <option value="actif">{"✅ Actif"}</option><option value="inactif">{"❌ Inactif"}</option>
+          </select></div>
+      </div>
+      <div style={{display:"flex",gap:8,marginTop:16}}>
+        <button className="btn btn-secondary" style={{flex:1}} onClick={onClose}>{"Annuler"}</button>
+        <button className="btn btn-primary" style={{flex:2}} onClick={function(){setUsers(function(prev){return prev.map(function(u){return u.id===fa.id?fa:u;});});onClose();}}>{"💾 Enregistrer"}</button>
+      </div>
+    </Modal>
+  );
+}
+
 export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var ctx = useApp();
   var { currentUser, users, agences, mandats, setMandats, locations, setLocations, gestion, setGestion, setUsers, inviterAgent, invitations, objectifs, setObjectifs, tasks, setTasks, addJournal, journal, resets, resetMdpParManager, changerMotDePasse, prospection, kpiConfig, setKpiConfig } = ctx;
