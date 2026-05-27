@@ -139,7 +139,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   // Leads confiés par agent
   var leads = ctx.tasks ? ctx.tasks.filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; }) : [];
   var leadsParAgent = agents.map(function(a){
-    return { ...a, nbLeads: (ctx.leads||[]).filter(function(l){ return l.agentId===a.id && l.agenceId===agenceId; }).length };
+    return { ...a, nbLeads: (leads||[]).filter(function(l){ return l.agentId===a.id && l.agenceId===agenceId; }).length };
   });
   var txCommMoyenAgence = agenceVendus.length > 0
     ? Math.round(agenceVendus.reduce(function(s,m){ return s+(m.commission/m.prix*100); },0)/agenceVendus.length*100)/100

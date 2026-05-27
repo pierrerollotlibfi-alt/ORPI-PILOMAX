@@ -41,7 +41,7 @@ export default function MatchingManager() {
   var locations= ctx.locations || [];
   var recherches = ctx.recherches || [];
   var offmarket  = ctx.offmarket || [];
-  var leads      = ctx.leads || [];
+  var leads      = (ctx.tasks||[]).filter(function(t){return t.type==="lead";}) || [];
 
   var [filtreSeuil, setFiltreSeuil] = useState(40);
   var [filtreType,  setFiltreType]  = useState("all"); // all | mandats | locations | offmarket | leads

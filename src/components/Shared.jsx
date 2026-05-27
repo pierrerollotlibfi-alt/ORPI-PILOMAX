@@ -44,7 +44,7 @@ export function SaveBanner() {
   var [open, setOpen] = useState(false);
   return (
     <div style={{display:"flex",alignItems:"center",gap:8,background:"var(--navy)",borderRadius:8,padding:"5px 10px",marginBottom:10,fontSize:11}}>
-      <span style={{color:"rgba(255,255,255,0.5)",flex:1}}>{"💾 Données locales"+(ctx.syncMode==="supabase"?" · Supabase":"")}</span>
+      <span style={{color:"rgba(255,255,255,0.5)",flex:1}}>{"💾 Données locales"+((ctx.syncMode||"local")==="supabase"?" · Supabase":"")}</span>
       {ctx.saveMsg && <span style={{color:"#6EE7B7",fontWeight:700}}>{ctx.saveMsg}</span>}
       <button style={{background:"rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.8)",border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11,fontFamily:"var(--font)"}} onClick={ctx.handleExport}>{"⬇️"}</button>
       <label style={{background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:11}}>

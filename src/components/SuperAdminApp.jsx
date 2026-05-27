@@ -254,7 +254,7 @@ export default function SuperAdminApp() {
   var title = tab==="groupe"?"🌐 Vue Groupe":tab==="agences"?(agenceSelectee?"🏢 "+agenceSelectee.nom:"🏢 Par agence"):tab==="mandats"?"📋 Tous mandats":tab==="classement"?"🏆 Classement agences":"👤 Mon profil";
 
   return (
-    <AppShell navItems={navItems} title={title} onLogout={handleLogout} currentUser={currentUser} syncMode={ctx.syncMode} saveMsg={ctx.saveMsg}>
+    <AppShell navItems={navItems} title={title} onLogout={handleLogout} currentUser={currentUser} syncMode={(ctx.syncMode||"local")} saveMsg={ctx.saveMsg}>
 
       {/* ─── VUE GROUPE ─── */}
       {tab==="groupe" && (
