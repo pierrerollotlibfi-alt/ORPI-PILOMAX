@@ -836,8 +836,9 @@ function ProfilAgent({ currentUser, changerMotDePasse }) {
 
 function genererRecommandations(mandats, recherches, offmarket) {
   var recs = [];
-  var nbM = _mandats.filter(function(m){return m.statut==="mandat";}).length;
-  var nbC = _mandats.filter(function(m){return m.statut==="compromis";}).length;
+  var ctx2 = useApp(); var _m2 = Array.isArray(ctx2.mandats)?ctx2.mandats:[];
+  var nbM = _m2.filter(function(m){return m.statut==="mandat";}).length;
+  var nbC = _m2.filter(function(m){return m.statut==="compromis";}).length;
   if (nbM > 0 && recherches.length === 0) recs.push({icon:"🔍",type:"Action",texte:"Vous avez "+nbM+" mandat"+(nbM>1?"s":"")+" en stock. Rentrez des recherches clients pour activer le matching automatique !"});
   if (nbC > 0) recs.push({icon:"✍️",type:"Priorité",texte:nbC+" compromis en cours. Vérifiez les conditions suspensives et relancez les notaires."});
   if (offmarket.length === 0) recs.push({icon:"🔒",type:"Astuce",texte:"Ajoutez des biens off-market pour enrichir votre portefeuille confidentiel."});

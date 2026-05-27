@@ -1383,7 +1383,8 @@ function JournalActivite({ journal, users, agenceId }) {
 
   var agents = users.filter(function(u){ return u.agenceId===agenceId && u.actif; });
 
-  var filtered = _journal.filter(function(e){
+  var _j = Array.isArray(journal)?journal:[];
+  var filtered = _j.filter(function(e){
     if (filtre     && e.userId !== filtre)     return false;
     if (filtreType && e.type   !== filtreType) return false;
     return true;
