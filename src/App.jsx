@@ -2831,6 +2831,10 @@ export default function App() {
   var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       setUsersRaw(v);    lsave(SK.users,v);       if(supabaseConfigured)dbSave("users",v);       },[users]);
   var setAgences     = useCallback(function(u){ var v=typeof u==="function"?u(agences):u;     setAgencesRaw(v);  lsave(SK.agences,v);     if(supabaseConfigured)dbSave("agences",v);     },[agences]);
   var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     setMandatsRaw(v);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSave("mandats",v);     },[mandats]);
+  var leads = useMemo(function(){
+    return (tasks||[]).filter(function(t){ return t.type==="lead"||t.categorie==="lead"; });
+  }, [tasks]);
+
   var setTresorerie  = useCallback(function(u){ var v=typeof u==="function"?u(tresorerie):u;  setTresoRaw(v);    lsave(SK.tresorerie,v);  if(supabaseConfigured)dbSave("tresorerie",v);  },[tresorerie]);
   var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   setLocsRaw(v);     lsave(SK.locations,v);   if(supabaseConfigured)dbSave("locations",v);   },[locations]);
   var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     setGestRaw(v);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSave("gestion",v);     },[gestion]);

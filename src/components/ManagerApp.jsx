@@ -84,7 +84,7 @@ function AgentEditModal({ agent, currentUser, setUsers, onClose }) {
 
 export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var ctx = useApp();
-  var { currentUser, users, agences, mandats, setMandats, locations, setLocations, gestion, setGestion, setUsers, inviterAgent, invitations, objectifs, setObjectifs, tasks, setTasks, addJournal, journal, resets, resetMdpParManager, changerMotDePasse, prospection, kpiConfig, setKpiConfig } = ctx;
+  var { currentUser, users, agences, mandats, setMandats, locations, setLocations, gestion, setGestion, setUsers, inviterAgent, invitations, objectifs, setObjectifs, tasks, setTasks, addJournal, journal, resets, resetMdpParManager, changerMotDePasse, prospection, kpiConfig, setKpiConfig, offmarket, recherches, feedback, tresorerie, setTresorerie } = ctx;
 
   var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_manager")||"dashboard"; }catch(e){ return "dashboard"; } });
   function setTab(v){ try{ localStorage.setItem("orpi_tab_manager",v); }catch(e){} _setTabRaw(v); }
@@ -112,10 +112,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [filtreDoublons,   setFiltreDoublons]   = useState(false);
   var [showKpiDetail,    setShowKpiDetail]    = useState(null);
   var [canInstall, setCanInstall] = useState(function(){
-    return !!(window._pwaPrompt);
+    return !!(window._pwaInstallPrompt);
   });
   var installApp = function() {
-    if (window._pwaPrompt) { window._pwaPrompt.prompt(); window._pwaPrompt = null; setCanInstall(false); }
+    if (window._pwaInstallPrompt) { window._pwaInstallPrompt.prompt(); window._pwaInstallPrompt = null; setCanInstall(false); }
   };
   var [filtreAgentKpi,  setFiltreAgentKpi]  = useState("");
   var [filterType,  setFilterType]  = useState("");
