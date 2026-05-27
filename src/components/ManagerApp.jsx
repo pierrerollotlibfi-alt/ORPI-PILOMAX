@@ -126,10 +126,23 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [prixMax,     setPrixMax]     = useState("");
 
   var agenceId  = agenceIdOverride || currentUser.agenceId;
-  var agents    = users.filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.agenceId===agenceId && u.actif;});
-  var myMandats = mandats.filter(function(m){return m.agenceId===agenceId;});
-  var myLocs    = locations.filter(function(l){return l.agenceId===agenceId;});
-  var myGestion = gestion.filter(function(g){return g.agenceId===agenceId && g.actif;});
+  // Protection null-safety sur toutes les collections
+  var _users       = Array.isArray(users)       ? users       : [];
+  var _mandats     = Array.isArray(mandats)     ? mandats     : [];
+  var _locations   = Array.isArray(locations)   ? locations   : [];
+  var _gestion     = Array.isArray(gestion)     ? gestion     : [];
+  var _tasks       = Array.isArray(tasks)       ? tasks       : [];
+  var _invitations = Array.isArray(invitations) ? invitations : [];
+  var _objectifs   = Array.isArray(objectifs)   ? objectifs   : [];
+  var _offmarket   = Array.isArray(offmarket)   ? offmarket   : [];
+  var _recherches  = Array.isArray(recherches)  ? recherches  : [];
+  var _prospection = Array.isArray(prospection) ? prospection : [];
+  var _journal     = Array.isArray(journal)     ? journal     : [];
+  var _resets      = Array.isArray(resets)      ? resets      : [];
+  var agents    = _users.filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin") && u.agenceId===agenceId && u.actif;});
+  var myMandats = _mandats.filter(function(m){return m.agenceId===agenceId;});
+  var myLocs    = _locations.filter(function(l){return l.agenceId===agenceId;});
+  var myGestion = _gestion.filter(function(g){return g.agenceId===agenceId && g.actif;});
 
   // Stats transaction
   var active    = myMandats.filter(function(m){return m.statut==="mandat";});
@@ -138,7 +151,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   // Taux commission moyen agence (tous agents)
   var agenceVendus = myMandats.filter(function(m){ return m.statut==="vendu" && m.prix>0 && m.commission>0; });
   // Leads confiés par agent
-  var leads = (tasks||[]).filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; });
+  var leads = __tasks.filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; });
   var leadsParAgent = agents.map(function(a){
     return { ...a, nbLeads: (leads||[]).filter(function(l){ return l.agentId===a.id && l.agenceId===agenceId; }).length };
   });
@@ -289,7 +302,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   }, [myMandats, filterAgent, filterStatut, filterType, filterBien, searchText, prixMin, prixMax]);
 
   // Tasks
-  var pendingTasks = tasks.filter(function(t){return t.agenceId===agenceId && t.statut!=="terminee";});
+  var pendingTasks = _tasks.filter(function(t){return t.agenceId===agenceId && t.statut!=="terminee";});
   var nbTasks = pendingTasks.length;
 
   // Alertes
@@ -677,7 +690,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             mandats={myMandats}
             locations={myLocs}
             gestion={myGestion}
-            objectifs={objectifs}
+            objectifs={_objectifs}
           />
 
           {/* Ancienneté mandats */}
@@ -1007,7 +1020,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             <button className="btn btn-secondary btn-sm" onClick={function(){setShowConfigKPI(true);}}>{"⚙️ Paramétrer les seuils KPI"}</button>
           </div>
           {agents.map(function(a, i) {
-            var myM  = mandats.filter(function(m){return m.agentId===a.id;});
+            var myM  = _mandats.filter(function(m){return m.agentId===a.id;});
             var vend = myM.filter(function(m){return m.statut==="vendu";});
             var comp = myM.filter(function(m){return m.statut==="compromis";});
             var act  = myM.filter(function(m){return m.statut==="mandat";});
@@ -1070,11 +1083,11 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             );
           })}
           {/* Invitations en attente */}
-          {invitations.filter(function(i){return !i.used;}).length > 0 && (
+          {_invitations.filter(function(i){return !i.used;}).length > 0 && (
             <div className="card" style={{marginTop:16}}>
               <div className="card-header"><span className="card-title">{"📩 Invitations en attente"}</span></div>
               <div className="card-body">
-                {invitations.filter(function(i){return !i.used;}).map(function(inv) {
+                {_invitations.filter(function(i){return !i.used;}).map(function(inv) {
                   var u = users.find(function(x){return x.id===inv.userId;});
                   return (
                     <div key={inv.token} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--g100)"}}>
@@ -1091,7 +1104,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
           )}
 
           {/* ── DEMANDES RESET MOT DE PASSE ── */}
-          <DemandesReset resets={resets||[]} resetMdpParManager={resetMdpParManager}/>
+          <DemandesReset resets={_resets} resetMdpParManager={resetMdpParManager}/>
 
           {/* ── JOURNAL D'ACTIVITÉ ── */}
           <JournalActivite journal={journal||[]} users={users} agenceId={agenceId}/>
@@ -1108,7 +1121,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
         <div>
           <div className="kpi-grid" style={{marginBottom:16}}>
             <KpiCard label="Tâches en cours" value={pendingTasks.length} color="var(--amber)" icon="⏳"/>
-            <KpiCard label="Terminées" value={tasks.filter(function(t){return t.agenceId===agenceId&&t.statut==="terminee";}).length} color="var(--green)" icon="✅"/>
+            <KpiCard label="Terminées" value={_tasks.filter(function(t){return t.agenceId===agenceId&&t.statut==="terminee";}).length} color="var(--green)" icon="✅"/>
           </div>
           {pendingTasks.map(function(t) {
             var a = users.find(function(u){return u.id===t.agentId;});
@@ -1187,7 +1200,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       )}
 
       {showObjModal && (
-        <ObjectifsModal agents={agents} objectifs={objectifs} setObjectifs={setObjectifs} onClose={function(){setShowObjModal(false);}}/>
+        <ObjectifsModal agents={agents} objectifs={_objectifs} setObjectifs={setObjectifs} onClose={function(){setShowObjModal(false);}}/>
       )}
       {showTaskModal && (
         <TaskForm agents={agents} agenceId={agenceId} setTasks={setTasks} onClose={function(){setShowTaskModal(false);}}/>
@@ -1370,7 +1383,7 @@ function JournalActivite({ journal, users, agenceId }) {
 
   var agents = users.filter(function(u){ return u.agenceId===agenceId && u.actif; });
 
-  var filtered = journal.filter(function(e){
+  var filtered = _journal.filter(function(e){
     if (filtre     && e.userId !== filtre)     return false;
     if (filtreType && e.type   !== filtreType) return false;
     return true;

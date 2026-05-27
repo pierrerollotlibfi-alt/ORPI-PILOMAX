@@ -55,6 +55,16 @@ export default function AgentApp() {
   var ctx = useApp();
   var { currentUser, mandats, setMandats, locations, gestion, objectifs, tasks, setTasks, addJournal, changerMotDePasse, recherches, offmarket, users } = ctx;
 
+  // Null-safety guards
+  var _users       = Array.isArray(users)       ? users       : [];
+  var _mandats     = Array.isArray(mandats)     ? mandats     : [];
+  var _locations   = Array.isArray(locations)   ? locations   : [];
+  var _tasks       = Array.isArray(tasks)       ? tasks       : [];
+  var _objectifs   = Array.isArray(objectifs)   ? objectifs   : [];
+  var _offmarket   = Array.isArray(offmarket)   ? offmarket   : [];
+  var _recherches  = Array.isArray(recherches)  ? recherches  : [];
+  var _prospection = Array.isArray(prospection) ? prospection : [];
+
   var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_agent")||"mandats"; }catch(e){ return "mandats"; } });
   function setTab(v){ try{ localStorage.setItem("orpi_tab_agent",v); }catch(e){} _setTabRaw(v); }
   var [sweepOpen,    setSweepOpen]    = useState(null);
@@ -64,11 +74,11 @@ export default function AgentApp() {
   var [showBravo,      setShowBravo]      = useState(null);
 
   var agenceId   = currentUser.agenceId;
-  var agenceMandats = mandats.filter(function(m){return m.agenceId===agenceId;});
-  var myMandats     = mandats.filter(function(m){return m.agentId===currentUser.id;});
-  var myLocs     = locations.filter(function(l){return l.agentId===currentUser.id;});
-  var myGestion  = gestion.filter(function(g){return g.agentId===currentUser.id && g.actif;});
-  var myTasks    = tasks.filter(function(t){return (t.agentId===currentUser.id||!t.agentId) && t.agenceId===agenceId && t.statut!=="terminee";});
+  var agenceMandats = _____mandats.filter(function(m){return m.agenceId===agenceId;});
+  var myMandats     = _____mandats.filter(function(m){return m.agentId===currentUser.id;});
+  var myLocs     = _locations.filter(function(l){return l.agentId===currentUser.id;});
+  var myGestion  = _gestion.filter(function(g){return g.agentId===currentUser.id && g.actif;});
+  var myTasks    = _tasks.filter(function(t){return (t.agentId===currentUser.id||!t.agentId) && t.agenceId===agenceId && t.statut!=="terminee";});
   var nbTasks    = myTasks.length;
 
   // Stats
@@ -682,11 +692,11 @@ export default function AgentApp() {
       )}
 
       {showMandatForm && (
-        <MandatForm initial={editingMandat} agents={ctx.users.filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin")&&u.agenceId===agenceId&&u.actif;})} agenceId={agenceId} onSave={saveMandat} onCancel={function(){setShowMandatForm(false);setEditingMandat(null);}}/>
+        <MandatForm initial={editingMandat} agents={ctx._users.filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin")&&u.agenceId===agenceId&&u.actif;})} agenceId={agenceId} onSave={saveMandat} onCancel={function(){setShowMandatForm(false);setEditingMandat(null);}}/>
       )}
     {sweepMandat && <SweepModal m={sweepMandat}/>}
       {showKpiDetailA && (function(){
-        var agentMandats = mandats.filter(function(m){return m.agentId===currentUser.id;});
+        var agentMandats = _____mandats.filter(function(m){return m.agentId===currentUser.id;});
         var kpiMapA = {
           mandats_actifs: {titre:"📋 Mandats actifs",   items:agentMandats.filter(function(m){return m.statut==="mandat";}),   extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.prix||0);}},
           compromis:      {titre:"🤝 Compromis",         items:agentMandats.filter(function(m){return m.statut==="compromis";}), extra:function(m){return m.adresse.split(",")[0]+" · "+fmt(m.commission||0)+" comm.";}},
@@ -824,8 +834,8 @@ function ProfilAgent({ currentUser, changerMotDePasse }) {
 
 function genererRecommandations(mandats, recherches, offmarket) {
   var recs = [];
-  var nbM = mandats.filter(function(m){return m.statut==="mandat";}).length;
-  var nbC = mandats.filter(function(m){return m.statut==="compromis";}).length;
+  var nbM = _____mandats.filter(function(m){return m.statut==="mandat";}).length;
+  var nbC = _____mandats.filter(function(m){return m.statut==="compromis";}).length;
   if (nbM > 0 && recherches.length === 0) recs.push({icon:"🔍",type:"Action",texte:"Vous avez "+nbM+" mandat"+(nbM>1?"s":"")+" en stock. Rentrez des recherches clients pour activer le matching automatique !"});
   if (nbC > 0) recs.push({icon:"✍️",type:"Priorité",texte:nbC+" compromis en cours. Vérifiez les conditions suspensives et relancez les notaires."});
   if (offmarket.length === 0) recs.push({icon:"🔒",type:"Astuce",texte:"Ajoutez des biens off-market pour enrichir votre portefeuille confidentiel."});

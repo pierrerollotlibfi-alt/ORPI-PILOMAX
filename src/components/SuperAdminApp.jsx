@@ -40,6 +40,16 @@ export default function SuperAdminApp() {
   var ctx = useApp();
   var { currentUser, users, agences, mandats, locations, gestion, objectifs, offmarket, handleLogout, changerMotDePasse, setAgences, setUsers, setObjectifs } = ctx;
 
+  // Null-safety guards
+  var _users       = Array.isArray(users)       ? users       : [];
+  var _mandats     = Array.isArray(mandats)     ? mandats     : [];
+  var _locations   = Array.isArray(locations)   ? locations   : [];
+  var _tasks       = Array.isArray(tasks)       ? tasks       : [];
+  var _objectifs   = Array.isArray(objectifs)   ? objectifs   : [];
+  var _offmarket   = Array.isArray(offmarket)   ? offmarket   : [];
+  var _recherches  = Array.isArray(recherches)  ? recherches  : [];
+  var _prospection = Array.isArray(prospection) ? prospection : [];
+
   var [tab, _setTabRaw] = useState(function(){ try{ return localStorage.getItem("orpi_tab_superadmin")||"groupe"; }catch(e){ return "groupe"; } });
   function setTab(v){ try{ localStorage.setItem("orpi_tab_superadmin",v); }catch(e){} _setTabRaw(v); }
   var [agenceSelectee, setAgenceSelectee] = useState(null); // null = vue groupe
@@ -64,12 +74,12 @@ export default function SuperAdminApp() {
   // ─── STATS PAR AGENCE ────────────────────────────────────────────────────
   var statsParAgence = useMemo(function() {
     return agencesActives.map(function(ag) {
-      var m   = mandats.filter(function(x){ return x.agenceId===ag.id; });
-      var l   = locations.filter(function(x){ return x.agenceId===ag.id; });
-      var g   = gestion.filter(function(x){ return x.agenceId===ag.id && x.actif; });
+      var m   = ____mandats.filter(function(x){ return x.agenceId===ag.id; });
+      var l   = _locations.filter(function(x){ return x.agenceId===ag.id; });
+      var g   = _gestion.filter(function(x){ return x.agenceId===ag.id && x.actif; });
       var om  = (offmarket||[]).filter(function(x){ return x.agenceId===ag.id && x.actif; });
-      var agts= users.filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="agent"||u.role==="manager"); });
-      var mgrs= users.filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="manager"); });
+      var agts= __users.filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="agent"||u.role==="manager"); });
+      var mgrs= __users.filter(function(u){ return u.agenceId===ag.id && u.actif && (u.role==="manager"); });
 
       var actifs    = m.filter(function(x){ return x.statut==="mandat"; });
       var compromis = m.filter(function(x){ return x.statut==="compromis"; });
@@ -374,7 +384,7 @@ export default function SuperAdminApp() {
           <div style={{marginBottom:12,fontSize:12,color:"var(--g400)"}}>{"Tous les mandats de toutes les agences · "+mandats.length+" au total"}</div>
           {agencesActives.map(function(ag, i) {
             var col = AGENCE_COLORS[i%AGENCE_COLORS.length];
-            var agM = mandats.filter(function(m){return m.agenceId===ag.id && m.statut==="mandat";});
+            var agM = ____mandats.filter(function(m){return m.agenceId===ag.id && m.statut==="mandat";});
             if (agM.length===0) return null;
             return (
               <div key={ag.id} style={{marginBottom:20}}>
@@ -514,11 +524,11 @@ function CarteGroupe({ agences, mandats, locations, offmarket, users }) {
           html:'<div style="background:'+col+';color:#fff;border:3px solid #fff;border-radius:12px;padding:4px 10px;font-weight:900;font-size:12px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,0.3);">🏢 '+ag.ville+'</div>',
           iconAnchor:[0,0]
         });
-        L.marker(c, {icon}).addTo(map).bindTooltip(ag.nom+" · "+mandats.filter(function(m){return m.agenceId===ag.id&&m.statut==="mandat";}).length+" mandats actifs",{direction:"top"});
+        L.marker(c, {icon}).addTo(map).bindTooltip(ag.nom+" · "+____mandats.filter(function(m){return m.agenceId===ag.id&&m.statut==="mandat";}).length+" mandats actifs",{direction:"top"});
       });
 
       // Mandats (quelques-uns par agence avec coords approchées)
-      mandats.filter(function(m){return m.statut==="mandat";}).forEach(function(m) {
+      ____mandats.filter(function(m){return m.statut==="mandat";}).forEach(function(m) {
         var agIdx = agences.findIndex(function(a){return a.id===m.agenceId;});
         var base = COORDS[m.agenceId] || [49.894,2.296];
         var lat = base[0] + (Math.random()-0.5)*0.03;
