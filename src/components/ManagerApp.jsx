@@ -151,7 +151,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   // Taux commission moyen agence (tous agents)
   var agenceVendus = myMandats.filter(function(m){ return m.statut==="vendu" && m.prix>0 && m.commission>0; });
   // Leads confiés par agent
-  var leads = __tasks.filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; });
+  var leads = _tasks.filter(function(t){ return t.agenceId===agenceId && t.type==="lead"; });
   var leadsParAgent = agents.map(function(a){
     return { ...a, nbLeads: (leads||[]).filter(function(l){ return l.agentId===a.id && l.agenceId===agenceId; }).length };
   });
