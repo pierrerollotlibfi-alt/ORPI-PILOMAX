@@ -1179,11 +1179,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       })()}
 
       {/* ─── MODAL ÉDITION AGENT ─── */}
-      {editingAgent && (function(){
-        var [fa, setFa] = React.useState({...editingAgent});
-        function setA(k,v){ setFa(function(p){return{...p,[k]:v};}); }
-        var isMe = fa.id === currentUser.id;
-        return (
+      {editingAgent && <AgentEditModal agent={editingAgent} currentUser={currentUser} setUsers={setUsers} onClose={function(){setEditingAgent(null);}}/>}
+      {false && (function(){var fa={};var setFa=function(){};var setA=function(){};var isMe=false;return (
           <Modal title={"✏️ Modifier — "+fa.nom} onClose={function(){setEditingAgent(null);}}>
             <div className="form-grid">
               <div className="form-group"><label className="form-label">{"Nom complet"}</label>
