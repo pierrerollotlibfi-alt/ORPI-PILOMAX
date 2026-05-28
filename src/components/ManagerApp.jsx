@@ -126,6 +126,8 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [prixMax,     setPrixMax]     = useState("");
 
   var agenceId  = agenceIdOverride || currentUser.agenceId;
+  var isManager = currentUser.role==="manager" || currentUser.role==="superadmin";
+  var isAdmin   = isManager || currentUser.role==="admin";
   var agents    = (users||[]).filter(function(u){return (u.role==="agent"||u.role==="manager"||u.role==="superadmin"||u.role==="admin") && u.agenceId===agenceId && u.actif;});
   var myMandats = (mandats||[]).filter(function(m){return m.agenceId===agenceId;});
   var myLocs    = (locations||[]).filter(function(l){return l.agenceId===agenceId;});
@@ -805,7 +807,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                     </div>
                     {/* Bouton actions rapides */}
                     <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0}} onClick={function(e){e.stopPropagation();}}>
-                      <button className="btn btn-secondary btn-sm" onClick={function(e){e.stopPropagation();setEditingMandat(m);setShowMandatForm(true);}}>{"✏️"}</button>
+                      {(isAdmin||m.agentId===currentUser.id) && <button className="btn btn-secondary btn-sm" onClick={function(e){e.stopPropagation();setEditingMandat(m);setShowMandatForm(true);}}>{"✏️"}</button>}
                       {m.statut==="sous_offre" && (
                         <button onClick={function(e){e.stopPropagation();celebrerOffreAcceptee(m);}} title="Célébrer cette offre !" title="Célébrer cette offre !" style={{background:"linear-gradient(135deg,#F59E0B,#EF4444)",border:"none",borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:14,boxShadow:"0 2px 8px rgba(239,68,68,0.4)"}}>{"🎉"}</button>
                       )}
@@ -1062,6 +1064,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                       </div>
                     );
                   })}
+                </div>
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setEditingAgent(a);}}>{"✏️ Modifier"}</button>
+                  <button className="btn btn-primary btn-sm" style={{flex:2}} onClick={function(){setFicheKPIAgent(a);}}>{"📊 Fiche KPI"}</button>
                 </div>
                 <button className="btn btn-secondary btn-sm w-full" onClick={function(){toggleAgentActif(a.id);}}>
                   {a.actif ? "🚫 Désactiver le compte" : "✅ Réactiver le compte"}
