@@ -1270,7 +1270,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                 </div>
               );
             })}
-            <button className="btn btn-primary" style={{width:"100%",marginTop:20}} onClick={function(){setShowConfigKPI(false);ctxSaveKpi();}}>{"💾 Enregistrer les seuils"}</button>
+            <button className="btn btn-primary" style={{width:"100%",marginTop:20}} onClick={function(){setShowConfigKPI(false);}}>{"💾 Enregistrer les seuils"}</button>
           </div>
         </div>
       )}
