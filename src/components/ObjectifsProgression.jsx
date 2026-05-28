@@ -21,8 +21,8 @@ var COULEURS = ["#E63946","#F59E0B","#3B82F6","#10B981","#8B5CF6","#06B6D4","#F9
 export default function ObjectifsProgression() {
   var ctx      = useApp();
   var agenceId = ctx.currentUser.agenceId;
-  var agents   = ctx.users.filter(function(u){return u.role==="agent"&&u.agenceId===agenceId&&u.actif;});
-  var mandats  = ctx.mandats.filter(function(m){return m.agenceId===agenceId;});
+  var agents   = (ctx.users||[]).filter(function(u){return u.role==="agent"&&u.agenceId===agenceId&&u.actif;});
+  var mandats  = (ctx.mandats||[]).filter(function(m){return m.agenceId===agenceId;});
   var objectifs= ctx.objectifs||[];
   var setObjectifs = ctx.setObjectifs;
 

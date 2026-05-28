@@ -8,6 +8,7 @@ import Leads from "./Leads";
 import Recherches from "./Recherches";
 import GestionLocative from "./GestionLocative";
 import DashboardMatin from "./DashboardMatin";
+import ChallengeProspection from "./ChallengeProspection";
 import PwaInstallButton from "./PwaInstallButton";
 import FicheKPIAgent from "./FicheKPIAgent";
 import Feedback from "./Feedback";
@@ -380,6 +381,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       tabs:[
         {id:"dashboard",   icon:"📊", label:"Tableau de bord"},
         {id:"prospection", icon:"🚶", label:"Prospection"},
+        {id:"challenge",    icon:"🏆", label:"Challenge Prosp."},
         {id:"leads",       icon:"📥", label:"Leads"},
         {id:"taches",      icon:"✅", label:"Tâches"},
         {id:"recherches",  icon:"🔍", label:"Recherches"},
@@ -1237,6 +1239,41 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       })()}
 
       {/* ─── MODAL ÉDITION AGENT ─── */}
+
+      {/* ─── MODAL CONFIG KPI ─── */}
+      {showConfigKPI && (
+        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"flex-end"}} onClick={function(){setShowConfigKPI(false);}}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",padding:"20px 16px 40px",width:"100%",maxWidth:480,margin:"0 auto"}} onClick={function(e){e.stopPropagation();}}>
+            <div style={{fontWeight:900,color:"var(--navy)",fontSize:16,marginBottom:4}}>{"⚙️ Paramétrer les seuils KPI"}</div>
+            <div style={{fontSize:12,color:"var(--g400)",marginBottom:16}}>{"Ces seuils définissent les alertes visuelles sur les fiches agents"}</div>
+            {[
+              {key:"mandatsMin",    label:"Mandats actifs minimum",   icon:"📋", unit:"mandats"},
+              {key:"vendusMin",     label:"Ventes minimum / mois",     icon:"🏆", unit:"ventes"},
+              {key:"compromisMin",  label:"Compromis minimum / mois",  icon:"🤝", unit:""},
+              {key:"caMin",        label:"CA minimum annuel (€HT)",   icon:"💰", unit:"€"},
+              {key:"visitesMin",   label:"Visites minimum / semaine",  icon:"👁️",  unit:"visites"},
+              {key:"prospMin",     label:"Actions prospection / mois", icon:"🚶", unit:"actions"},
+            ].map(function(s){
+              var val = (kpiConfig||{})[s.key] || 0;
+              return (
+                <div key={s.key} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid var(--g50)"}}>
+                  <span style={{fontSize:20,width:28,textAlign:"center",flexShrink:0}}>{s.icon}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,color:"var(--navy)",fontSize:13}}>{s.label}</div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <button onClick={function(){setKpiConfig(function(p){var n={...(p||{})};n[s.key]=Math.max(0,(n[s.key]||0)-1);return n;});}} style={{width:28,height:28,borderRadius:14,border:"1px solid var(--g200)",background:"var(--g50)",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{"−"}</button>
+                    <span style={{fontWeight:800,color:"var(--navy)",fontSize:16,minWidth:30,textAlign:"center"}}>{val}</span>
+                    <button onClick={function(){setKpiConfig(function(p){var n={...(p||{})};n[s.key]=(n[s.key]||0)+1;return n;});}} style={{width:28,height:28,borderRadius:14,border:"1px solid var(--g200)",background:"var(--g50)",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{"+"}</button>
+                    <span style={{fontSize:11,color:"var(--g400)",width:40}}>{s.unit}</span>
+                  </div>
+                </div>
+              );
+            })}
+            <button className="btn btn-primary" style={{width:"100%",marginTop:20}} onClick={function(){setShowConfigKPI(false);ctxSaveKpi();}}>{"💾 Enregistrer les seuils"}</button>
+          </div>
+        </div>
+      )}
       {editingAgent && <AgentEditModal agent={editingAgent} currentUser={currentUser} setUsers={setUsers} onClose={function(){setEditingAgent(null);}}/>}
       {false && (function(){var fa={};var setFa=function(){};var setA=function(){};var isMe=false;return (
           <Modal title={"✏️ Modifier — "+fa.nom} onClose={function(){setEditingAgent(null);}}>

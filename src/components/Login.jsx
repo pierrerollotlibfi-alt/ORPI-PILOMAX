@@ -137,6 +137,19 @@ export default function Login({ onLogin }) {
                 {/* Bouton PWA install multi-navigateur */}
         <PwaInstallButton canInstall={canInstall} installApp={installApp}/>        )}
       </div>
+
+      {/* ─── COPYRIGHT ─── */}
+      <div style={{textAlign:"center",padding:"16px 20px 24px",marginTop:"auto"}}>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.6}}>
+          {"© "+new Date().getFullYear()+" ORPI PILOMAX"}
+        </div>
+        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2}}>
+          {"Propriété exclusive de Pierre ROLLOT — Tous droits réservés"}
+        </div>
+        <div style={{fontSize:10,color:"rgba(255,255,255,0.25)",marginTop:1}}>
+          {"Application développée et conçue par Pierre ROLLOT"}
+        </div>
+      </div>
     </div>
   );
 }
