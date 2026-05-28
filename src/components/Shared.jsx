@@ -63,7 +63,7 @@ export function AppShell({ navItems, children, title, topbarActions, onBack }) {
     <div className="shell">
       {/* SIDEBAR DESKTOP */}
       <aside className="sidebar">
-        <div className="sidebar-logo">
+        <div className="sidebar-logo" title="ORPI PILOMAX">
           <OrpiLogo/>
         </div>
         <nav className="sidebar-nav">
@@ -72,7 +72,7 @@ export function AppShell({ navItems, children, title, topbarActions, onBack }) {
               <div key={item.label} className="nav-section">{item.label}</div>
             );
             return (
-              <button key={item.id} className={"nav-item"+(item.active?" active":"")} onClick={item.onClick}>
+              <button key={item.id} className={"nav-item"+(item.active?" active":"")} onClick={item.onClick} title={item.label}>
                 <span className="icon">{item.icon}</span>
                 <span>{item.label}</span>
                 {item.badge != null && <span className="nav-badge">{item.badge}</span>}

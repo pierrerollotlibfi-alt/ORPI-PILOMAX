@@ -1071,6 +1071,14 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
                   <button className="btn btn-secondary btn-sm" style={{flex:1}} onClick={function(){setEditingAgent(a);}}>{"✏️ Modifier"}</button>
                   <button className="btn btn-primary btn-sm" style={{flex:2}} onClick={function(){setFicheKPIAgent(a);}}>{"📊 Fiche KPI"}</button>
                 </div>
+                {isAdmin && (
+                  <button className="btn btn-secondary btn-sm w-full" style={{marginBottom:6}} onClick={function(){
+                    if(window.confirm("Réinitialiser le mot de passe de "+a.nom+" à ORPI2026 ?")) {
+                      resetMdpParManager(a.id, "ORPI2026");
+                      alert("Mot de passe réinitialisé à ORPI2026");
+                    }
+                  }}>{"🔑 Réinitialiser le mot de passe"}</button>
+                )}
                 <button className="btn btn-secondary btn-sm w-full" onClick={function(){toggleAgentActif(a.id);}}>
                   {a.actif ? "🚫 Désactiver le compte" : "✅ Réactiver le compte"}
                 </button>
@@ -1207,29 +1215,28 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
         var theme = THEMES.find(function(t){return t.id===activeTheme;});
         if(!theme) return null;
         return (
-          <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"#fff",
-            borderTop:"2px solid var(--navy)",boxShadow:"0 -4px 20px rgba(0,0,0,0.15)",
-            padding:"10px 12px 8px"}}
+          <div style={{position:"fixed",bottom:"var(--mob-nav,56px)",left:0,right:0,zIndex:100,
+            background:"#1D3557",boxShadow:"0 -4px 24px rgba(0,0,0,0.35)"}}
             onClick={function(e){e.stopPropagation();}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-              <span style={{fontSize:16}}>{theme.icon}</span>
-              <span style={{fontWeight:900,color:"var(--navy)",fontSize:13}}>{theme.label}</span>
-              <button onClick={function(){setActiveTheme(null);}} style={{marginLeft:"auto",background:"var(--g100)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:12,color:"var(--g500)"}}>{"✕"}</button>
+            <div style={{display:"flex",alignItems:"center",padding:"10px 14px 6px",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>
+              <span style={{fontSize:18,marginRight:8}}>{theme.icon}</span>
+              <span style={{fontWeight:900,color:"#fff",fontSize:14,flex:1}}>{theme.label}</span>
+              <button onClick={function(){setActiveTheme(null);}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,width:28,height:28,cursor:"pointer",color:"#fff",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>{"✕"}</button>
             </div>
-            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2,scrollbarWidth:"none"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:6,padding:"10px 10px 14px"}}>
               {theme.tabs.map(function(t){
                 var isActive = tab===t.id;
-                return(
+                return (
                   <button key={t.id} onClick={function(){setTab(t.id);setActiveTheme(null);}}
-                    style={{flexShrink:0,display:"flex",alignItems:"center",gap:6,padding:"8px 14px",
-                      borderRadius:20,border:"2px solid "+(isActive?"var(--navy)":"var(--g200)"),
-                      background:isActive?"var(--navy)":"#fff",
-                      color:isActive?"#fff":"var(--g600)",
-                      fontWeight:isActive?800:600,fontSize:12,cursor:"pointer",
-                      fontFamily:"var(--font)",whiteSpace:"nowrap"}}>
-                    <span style={{fontSize:15}}>{t.icon}</span>
-                    <span>{t.label}</span>
-                    {isActive && <span style={{width:6,height:6,borderRadius:3,background:"#6EE7B7",flexShrink:0}}/>}
+                    style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                      gap:4,padding:"10px 6px",borderRadius:12,border:"none",
+                      background:isActive?"rgba(232,0,29,0.85)":"rgba(255,255,255,0.1)",
+                      color:"#fff",fontWeight:isActive?800:600,fontSize:11,cursor:"pointer",
+                      fontFamily:"var(--font)",transition:"background 0.15s",
+                      boxShadow:isActive?"0 2px 8px rgba(232,0,29,0.4)":"none"}}>
+                    <span style={{fontSize:20,lineHeight:1}}>{t.icon}</span>
+                    <span style={{lineHeight:1.3,textAlign:"center",marginTop:2}}>{t.label}</span>
+                    {isActive && <span style={{width:4,height:4,borderRadius:2,background:"#6EE7B7",marginTop:2}}/>}
                   </button>
                 );
               })}
@@ -1242,98 +1249,35 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
 
       {/* ─── MODAL CONFIG KPI ─── */}
       {showConfigKPI && (
-        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"flex-end"}} onClick={function(){setShowConfigKPI(false);}}>
-          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",padding:"20px 16px 40px",width:"100%",maxWidth:480,margin:"0 auto"}} onClick={function(e){e.stopPropagation();}}>
-            <div style={{fontWeight:900,color:"var(--navy)",fontSize:16,marginBottom:4}}>{"⚙️ Paramétrer les seuils KPI"}</div>
-            <div style={{fontSize:12,color:"var(--g400)",marginBottom:16}}>{"Ces seuils définissent les alertes visuelles sur les fiches agents"}</div>
-            {[
-              {key:"mandatsMin",    label:"Mandats actifs minimum",   icon:"📋", unit:"mandats"},
-              {key:"vendusMin",     label:"Ventes minimum / mois",     icon:"🏆", unit:"ventes"},
-              {key:"compromisMin",  label:"Compromis minimum / mois",  icon:"🤝", unit:""},
-              {key:"caMin",        label:"CA minimum annuel (€HT)",   icon:"💰", unit:"€"},
-              {key:"visitesMin",   label:"Visites minimum / semaine",  icon:"👁️",  unit:"visites"},
-              {key:"prospMin",     label:"Actions prospection / mois", icon:"🚶", unit:"actions"},
-            ].map(function(s){
-              var val = (kpiConfig||{})[s.key] || 0;
-              return (
-                <div key={s.key} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid var(--g50)"}}>
-                  <span style={{fontSize:20,width:28,textAlign:"center",flexShrink:0}}>{s.icon}</span>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:700,color:"var(--navy)",fontSize:13}}>{s.label}</div>
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <button onClick={function(){setKpiConfig(function(p){var n={...(p||{})};n[s.key]=Math.max(0,(n[s.key]||0)-1);return n;});}} style={{width:28,height:28,borderRadius:14,border:"1px solid var(--g200)",background:"var(--g50)",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{"−"}</button>
-                    <span style={{fontWeight:800,color:"var(--navy)",fontSize:16,minWidth:30,textAlign:"center"}}>{val}</span>
-                    <button onClick={function(){setKpiConfig(function(p){var n={...(p||{})};n[s.key]=(n[s.key]||0)+1;return n;});}} style={{width:28,height:28,borderRadius:14,border:"1px solid var(--g200)",background:"var(--g50)",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{"+"}</button>
-                    <span style={{fontSize:11,color:"var(--g400)",width:40}}>{s.unit}</span>
-                  </div>
+        <Modal title={"⚙️ Paramétrer les seuils KPI"} onClose={function(){setShowConfigKPI(false);}}>
+          <p style={{fontSize:12,color:"var(--g400)",marginBottom:16}}>{"Ces seuils définissent les alertes visuelles sur les fiches agents"}</p>
+          {[
+            {key:"mandatsMin",   label:"Mandats actifs minimum",    icon:"📋", unit:"mandats"},
+            {key:"vendusMin",    label:"Ventes minimum / mois",      icon:"🏆", unit:"ventes"},
+            {key:"compromisMin", label:"Compromis minimum / mois",   icon:"🤝", unit:""},
+            {key:"caMin",       label:"CA minimum annuel (€HT)",    icon:"💰", unit:"€"},
+            {key:"visitesMin",  label:"Visites minimum / semaine",   icon:"👁️",  unit:"visites"},
+            {key:"prospMin",    label:"Actions prospection / mois",  icon:"🚶", unit:"actions"},
+          ].map(function(s){
+            var val = (kpiConfig||{})[s.key] || 0;
+            return (
+              <div key={s.key} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid var(--g50)"}}>
+                <span style={{fontSize:20,width:28,textAlign:"center",flexShrink:0}}>{s.icon}</span>
+                <div style={{flex:1,fontWeight:700,color:"var(--navy)",fontSize:13}}>{s.label}</div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <button onClick={function(){setKpiConfig(function(p){var n={...(p||{})};n[s.key]=Math.max(0,(n[s.key]||0)-1);return n;});}}
+                    style={{width:32,height:32,borderRadius:16,border:"1.5px solid var(--g200)",background:"var(--g50)",cursor:"pointer",fontSize:18,fontWeight:700,color:"var(--navy)"}}>{"−"}</button>
+                  <span style={{fontWeight:900,color:"var(--navy)",fontSize:18,minWidth:36,textAlign:"center"}}>{val}</span>
+                  <button onClick={function(){setKpiConfig(function(p){var n={...(p||{})};n[s.key]=(n[s.key]||0)+1;return n;});}}
+                    style={{width:32,height:32,borderRadius:16,border:"1.5px solid var(--g200)",background:"var(--g50)",cursor:"pointer",fontSize:18,fontWeight:700,color:"var(--navy)"}}>{"+"}</button>
+                  <span style={{fontSize:11,color:"var(--g400)",width:44}}>{s.unit}</span>
                 </div>
-              );
-            })}
-            <button className="btn btn-primary" style={{width:"100%",marginTop:20}} onClick={function(){setShowConfigKPI(false);}}>{"💾 Enregistrer les seuils"}</button>
-          </div>
-        </div>
+              </div>
+            );
+          })}
+          <button className="btn btn-primary" style={{width:"100%",marginTop:20}} onClick={function(){setShowConfigKPI(false);}}>{"💾 Enregistrer"}</button>
+        </Modal>
       )}
-      {editingAgent && <AgentEditModal agent={editingAgent} currentUser={currentUser} setUsers={setUsers} onClose={function(){setEditingAgent(null);}}/>}
-      {false && (function(){var fa={};var setFa=function(){};var setA=function(){};var isMe=false;return (
-          <Modal title={"✏️ Modifier — "+fa.nom} onClose={function(){setEditingAgent(null);}}>
-            <div className="form-grid">
-              <div className="form-group"><label className="form-label">{"Nom complet"}</label>
-                <input className="form-input" value={fa.nom||""} onChange={function(e){setA("nom",e.target.value);}}/></div>
-              <div className="form-group"><label className="form-label">{"Prénom"}</label>
-                <input className="form-input" value={fa.prenom||""} onChange={function(e){setA("prenom",e.target.value);}}/></div>
-              <div className="form-group"><label className="form-label">{"Email"}</label>
-                <input className="form-input" type="email" value={fa.email||""} onChange={function(e){setA("email",e.target.value);}}/></div>
-              <div className="form-group"><label className="form-label">{"Téléphone"}</label>
-                <input className="form-input" value={fa.telephone||""} onChange={function(e){setA("telephone",e.target.value);}}/></div>
-
-              {/* Rôle — superadmin peut changer n'importe quel rôle, manager peut donner admin */}
-              {!isMe && (
-                <div className="form-group form-full">
-                  <label className="form-label">{"🔑 Niveau d'accès"}</label>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginTop:4}}>
-                    {[
-                      {id:"agent",      label:"👤 Agent",          sub:"Accès à ses propres données",         color:"var(--navy)"},
-                      {id:"admin",      label:"🔧 Administrateur", sub:"Gestion mandats + agents de l'agence",color:"var(--blue)"},
-                      {id:"manager",    label:"⚙️ Manager",        sub:"Pilotage complet + trésorerie",        color:"var(--amber)"},
-                      {id:"superadmin", label:"🌟 Super Admin",    sub:"Accès total + configuration",         color:"var(--red)"},
-                    ].map(function(role){
-                      var actif = fa.role===role.id;
-                      // Seul superadmin peut accorder superadmin
-                      var disabled = role.id==="superadmin" && currentUser.role!=="superadmin";
-                      return (
-                        <button key={role.id} disabled={disabled} onClick={function(){if(!disabled)setA("role",role.id);}}
-                          style={{padding:"10px 12px",borderRadius:10,border:"2px solid "+(actif?role.color:"var(--g200)"),
-                            background:actif?role.color+"18":"#fff",cursor:disabled?"not-allowed":"pointer",
-                            textAlign:"left",opacity:disabled?0.4:1,fontFamily:"var(--font)"}}>
-                          <div style={{fontWeight:800,color:actif?role.color:"var(--navy)",fontSize:12}}>{role.label}</div>
-                          <div style={{fontSize:10,color:"var(--g400)",marginTop:2}}>{role.sub}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="form-group"><label className="form-label">{"Niveau"}</label>
-                <select className="form-select" value={fa.niveau||"junior"} onChange={function(e){setA("niveau",e.target.value);}}>
-                  <option value="junior">🌱 Junior</option><option value="senior">🏆 Senior</option>
-                </select></div>
-              <div className="form-group"><label className="form-label">{"Statut"}</label>
-                <select className="form-select" value={fa.actif?"actif":"inactif"} onChange={function(e){setA("actif",e.target.value==="actif");}}>
-                  <option value="actif">✅ Actif</option><option value="inactif">❌ Inactif</option>
-                </select></div>
-            </div>
-            <div style={{display:"flex",gap:8,marginTop:16}}>
-              <button className="btn btn-secondary" style={{flex:1}} onClick={function(){setEditingAgent(null);}}>{"Annuler"}</button>
-              <button className="btn btn-primary" style={{flex:2}} onClick={function(){
-                setUsers(function(prev){return prev.map(function(u){return u.id===fa.id?fa:u;});});
-                setEditingAgent(null);
-              }}>{"💾 Enregistrer"}</button>
-            </div>
-          </Modal>
-        );
-      })()}
     </AppShell>
   );
 }
@@ -1362,7 +1306,10 @@ function DemandesReset({ resets, resetMdpParManager }) {
               <div style={{fontWeight:700,color:"var(--navy)",fontSize:13}}>{r.nom}</div>
               <div style={{fontSize:11,color:"var(--g400)"}}>{r.email}</div>
             </div>
-            <button className="btn btn-primary btn-sm" onClick={function(){resetMdpParManager(r.agentId);}}>{"Réinitialiser"}</button>
+            <button className="btn btn-primary btn-sm" onClick={function(){
+              resetMdpParManager(r.agentId,"ORPI2026");
+              alert("Mot de passe de "+r.nom+" réinitialisé à : ORPI2026");
+            }}>{"🔑 Réinitialiser → ORPI2026"}</button>
           </div>
         );
       })}

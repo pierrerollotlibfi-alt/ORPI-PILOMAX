@@ -727,128 +727,32 @@ export default function AgentApp() {
         </div>
       )}
       {showMoreMenuA && (
-        <div style={{position:"fixed",bottom:56,left:0,right:0,zIndex:100,background:"rgba(0,0,0,0.5)"}} onClick={function(){setShowMoreMenuA(false);}}>
-          <div style={{background:"#fff",borderRadius:"16px 16px 0 0",padding:"16px",maxHeight:"70vh",overflowY:"auto"}} onClick={function(e){e.stopPropagation();}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <span style={{fontWeight:800,color:"var(--navy)",fontSize:15}}>{"Navigation"}</span>
-              <button onClick={function(){setShowMoreMenuA(false);}} style={{background:"var(--g100)",border:"none",borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:14}}>{"✕"}</button>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
-              {NAV_SECONDARY_A.map(function(id){
-                var t = ALL_TABS_A[id]||{};
-                return (
-                  <button key={id} onClick={function(e){e.stopPropagation();setTab(id);setShowMoreMenuA(false);}}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"12px 8px",borderRadius:12,border:"2px solid "+(tab===id?"var(--navy)":"var(--g200)"),background:tab===id?"var(--navy)":"#fff",color:tab===id?"#fff":"var(--g600)",fontWeight:700,fontSize:11,cursor:"pointer",textAlign:"center",fontFamily:"var(--font)"}}>
-                    <span style={{fontSize:22}}>{t.icon}</span>
-                    <span>{t.shortLabel||t.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+        <div style={{position:"fixed",bottom:"var(--mob-nav,56px)",left:0,right:0,zIndex:100,
+          background:"#1D3557",boxShadow:"0 -4px 24px rgba(0,0,0,0.35)"}}
+          onClick={function(e){e.stopPropagation();}}>
+          <div style={{display:"flex",alignItems:"center",padding:"10px 14px 6px",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>
+            <span style={{fontWeight:900,color:"#fff",fontSize:14,flex:1}}>{"Navigation"}</span>
+            <button onClick={function(){setShowMoreMenuA(false);}} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,width:28,height:28,cursor:"pointer",color:"#fff",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>{"✕"}</button>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:6,padding:"10px 10px 14px"}}>
+            {(NAV_SECONDARY_A||[]).map(function(id){
+              var t = ALL_TABS_A[id]||{icon:"📄",label:id,shortLabel:id};
+              var isActive = tab===id;
+              return (
+                <button key={id} onClick={function(){setTab(id);setShowMoreMenuA(false);}}
+                  style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                    gap:4,padding:"10px 6px",borderRadius:12,border:"none",
+                    background:isActive?"rgba(232,0,29,0.85)":"rgba(255,255,255,0.1)",
+                    color:"#fff",fontWeight:isActive?800:600,fontSize:11,cursor:"pointer",
+                    fontFamily:"var(--font)"}}>
+                  <span style={{fontSize:20,lineHeight:1}}>{t.icon}</span>
+                  <span style={{lineHeight:1.3,textAlign:"center",marginTop:2}}>{t.shortLabel||t.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
     </AppShell>
-  );
-}
-
-function ProfilAgent({ currentUser, changerMotDePasse }) {
-  var ctx    = useApp();
-  var [ancien,   setAncien]   = useState("");
-  var [nouveau,  setNouveau]  = useState("");
-  var [confirm,  setConfirm]  = useState("");
-  var [msg,      setMsg]      = useState(null);
-  var [couleur,  setCouleur]  = useState(currentUser.couleur || "#E63946");
-  var [photoB64, setPhotoB64] = useState(currentUser.photo  || "");
-  var [saved,    setSaved]    = useState(false);
-
-  var COULEURS = ["#E63946","#2196F3","#059669","#7C3AED","#F59E0B","#EC4899","#0891B2","#DC2626","#16A34A","#1D3557","#D97706","#9333EA","#0284C7","#BE185D","#065F46"];
-
-  function sauvegarderProfil() {
-    ctx.setUsers(function(prev){ return prev.map(function(u){ return u.id===currentUser.id ? {...u, couleur, photo:photoB64} : u; }); });
-    setSaved(true); setTimeout(function(){ setSaved(false); }, 3000);
-  }
-  function sauvegarderMdp() {
-    if (!ancien) { setMsg({type:"err",text:"Saisissez votre mot de passe actuel"}); return; }
-    if (ancien !== currentUser.password) { setMsg({type:"err",text:"Mot de passe actuel incorrect"}); return; }
-    if (nouveau.length < 6) { setMsg({type:"err",text:"Minimum 6 caractères"}); return; }
-    if (nouveau !== confirm) { setMsg({type:"err",text:"Les mots de passe ne correspondent pas"}); return; }
-    changerMotDePasse(currentUser.id, nouveau);
-    setMsg({type:"ok",text:"✅ Mot de passe modifié !"}); setAncien(""); setNouveau(""); setConfirm("");
-  }
-  return (
-    <div>
-      <div style={{background:"linear-gradient(135deg,"+(couleur||"#E63946")+","+(couleur||"#E63946")+"99)",borderRadius:14,padding:"20px",marginBottom:14,display:"flex",alignItems:"center",gap:16,color:"#fff"}}>
-        <div style={{position:"relative",flexShrink:0}}>
-          <div style={{width:72,height:72,borderRadius:36,background:"rgba(255,255,255,0.2)",border:"3px solid rgba(255,255,255,0.5)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {photoB64?<img src={photoB64} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontWeight:900,fontSize:26,color:"#fff"}}>{currentUser.avatar}</span>}
-          </div>
-          <label style={{position:"absolute",bottom:-4,right:-4,width:26,height:26,borderRadius:13,background:couleur,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:13}}>
-            {"📷"}<input type="file" accept="image/*" style={{display:"none"}} onChange={function(e){var file=e.target.files[0];if(!file||file.size>2*1024*1024){return;}var r=new FileReader();r.onload=function(ev){setPhotoB64(ev.target.result);};r.readAsDataURL(file);}}/>
-          </label>
-        </div>
-        <div><div style={{fontWeight:900,fontSize:18}}>{currentUser.nom}</div><div style={{fontSize:12,color:"rgba(255,255,255,0.75)",marginTop:2}}>{currentUser.email}</div></div>
-      </div>
-      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px",marginBottom:14}}>
-        <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:14}}>{"🎨 Personnalisation"}</div>
-        <label style={{fontSize:11,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:8}}>{"PHOTO DE PROFIL"}</label>
-        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:14}}>
-          <div style={{width:52,height:52,borderRadius:26,background:couleur,border:"3px solid var(--g200)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            {photoB64?<img src={photoB64} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontWeight:900,fontSize:20,color:"#fff"}}>{currentUser.avatar}</span>}
-          </div>
-          <label style={{flex:1,background:"#EFF6FF",border:"2px solid var(--blue)",borderRadius:10,padding:"8px 12px",cursor:"pointer",textAlign:"center",fontSize:12,fontWeight:700,color:"var(--blue)"}}>
-            {"📷 Choisir une photo"}<input type="file" accept="image/*" style={{display:"none"}} onChange={function(e){var file=e.target.files[0];if(!file||file.size>2*1024*1024){return;}var r=new FileReader();r.onload=function(ev){setPhotoB64(ev.target.result);};r.readAsDataURL(file);}}/>
-          </label>
-          {photoB64&&<button onClick={function(){setPhotoB64("");}} style={{background:"#FEF2F2",border:"2px solid #FECACA",borderRadius:10,padding:"8px 12px",fontSize:12,fontWeight:700,color:"var(--red)",cursor:"pointer"}}>{"🗑"}</button>}
-        </div>
-        <label style={{fontSize:11,color:"var(--g400)",fontWeight:700,display:"block",marginBottom:8}}>{"CODE COULEUR"}</label>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
-          {COULEURS.map(function(col){var actif=couleur===col;return(<button key={col} onClick={function(){setCouleur(col);}} style={{width:36,height:36,borderRadius:18,background:col,border:actif?"3px solid var(--navy)":"3px solid transparent",cursor:"pointer",transform:actif?"scale(1.15)":"scale(1)"}}/>);})}
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:11,color:"var(--g400)"}}>{"Couleur libre :"}</span>
-          <input type="color" value={couleur} onChange={function(e){setCouleur(e.target.value);}} style={{width:36,height:28,borderRadius:8,border:"1px solid var(--g200)",cursor:"pointer"}}/>
-        </div>
-        {saved&&<div style={{background:"#F0FDF4",border:"1px solid #A7F3D0",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#065F46",fontWeight:700,margin:"10px 0"}}>{"✅ Profil sauvegardé !"}</div>}
-        <button className="btn btn-primary" style={{width:"100%",marginTop:12,background:couleur,border:"none"}} onClick={sauvegarderProfil}>{"💾 Sauvegarder mon profil"}</button>
-      </div>
-      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px"}}>
-        <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:14}}>{"🔑 Changer mon mot de passe"}</div>
-        {msg&&<div style={{background:msg.type==="ok"?"#F0FDF4":"#FEF2F2",border:"1px solid "+(msg.type==="ok"?"#A7F3D0":"#FECACA"),borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.type==="ok"?"#065F46":"#DC2626",fontWeight:600}}>{msg.text}</div>}
-        <div className="form-group" style={{marginBottom:12}}><label className="form-label">{"Mot de passe actuel"}</label><input type="password" className="form-input" value={ancien} onChange={function(e){setAncien(e.target.value);setMsg(null);}}/></div>
-        <div className="form-group" style={{marginBottom:12}}><label className="form-label">{"Nouveau mot de passe"}</label><input type="password" className="form-input" value={nouveau} onChange={function(e){setNouveau(e.target.value);setMsg(null);}}/></div>
-        <div className="form-group" style={{marginBottom:16}}><label className="form-label">{"Confirmer"}</label><input type="password" className="form-input" value={confirm} onChange={function(e){setConfirm(e.target.value);setMsg(null);}}/></div>
-        <button className="btn btn-primary" style={{width:"100%"}} onClick={sauvegarderMdp}>{"💾 Enregistrer"}</button>
-      </div>
-    </div>
-  );
-}
-
-function genererRecommandations(mandats, recherches, offmarket) {
-  var recs = [];
-  var nbM = 0; var nbC = 0;
-  if (nbM > 0 && recherches.length === 0) recs.push({icon:"🔍",type:"Action",texte:"Vous avez "+nbM+" mandat"+(nbM>1?"s":"")+" en stock. Rentrez des recherches clients pour activer le matching automatique !"});
-  if (nbC > 0) recs.push({icon:"✍️",type:"Priorité",texte:nbC+" compromis en cours. Vérifiez les conditions suspensives et relancez les notaires."});
-  if (offmarket.length === 0) recs.push({icon:"🔒",type:"Astuce",texte:"Ajoutez des biens off-market pour enrichir votre portefeuille confidentiel."});
-  if (recs.length === 0) recs.push({icon:"🎯",type:"Bravo",texte:"Votre portefeuille est bien structuré. Continuez à prospecter !"});
-  return recs;
-}
-
-function Recommandations({ mandats, recherches, offmarket }) {
-  var recs = genererRecommandations(mandats||[], recherches||[], offmarket||[]);
-  return (
-    <div>
-      {recs.map(function(r,i){
-        return (
-          <div key={i} style={{display:"flex",gap:12,padding:"12px 0",borderBottom:"1px solid var(--g50)"}}>
-            <span style={{fontSize:28,flexShrink:0}}>{r.icon}</span>
-            <div>
-              <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:3}}>{r.type}</div>
-              <div style={{fontSize:13,color:"var(--g600)",lineHeight:1.5}}>{r.texte}</div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
   );
 }

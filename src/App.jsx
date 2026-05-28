@@ -2982,7 +2982,8 @@ export default function App() {
 
   // Réinitialisation par le manager
   function resetMdpParManager(userId, newPwd) {
-    setUsers(function(prev){ return prev.map(function(u){ return u.id===userId ? {...u, password:newPwd} : u; }); });
+    var mdp = newPwd || "ORPI2026";
+    setUsers(function(prev){ return prev.map(function(u){ return u.id===userId ? {...u, password:mdp, premierAcces:false} : u; }); });
     setResets(function(prev){ return prev.map(function(r){ return r.userId===userId ? {...r, traite:true} : r; }); });
   }
 
