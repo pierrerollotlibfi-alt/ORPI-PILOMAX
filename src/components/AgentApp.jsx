@@ -756,3 +756,87 @@ export default function AgentApp() {
     </AppShell>
   );
 }
+
+function ProfilAgent({ currentUser, changerMotDePasse }) {
+  var ctx    = useApp();
+  var [ancien,   setAncien]   = useState("");
+  var [nouveau,  setNouveau]  = useState("");
+  var [confirm,  setConfirm]  = useState("");
+  var [msg,      setMsg]      = useState(null);
+  var [couleur,  setCouleur]  = useState(currentUser.couleur || "#E63946");
+  var [photoB64, setPhotoB64] = useState(currentUser.photo  || "");
+  var [saved,    setSaved]    = useState(false);
+
+  var COULEURS = ["#E63946","#2196F3","#059669","#7C3AED","#F59E0B","#EC4899","#0891B2","#DC2626","#16A34A","#1D3557","#D97706","#9333EA","#0284C7","#BE185D","#065F46"];
+
+  function sauvegarderProfil() {
+    ctx.setUsers(function(prev){ return prev.map(function(u){ return u.id===currentUser.id ? {...u, couleur, photo:photoB64} : u; }); });
+    setSaved(true); setTimeout(function(){ setSaved(false); }, 3000);
+  }
+  function sauvegarderMdp() {
+    if (!ancien) { setMsg({type:"err",text:"Saisissez votre mot de passe actuel"}); return; }
+    if (ancien !== currentUser.password) { setMsg({type:"err",text:"Mot de passe actuel incorrect"}); return; }
+    if (nouveau.length < 6) { setMsg({type:"err",text:"Minimum 6 caracteres"}); return; }
+    if (nouveau !== confirm) { setMsg({type:"err",text:"Les mots de passe ne correspondent pas"}); return; }
+    changerMotDePasse(currentUser.id, nouveau);
+    setMsg({type:"ok",text:"Mot de passe modifie !"}); setAncien(""); setNouveau(""); setConfirm("");
+  }
+  return (
+    <div>
+      <div style={{background:"linear-gradient(135deg,"+(couleur||"#E63946")+","+(couleur||"#E63946")+"99)",borderRadius:14,padding:"20px",marginBottom:14,display:"flex",alignItems:"center",gap:16,color:"#fff"}}>
+        <div style={{position:"relative",flexShrink:0}}>
+          <div style={{width:72,height:72,borderRadius:36,background:"rgba(255,255,255,0.2)",border:"3px solid rgba(255,255,255,0.5)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {photoB64?<img src={photoB64} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontWeight:900,fontSize:26,color:"#fff"}}>{currentUser.avatar}</span>}
+          </div>
+        </div>
+        <div><div style={{fontWeight:900,fontSize:18}}>{currentUser.nom}</div><div style={{fontSize:12,color:"rgba(255,255,255,0.75)",marginTop:2}}>{currentUser.email}</div></div>
+      </div>
+      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px",marginBottom:14}}>
+        <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:14}}>{"Couleur de profil"}</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+          {COULEURS.map(function(col){var actif=couleur===col;return(<button key={col} onClick={function(){setCouleur(col);}} style={{width:36,height:36,borderRadius:18,background:col,border:actif?"3px solid var(--navy)":"3px solid transparent",cursor:"pointer"}}/>);})}
+        </div>
+        {saved&&<div style={{background:"#F0FDF4",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#065F46",fontWeight:700,marginBottom:10}}>{"Profil sauvegarde !"}</div>}
+        <button className="btn btn-primary" style={{width:"100%",background:couleur,border:"none"}} onClick={sauvegarderProfil}>{"Sauvegarder mon profil"}</button>
+      </div>
+      <div style={{background:"#fff",borderRadius:14,border:"1px solid var(--g200)",padding:"20px"}}>
+        <div style={{fontWeight:800,color:"var(--navy)",fontSize:14,marginBottom:14}}>{"Changer mon mot de passe"}</div>
+        {msg&&<div style={{background:msg.type==="ok"?"#F0FDF4":"#FEF2F2",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.type==="ok"?"#065F46":"#DC2626",fontWeight:600}}>{msg.text}</div>}
+        <div className="form-group" style={{marginBottom:12}}><label className="form-label">{"Mot de passe actuel"}</label><input type="password" className="form-input" value={ancien} onChange={function(e){setAncien(e.target.value);setMsg(null);}}/></div>
+        <div className="form-group" style={{marginBottom:12}}><label className="form-label">{"Nouveau mot de passe"}</label><input type="password" className="form-input" value={nouveau} onChange={function(e){setNouveau(e.target.value);setMsg(null);}}/></div>
+        <div className="form-group" style={{marginBottom:16}}><label className="form-label">{"Confirmer"}</label><input type="password" className="form-input" value={confirm} onChange={function(e){setConfirm(e.target.value);setMsg(null);}}/></div>
+        <button className="btn btn-primary" style={{width:"100%"}} onClick={sauvegarderMdp}>{"Enregistrer"}</button>
+      </div>
+    </div>
+  );
+}
+
+function genererRecommandations(mandats, recherches, offmarket) {
+  var recs = [];
+  var nbM = (mandats||[]).filter(function(m){return m.statut==="mandat";}).length;
+  var nbC = (mandats||[]).filter(function(m){return m.statut==="compromis";}).length;
+  if (nbM > 0 && (recherches||[]).length === 0) recs.push({icon:"🔍",type:"Action",texte:"Vous avez "+nbM+" mandat"+(nbM>1?"s":"")+" en stock. Rentrez des recherches clients pour activer le matching automatique !"});
+  if (nbC > 0) recs.push({icon:"✍️",type:"Priorite",texte:nbC+" compromis en cours. Verifiez les conditions suspensives et relancez les notaires."});
+  if ((offmarket||[]).length === 0) recs.push({icon:"🔒",type:"Astuce",texte:"Ajoutez des biens off-market pour enrichir votre portefeuille confidentiel."});
+  if (recs.length === 0) recs.push({icon:"🎯",type:"Bravo",texte:"Votre portefeuille est bien structure. Continuez a prospecter !"});
+  return recs;
+}
+
+function Recommandations({ mandats, recherches, offmarket }) {
+  var recs = genererRecommandations(mandats||[], recherches||[], offmarket||[]);
+  return (
+    <div>
+      {recs.map(function(r,i){
+        return (
+          <div key={i} style={{display:"flex",gap:12,padding:"12px 0",borderBottom:"1px solid var(--g50)"}}>
+            <span style={{fontSize:28,flexShrink:0}}>{r.icon}</span>
+            <div>
+              <div style={{fontWeight:800,color:"var(--navy)",fontSize:12,marginBottom:3}}>{r.type}</div>
+              <div style={{fontSize:13,color:"var(--g600)",lineHeight:1.5}}>{r.texte}</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
