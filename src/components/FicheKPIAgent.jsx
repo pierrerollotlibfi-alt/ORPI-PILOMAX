@@ -101,7 +101,15 @@ export default function FicheKPIAgent({ agent, onClose }) {
   var myMandats  = allMandats.filter(function(m){ return m.agentId===agent.id; });
   var vendus     = myMandats.filter(function(m){ return m.statut==="vendu"; });
   var compromis  = myMandats.filter(function(m){ return m.statut==="compromis"; });
-  var actifs     = myMandats.filter(function(m){ return m.statut==="mandat"; });
+  var actifs     = (myMandats||[]).filter(function(m){ return m.statut==="mandat"; });
+  var sousOffre  = (myMandats||[]).filter(function(m){ return m.statut==="sous_offre"; });
+  var enCompromis= (myMandats||[]).filter(function(m){ return m.statut==="compromis"; });
+  var csLevees   = (myMandats||[]).filter(function(m){ return m.statut==="compromis"&&m.clausesSuspensivesLevees; });
+  var vendus     = (myMandats||[]).filter(function(m){ return m.statut==="vendu"; });
+  var caSousOffre= sousOffre.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caCompromis= enCompromis.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caCsLevees = csLevees.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caVendus   = vendus.reduce(function(s,m){return s+(m.commission||0);},0);
   var myLocs     = locations.filter(function(l){ return l.agentId===agent.id; });
   var myProspec  = prospection.filter(function(p){ return p.agentId===agent.id; });
   var myRecherches = recherches.filter(function(r){ return r.agentId===agent.id; });

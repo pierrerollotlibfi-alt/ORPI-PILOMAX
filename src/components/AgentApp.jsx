@@ -79,12 +79,12 @@ export default function AgentApp() {
   var vendus    = myMandats.filter(function(m){return m.statut==="vendu";});
   var _nowA = new Date(); var _yA = _nowA.getFullYear(); var _mA = _nowA.getMonth();
   var offresMois = myMandats.filter(function(m){ if(!m.dateCompromis)return false; var d=new Date(m.dateCompromis); return d.getFullYear()===_yA&&d.getMonth()===_mA; });
-  var caStock   = active.reduce(function(s,m){return s+m.commission;},0);
-  var caSigne   = compromis.reduce(function(s,m){return s+m.commission;},0);
-  var caEnc     = compromis.filter(function(m){return m.clausesSuspensivesLevees;}).reduce(function(s,m){return s+m.commission;},0);
-  var caReal    = vendus.reduce(function(s,m){return s+m.commission;},0);
-  var caLoc     = myLocs.filter(function(l){return l.locataireTrouve;}).reduce(function(s,l){return s+l.commission;},0);
-  var caGest    = myGestion.reduce(function(s,g){return s+g.commissionMensuelle;},0);
+  var caStock   = active.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caSigne   = compromis.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caEnc     = compromis.filter(function(m){return m.clausesSuspensivesLevees;}).reduce(function(s,m){return s+(m.commission||0);},0);
+  var caReal    = vendus.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caLoc     = (myLocs||[]).filter(function(l){return l.locataireTrouve;}).reduce(function(s,l){return s+(l.commission||0);},0);
+  var caGest    = (myGestion||[]).reduce(function(s,g){return s+(g.commissionMensuelle||0);},0);
   var obj       = (objectifs||[]).find(function(o){return o.agentId===currentUser.id && o.annee===new Date().getFullYear();});
   var progress  = obj && obj.montantHT>0 ? Math.min(100, Math.round(caReal/obj.montantHT*100)) : 0;
 

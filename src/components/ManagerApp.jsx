@@ -215,7 +215,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
     var act  = myM.filter(function(m){return m.statut==="mandat";});
     var myL  = myLocs.filter(function(l){return l.agentId===a.id && l.locataireTrouve;});
     var obj  = (objectifs||[]).find(function(o){return o.agentId===a.id && o.annee===new Date().getFullYear();});
-    var caRealise = vend.reduce(function(s,m){return s + (m.commission||0);},0);
+    var caRealise  = vend.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caEnCours2 = comp.reduce(function(s,m){return s+(m.commission||0);},0)
+                 + offres.reduce(function(s,m){return s+(m.commission||0);},0);
+  var caCsLev2   = csLev.reduce(function(s,m){return s+(m.commission||0);},0);
 
     // Indicateurs MENSUELS spécifiques (toujours sur mois en cours)
     var allAgentMandats = myMandats.filter(function(m){return m.agentId===a.id;});
