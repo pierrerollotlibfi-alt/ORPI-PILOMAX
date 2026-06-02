@@ -2618,6 +2618,23 @@ function lsave(key, val) {
 function lload(key, fallback) {
   try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch(e) { return fallback; }
 }
+// ─── BACKUP MANDATS (protection anti-perte de donnees - CDC 6.1) ─────────────
+function backupMandats(mandats) {
+  try {
+    if (!Array.isArray(mandats) || mandats.length === 0) return;
+    var payload = { ts: new Date().toISOString(), count: mandats.length, data: mandats };
+    localStorage.setItem("orpi_mandats_backup", JSON.stringify(payload));
+  } catch(e) {}
+}
+function restoreMandatsBackup() {
+  try {
+    var raw = localStorage.getItem("orpi_mandats_backup");
+    if (!raw) return null;
+    var payload = JSON.parse(raw);
+    if (payload && Array.isArray(payload.data)) return payload;
+  } catch(e) {}
+  return null;
+}
 function loadOrInit(key, legacyKeys, init) {
   var v = lload(key, null);
   // Fusion spéciale pour les users : on s'assure que tous les INIT_USERS existent
