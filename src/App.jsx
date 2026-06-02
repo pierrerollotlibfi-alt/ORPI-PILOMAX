@@ -2822,11 +2822,19 @@ export default function App() {
               dbSave(c.name, data);
             }
           }
-          var safeData = (c.name !== "tresorerie" && c.name !== "prospConfig") 
-            ? (Array.isArray(data) ? data : []) 
-            : (data || c.init || []);
-          c.setter(safeData);
-          lsave(c.sk, safeData);
+          var safeData = (c.name !== "tresorerie" && c.name !== "prospConfig")
+            ? (Array.isArray(data) ? data : null)
+            : (data || c.init || {});
+          if (safeData !== null) {
+            c.setter(safeData);
+            // Ne sauvegarder dans localStorage que si les données sont valides et non-vides
+            if (Array.isArray(safeData) ? safeData.length > 0 : true) {
+              lsave(c.sk, safeData);
+            }
+          } else {
+            // data invalide : garder le state existant (localStorage déjà chargé)
+            console.warn("Supabase a renvoyé des données invalides pour", c.name, "- conservation du cache local");
+          }
         } else {
           // Supabase vide → initialiser avec les données init
           var local = c.init && c.init.length > 0 ? c.init : lload(c.sk, []);
