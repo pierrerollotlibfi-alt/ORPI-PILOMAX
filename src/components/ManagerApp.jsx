@@ -23,6 +23,8 @@ import CarteInteractive from "./CarteInteractive";
 import CaRealise from "./CaRealise";
 import RapportMensuel from "./RapportMensuel";
 import ObjectifsProgression from "./ObjectifsProgression";
+import AttributionMasse from "./AttributionMasse";
+import SuiviProduction from "./SuiviProduction";
 import {
   AppShell, SaveBanner, KpiCard, Modal, MandatForm, PeriodSelector,
   BadgeStatut, BadgeType, BadgeNiveau, inPeriod,
@@ -103,6 +105,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
   var [ficheKPIAgent,   setFicheKPIAgent]   = useState(null);
   var [editingAgent,    setEditingAgent]    = useState(null); // agent à afficher
   var [showConfigKPI,   setShowConfigKPI]   = useState(false);
+  var [showAttribution, setShowAttribution] = useState(false);
   var [showTaskModal,   setShowTaskModal]   = useState(false);
   var [inviteResult,    setInviteResult]    = useState(null);
   var [period,      setPeriod]      = useState("year");
@@ -400,6 +403,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
         {id:"offmarket",   icon:"🔒", label:"Off Market"},
         {id:"carte",       icon:"🗺️", label:"Carte"},
         {id:"ca",          icon:"📈", label:"CA Réalisé"},
+        {id:"production",  icon:"📈", label:"Production / Point mort"},
         {id:"rapport",     icon:"📄", label:"Rapport mensuel"},
         {id:"objectifs",   icon:"🎯", label:"Objectifs"},
       ]
@@ -1012,8 +1016,9 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
             <KpiCard label="Seniors" value={agents.filter(function(a){return a.niveau==="senior";}).length} color="var(--amber)" icon="🏆"/>
             <KpiCard label="Juniors" value={agents.filter(function(a){return a.niveau==="junior";}).length} color="var(--blue)" icon="🌱"/>
           </div>
-          <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
-            <button className="btn btn-secondary btn-sm" onClick={function(){setShowConfigKPI(true);}}>{"⚙️ Paramétrer les seuils KPI"}</button>
+          <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginBottom:10}}>
+            <button className="btn btn-secondary btn-sm" onClick={function(){setShowAttribution(true);}}>{"\uD83D\uDC65 Attribuer les mandats"}</button>
+            <button className="btn btn-secondary btn-sm" onClick={function(){setShowConfigKPI(true);}}>{"\u2699\uFE0F Paramétrer les seuils KPI"}</button>
           </div>
           {agents.map(function(a, i) {
             var myM  = (mandats||[]).filter(function(m){return m.agentId===a.id;});
@@ -1162,6 +1167,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       {tab==="objectifs" && <ObjectifsProgression/>}
       {tab==="rapport" && <RapportMensuel/>}
       {tab==="ca" && <CaRealise/>}
+      {tab==="production" && <SuiviProduction/>}
       {tab==="leads" && <Leads/>}
       {tab==="recherches" && <Recherches/>}
       {tab==="messagerie" && <Messagerie/>}
@@ -1253,6 +1259,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       {/* ─── MODAL ÉDITION AGENT ─── */}
 
       {/* ─── MODAL CONFIG KPI ─── */}
+      {showAttribution && (
+        <AttributionMasse onClose={function(){setShowAttribution(false);}}/>
+      )}
+
       {showConfigKPI && (
         <Modal title={"⚙️ Paramétrer les seuils KPI"} onClose={function(){setShowConfigKPI(false);}}>
           <p style={{fontSize:12,color:"var(--g400)",marginBottom:16}}>{"Ces seuils définissent les alertes visuelles sur les fiches agents"}</p>
