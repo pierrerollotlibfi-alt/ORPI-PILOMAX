@@ -38,6 +38,7 @@ var SK = {
   journal:     "orpi_data_journal",
   session:     "orpi_data_session",
   tresorerie:  "orpi_data_tresorerie",
+  ventes:      "orpi_data_ventes",
 };
 
 // ─── DONNÉES INITIALES ────────────────────────────────────────────────────────
@@ -2603,6 +2604,454 @@ var INIT_KPI_CONFIG = {
   secteursMin:     4,     // nb secteurs minimum = force
   recherchesMin:   5,     // nb recherches acheteurs = force
 };
+// ─── VENTES (production réelle encaissée) ────────────────────────────────────
+// Source unique du CA réalisé. Chaque vente : commission TTC, 1 ou 2 négociateurs,
+// taux de reversement. Calcul automatique TTC -> HT -> part négo / part agence.
+var TVA_TAUX = 0.20;
+
+// Calcule les montants d'une vente. Retourne HT, part agence, et la part de CA
+// attribuee a chaque negociateur (50/50 du TTC si binome, sinon 100%).
+function calcVente(v) {
+  var ttc = v.commissionTTC || 0;
+  var ht = ttc / (1 + TVA_TAUX);
+  var taux = (typeof v.tauxReverse === "number") ? v.tauxReverse : 0.5;
+  // Part reversee au negociateur principal (agent commercial)
+  var partNego = ht * taux;
+  var partAgence = ht - partNego;
+  // Repartition du CREDIT de production (CA TTC) entre les negociateurs
+  var credits = {};
+  if (v.agentId2) {
+    credits[v.agentId] = ttc / 2;
+    credits[v.agentId2] = (credits[v.agentId2] || 0) + ttc / 2;
+  } else if (v.agentId) {
+    credits[v.agentId] = ttc;
+  }
+  return { ttc: ttc, ht: ht, partNego: partNego, partAgence: partAgence, credits: credits };
+}
+
+var INIT_VENTES = [
+  {
+    "id": "V-2026-001",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 3,
+    "date": "2026-03-15",
+    "agentId": "agent-landry",
+    "agentId2": null,
+    "bien": "Rue Lemerchier",
+    "mandatRef": "117",
+    "commissionTTC": 10000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-002",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 3,
+    "date": "2026-03-15",
+    "agentId": "agent-landry",
+    "agentId2": null,
+    "bien": "Rue Georges G.",
+    "mandatRef": "5",
+    "commissionTTC": 6000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-003",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 3,
+    "date": "2026-03-15",
+    "agentId": "agent-nathalie",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "887",
+    "commissionTTC": 7000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-004",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 3,
+    "date": "2026-03-15",
+    "agentId": "agent-cedric",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "NC",
+    "commissionTTC": 4000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-005",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 4,
+    "date": "2026-04-15",
+    "agentId": "agent-nathalie",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "74",
+    "commissionTTC": 7000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-006",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 4,
+    "date": "2026-04-15",
+    "agentId": "agent-isabelle",
+    "agentId2": null,
+    "bien": "Vente 1",
+    "mandatRef": "32",
+    "commissionTTC": 7000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-007",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 4,
+    "date": "2026-04-15",
+    "agentId": "agent-isabelle",
+    "agentId2": null,
+    "bien": "Vente 2",
+    "mandatRef": "NC",
+    "commissionTTC": 15000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-008",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-landry",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "26",
+    "commissionTTC": 10000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-009",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-landry",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "63",
+    "commissionTTC": 8000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-010",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-nathalie",
+    "agentId2": "agent-laetitia",
+    "bien": "",
+    "mandatRef": "109",
+    "commissionTTC": 7500,
+    "tauxReverse": 0.25,
+    "statut": "acte",
+    "binome": true
+  },
+  {
+    "id": "V-2026-011",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-nathalie",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "77",
+    "commissionTTC": 4900,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-012",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-clement",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "37",
+    "commissionTTC": 10000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-013",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-clement",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "NC",
+    "commissionTTC": 3500,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-014",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-clement",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "87",
+    "commissionTTC": 9000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-015",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-clement",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "80",
+    "commissionTTC": 10000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-016",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-cedric",
+    "agentId2": "agent-laetitia",
+    "bien": "",
+    "mandatRef": "",
+    "commissionTTC": 10000,
+    "tauxReverse": 0.25,
+    "statut": "acte",
+    "binome": true
+  },
+  {
+    "id": "V-2026-017",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-cedric",
+    "agentId2": "agent-laetitia",
+    "bien": "",
+    "mandatRef": "",
+    "commissionTTC": 18000,
+    "tauxReverse": 0.25,
+    "statut": "acte",
+    "binome": true
+  },
+  {
+    "id": "V-2026-018",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-cedric",
+    "agentId2": "agent-laetitia",
+    "bien": "",
+    "mandatRef": "",
+    "commissionTTC": 20000,
+    "tauxReverse": 0.25,
+    "statut": "acte",
+    "binome": true
+  },
+  {
+    "id": "V-2026-019",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-cedric",
+    "agentId2": "agent-laetitia",
+    "bien": "",
+    "mandatRef": "",
+    "commissionTTC": 13000,
+    "tauxReverse": 0.25,
+    "statut": "acte",
+    "binome": true
+  },
+  {
+    "id": "V-2026-020",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-cedric",
+    "agentId2": "manager-2",
+    "bien": "",
+    "mandatRef": "NC",
+    "commissionTTC": 15000,
+    "tauxReverse": 0.25,
+    "statut": "acte",
+    "binome": true
+  },
+  {
+    "id": "V-2026-021",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "superadmin-1",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "93",
+    "commissionTTC": 15000,
+    "tauxReverse": 0.0,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-022",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 5,
+    "date": "2026-05-15",
+    "agentId": "agent-isabelle",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "915",
+    "commissionTTC": 13000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-023",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 6,
+    "date": "2026-06-15",
+    "agentId": "agent-clement",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "17",
+    "commissionTTC": 10000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-024",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 6,
+    "date": "2026-06-15",
+    "agentId": "superadmin-1",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "129",
+    "commissionTTC": 15000,
+    "tauxReverse": 0.0,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-025",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 6,
+    "date": "2026-06-15",
+    "agentId": "superadmin-1",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "131",
+    "commissionTTC": 8400,
+    "tauxReverse": 0.0,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-026",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 6,
+    "date": "2026-06-15",
+    "agentId": "manager-2",
+    "agentId2": "agent-laetitia",
+    "bien": "",
+    "mandatRef": "53",
+    "commissionTTC": 12500,
+    "tauxReverse": 0.0,
+    "statut": "acte",
+    "binome": true
+  },
+  {
+    "id": "V-2026-027",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 6,
+    "date": "2026-06-15",
+    "agentId": "agent-laetitia",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "",
+    "commissionTTC": 14000,
+    "tauxReverse": 0.0,
+    "statut": "acte",
+    "binome": false
+  },
+  {
+    "id": "V-2026-028",
+    "agenceId": "agence-1",
+    "annee": 2026,
+    "mois": 6,
+    "date": "2026-06-15",
+    "agentId": "agent-isabelle",
+    "agentId2": null,
+    "bien": "",
+    "mandatRef": "",
+    "commissionTTC": 20000,
+    "tauxReverse": 0.5,
+    "statut": "acte",
+    "binome": false
+  }
+];
+
 var INIT_OBJECTIFS = [
   { agentId:"agent-1", agenceId:"agence-1", annee:2026, montantHT:40000 },
   { agentId:"agent-2", agenceId:"agence-1", annee:2026, montantHT:25000 },
@@ -2781,6 +3230,7 @@ export default function App() {
   var [feedback,    setFeedbackRaw]  = useState(function(){ return lload(SK.feedback, []); });
   var [tresorerie,  setTresoRaw]     = useState(function(){ return loadOrInit(SK.tresorerie, [], {ecritures:[]}); });
   var [journal2,    setJournal2Raw]  = useState(function(){ return lload(SK.journal, []); });
+  var [ventes,      setVentesRaw]    = useState(function(){ return loadOrInit(SK.ventes, [], INIT_VENTES); });
 
   var [currentUser, setCurrentUser] = useState(function() { return loadSession(lload(SK.users, INIT_USERS)); });
   var [page,        setPage]        = useState(function() {
@@ -2822,6 +3272,7 @@ export default function App() {
       { name:"journal",     setter:setJournalRaw,   sk:SK.journal,     init:[] },
       { name:"resets",      setter:setResetsRaw,    sk:SK.resets,      init:[] },
       { name:"prospConfig", setter:setProspCfgRaw,  sk:SK.prospConfig, init:{delaiRappelMois:2} },
+      { name:"ventes",      setter:setVentesRaw,    sk:SK.ventes,      init:INIT_VENTES },
     ];
     Promise.all(collections.map(function(c) {
       return dbLoad(c.name, null).then(function(v) {
@@ -2973,6 +3424,7 @@ export default function App() {
   var setOffMarket   = useCallback(function(u){ var v=typeof u==="function"?u(offmarket):u;    setOffMktRaw(v);   lsave(SK.offmarket,v); if(supabaseConfigured)dbSave("offmarket",v);  },[offmarket]);
   var setKpiConfig   = useCallback(function(u){ var v=typeof u==="function"?u(kpiConfig):u;    setKpiCfgRaw(v);   lsave(SK.kpiConfig,v); if(supabaseConfigured)dbSave("kpiConfig",v); },[kpiConfig]);
   var setFeedback    = useCallback(function(u){ var v=typeof u==="function"?u(feedback):u;     setFeedbackRaw(v);  lsave(SK.feedback,v);  if(supabaseConfigured)dbSave("feedback",v);  },[feedback]);
+  var setVentes      = useCallback(function(u){ var v=typeof u==="function"?u(ventes):u;       setVentesRaw(Array.isArray(v)?v:prev=>prev);   lsave(SK.ventes,v);    if(supabaseConfigured)dbSave("ventes",v);      },[ventes]);
 
   // ─── TOKEN INVITATION (useEffect conservé pour compatibilité) ───────────────
   useEffect(function() {
@@ -3200,8 +3652,8 @@ export default function App() {
   );
 
   var ctx = {
-    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads,
-    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie,
+    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads, ventes, calcVente,
+    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie, setVentes,
     handleLogout, inviterAgent, changerMotDePasse, demanderResetMdp, resetMdpParManager, handleExport, handleImport, saveMsg,
     resets, setResets, invUserId, invAgenceId, activerCompte, activerCompteAsync,
     syncMode,
