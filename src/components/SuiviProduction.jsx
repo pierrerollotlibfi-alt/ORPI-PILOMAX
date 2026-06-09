@@ -44,10 +44,9 @@ export default function SuiviProduction() {
   var pointMort = agence.pointMort || 292037;
 
   function nomAgent(id) {
-    var a = agents.find(function(x){ return x.id === id; });
-    if (a) return a.prenom + " " + a.nom;
-    if (id === "manager-1") return "Agence";
-    return "?";
+    var a = (ctx.users || []).find(function(x){ return x.id === id; });
+    if (a) return a.prenom ? (a.prenom + " " + a.nom) : a.nom;
+    return "Agence";
   }
 
   var ventesAnnee = useMemo(function(){
@@ -282,7 +281,7 @@ function VenteForm({ vente, agents, onClose }) {
         <div>
           <label style={labelStyle}>{"Négociateur principal"}</label>
           <select style={champStyle} value={f.agentId} onChange={function(e){ up("agentId", e.target.value); }}>
-            {agents.map(function(a){ return <option key={a.id} value={a.id}>{a.prenom + " " + a.nom}</option>; })}
+            {agents.map(function(a){ return <option key={a.id} value={a.id}>{a.prenom ? (a.prenom + " " + a.nom) : a.nom}</option>; })}
           </select>
         </div>
 
@@ -290,7 +289,7 @@ function VenteForm({ vente, agents, onClose }) {
           <label style={labelStyle}>{"Co-négociateur (binôme) \u2014 optionnel"}</label>
           <select style={champStyle} value={f.agentId2 || ""} onChange={function(e){ up("agentId2", e.target.value); }}>
             <option value="">{"\u2014 Aucun (vente seul) \u2014"}</option>
-            {agents.filter(function(a){ return a.id !== f.agentId; }).map(function(a){ return <option key={a.id} value={a.id}>{a.prenom + " " + a.nom}</option>; })}
+            {agents.filter(function(a){ return a.id !== f.agentId; }).map(function(a){ return <option key={a.id} value={a.id}>{a.prenom ? (a.prenom + " " + a.nom) : a.nom}</option>; })}
           </select>
           {f.agentId2 && <div style={{fontSize:11,color:"var(--g500)",marginTop:4}}>{"Le CA TTC sera partagé 50/50 entre les deux négociateurs."}</div>}
         </div>
