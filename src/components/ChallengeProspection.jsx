@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../App";
 import { avatarColor, fmt, todayStr, diffDays } from "./Shared";
+import ChallengesCustom from "./ChallengesCustom";
 
 var SEMAINES = 8;
 
@@ -165,6 +166,9 @@ export default function ChallengeProspection() {
           </div>
         )}
       </div>
+
+      {/* ─── CHALLENGES PERSONNALISÉS ─── */}
+      <ChallengesCustom />
     </div>
   );
 }

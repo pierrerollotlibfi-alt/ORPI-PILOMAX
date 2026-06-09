@@ -43,9 +43,20 @@ export default function SuiviProduction() {
   var agence = (ctx.agences || []).find(function(a){ return a.id === agenceId; }) || {};
   var pointMort = agence.pointMort || 292037;
 
+  // Noms de secours si le compte n'est pas (encore) dans ctx.users
+  var NOMS_SECOURS = {
+    "manager-1": "Pierre Rollot", "superadmin-1": "Pierre Rollot",
+    "manager-2": "Frédéric Carré", "agent-landry": "Landry Boungo",
+    "agent-laetitia": "Laetitia Vat", "agent-clement": "Clément Leroy",
+    "agent-nathalie": "Nathalie Ducrocq", "agent-hugo": "Hugo Sausse",
+    "agent-isabelle": "Isabelle Descombes", "agent-pascal": "Pascal Hainselin",
+    "agent-cedric": "Cédric Salle", "agent-karine": "Karine Flamand",
+  };
   function nomAgent(id) {
+    if (!id) return "Agence";
     var a = (ctx.users || []).find(function(x){ return x.id === id; });
     if (a) return a.prenom ? (a.prenom + " " + a.nom) : a.nom;
+    if (NOMS_SECOURS[id]) return NOMS_SECOURS[id];
     return "Agence";
   }
 

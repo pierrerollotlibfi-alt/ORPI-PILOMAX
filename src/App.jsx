@@ -39,6 +39,7 @@ var SK = {
   session:     "orpi_data_session",
   tresorerie:  "orpi_data_tresorerie",
   ventes:      "orpi_data_ventes",
+  challenges:  "orpi_data_challenges",
 };
 
 // ─── DONNÉES INITIALES ────────────────────────────────────────────────────────
@@ -3231,6 +3232,7 @@ export default function App() {
   var [tresorerie,  setTresoRaw]     = useState(function(){ return loadOrInit(SK.tresorerie, [], {ecritures:[]}); });
   var [journal2,    setJournal2Raw]  = useState(function(){ return lload(SK.journal, []); });
   var [ventes,      setVentesRaw]    = useState(function(){ return loadOrInit(SK.ventes, [], INIT_VENTES); });
+  var [challenges,  setChallengesRaw]= useState(function(){ return lload(SK.challenges, []); });
 
   var [currentUser, setCurrentUser] = useState(function() { return loadSession(lload(SK.users, INIT_USERS)); });
   var [page,        setPage]        = useState(function() {
@@ -3273,6 +3275,7 @@ export default function App() {
       { name:"resets",      setter:setResetsRaw,    sk:SK.resets,      init:[] },
       { name:"prospConfig", setter:setProspCfgRaw,  sk:SK.prospConfig, init:{delaiRappelMois:2} },
       { name:"ventes",      setter:setVentesRaw,    sk:SK.ventes,      init:INIT_VENTES },
+      { name:"challenges",  setter:setChallengesRaw,sk:SK.challenges,  init:[] },
     ];
     Promise.all(collections.map(function(c) {
       return dbLoad(c.name, null).then(function(v) {
@@ -3425,6 +3428,7 @@ export default function App() {
   var setKpiConfig   = useCallback(function(u){ var v=typeof u==="function"?u(kpiConfig):u;    setKpiCfgRaw(v);   lsave(SK.kpiConfig,v); if(supabaseConfigured)dbSave("kpiConfig",v); },[kpiConfig]);
   var setFeedback    = useCallback(function(u){ var v=typeof u==="function"?u(feedback):u;     setFeedbackRaw(v);  lsave(SK.feedback,v);  if(supabaseConfigured)dbSave("feedback",v);  },[feedback]);
   var setVentes      = useCallback(function(u){ var v=typeof u==="function"?u(ventes):u;       setVentesRaw(Array.isArray(v)?v:prev=>prev);   lsave(SK.ventes,v);    if(supabaseConfigured)dbSave("ventes",v);      },[ventes]);
+  var setChallenges  = useCallback(function(u){ var v=typeof u==="function"?u(challenges):u;   setChallengesRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.challenges,v); if(supabaseConfigured)dbSave("challenges",v); },[challenges]);
 
   // ─── TOKEN INVITATION (useEffect conservé pour compatibilité) ───────────────
   useEffect(function() {
@@ -3652,8 +3656,8 @@ export default function App() {
   );
 
   var ctx = {
-    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads, ventes, calcVente,
-    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie, setVentes,
+    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads, ventes, calcVente, challenges,
+    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie, setVentes, setChallenges,
     handleLogout, inviterAgent, changerMotDePasse, demanderResetMdp, resetMdpParManager, handleExport, handleImport, saveMsg,
     resets, setResets, invUserId, invAgenceId, activerCompte, activerCompteAsync,
     syncMode,
