@@ -1259,6 +1259,10 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       {/* ─── MODAL ÉDITION AGENT ─── */}
 
       {/* ─── MODAL CONFIG KPI ─── */}
+      {editingAgent && (
+        <AgentEditModal agent={editingAgent} currentUser={currentUser} setUsers={setUsers} onClose={function(){setEditingAgent(null);}}/>
+      )}
+
       {showAttribution && (
         <AttributionMasse onClose={function(){setShowAttribution(false);}}/>
       )}

@@ -837,7 +837,7 @@ export default function App() {
     <ErrorBoundary>
     <AppContext.Provider value={ctx}>
       {currentUser.role==="superadmin" && <SuperAdminApp/>}
-      {currentUser.role==="manager" && <ManagerApp/>}
+      {(currentUser.role==="manager" || currentUser.role==="admin") && <ManagerApp/>}
       {currentUser.role==="agent"   && <AgentApp/>}
     </AppContext.Provider>
     </ErrorBoundary>
