@@ -5,7 +5,7 @@ import AgentApp from "./components/AgentApp";
 import SuperAdminApp from "./components/SuperAdminApp";
 import SetPassword from "./components/SetPassword";
 import FirstPassword from "./components/FirstPassword";
-import { supabaseConfigured, getClient, dbLoad, dbSave, dbSubscribe } from "./supabase";
+import { supabaseConfigured, getClient, dbLoad, dbSave, dbSaveMerge, dbSubscribe } from "./supabase";
 import { registerSW, demanderPermission, permissionActuelle } from "./notifications";
 import "./styles.css";
 
@@ -561,14 +561,14 @@ export default function App() {
   // ─── SETTERS (écrivent local + Supabase) ─────────────────────────────────────
   var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       setUsersRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.users,v);       if(supabaseConfigured)dbSave("users",v);       },[users]);
   var setAgences     = useCallback(function(u){ var v=typeof u==="function"?u(agences):u;     setAgencesRaw(v);  lsave(SK.agences,v);     if(supabaseConfigured)dbSave("agences",v);     },[agences]);
-  var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     setMandatsRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSave("mandats",v);     },[mandats]);
+  var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     setMandatsRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSaveMerge("mandats",v).then(function(merged){ if(Array.isArray(merged)){ setMandatsRaw(merged); lsave(SK.mandats,merged); } });     },[mandats]);
   var leads = useMemo(function(){
     return (tasks||[]).filter(function(t){ return t.type==="lead"||t.categorie==="lead"; });
   }, [tasks]);
 
   var setTresorerie  = useCallback(function(u){ var v=typeof u==="function"?u(tresorerie):u;  setTresoRaw(v&&typeof v==="object"?v:{ecritures:[]});    lsave(SK.tresorerie,v);  if(supabaseConfigured)dbSave("tresorerie",v);  },[tresorerie]);
-  var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   setLocsRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.locations,v);   if(supabaseConfigured)dbSave("locations",v);   },[locations]);
-  var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     setGestRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSave("gestion",v);     },[gestion]);
+  var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   setLocsRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.locations,v);   if(supabaseConfigured)dbSaveMerge("locations",v).then(function(m){ if(Array.isArray(m)){ setLocsRaw(m); lsave(SK.locations,m); } });   },[locations]);
+  var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     setGestRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSaveMerge("gestion",v).then(function(m){ if(Array.isArray(m)){ setGestRaw(m); lsave(SK.gestion,m); } });     },[gestion]);
   var setInvitations = useCallback(function(u){ var v=typeof u==="function"?u(invitations):u; setInvRaw(Array.isArray(v)?v:prev=>prev);      lsave(SK.invitations,v); if(supabaseConfigured)dbSave("invitations",v); },[invitations]);
   var setObjectifs   = useCallback(function(u){ var v=typeof u==="function"?u(objectifs):u;   setObjRaw(Array.isArray(v)?v:prev=>prev);      lsave(SK.objectifs,v);   if(supabaseConfigured)dbSave("objectifs",v);   },[objectifs]);
   var setProspection = useCallback(function(u){ var v=typeof u==="function"?u(prospection):u; setProspRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.prospection,v); if(supabaseConfigured)dbSave("prospection",v); },[prospection]);

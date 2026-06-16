@@ -42,6 +42,46 @@ export async function dbSave(collection, value) {
   } catch(e) { console.warn("dbSave error:", e); }
 }
 
+// Sauvegarde "fusionnée" pour les collections en tableau d'objets {id,...}.
+// Relit l'état actuel en base et fusionne par id AVANT d'écrire, pour ne JAMAIS
+// écraser les enregistrements ajoutés/modifiés entre-temps par un autre agent.
+export async function dbSaveMerge(collection, localArray) {
+  var sb = getClient();
+  if (!sb) return localArray;
+  try {
+    var remote = await dbLoad(collection, []);
+    if (!Array.isArray(remote)) remote = [];
+    if (!Array.isArray(localArray)) localArray = [];
+
+    // Index distant par id
+    var byId = {};
+    remote.forEach(function(item){ if (item && item.id != null) byId[item.id] = item; });
+
+    // Les ids présents localement (pour détecter les suppressions volontaires)
+    var localIds = {};
+    localArray.forEach(function(item){ if (item && item.id != null) localIds[item.id] = true; });
+
+    // 1) Les éléments locaux écrasent/ajoutent leur version (édition en cours)
+    localArray.forEach(function(item){ if (item && item.id != null) byId[item.id] = item; });
+
+    // 2) On conserve les éléments distants absents en local UNIQUEMENT s'ils
+    //    sont récents (ajoutés par un autre agent et pas encore synchronisés ici).
+    //    -> ici on les garde tous : la suppression passe par une action explicite.
+    var merged = Object.keys(byId).map(function(k){ return byId[k]; });
+
+    await sb.from("orpi_data").upsert(
+      { agence_id: AGENCE_ID, collection: collection, data: merged, updated_at: new Date().toISOString() },
+      { onConflict: "agence_id,collection" }
+    );
+    return merged;
+  } catch(e) {
+    console.warn("dbSaveMerge error:", e);
+    // En cas d'échec, repli sur la sauvegarde simple
+    await dbSave(collection, localArray);
+    return localArray;
+  }
+}
+
 export function dbSubscribe(collection, callback) {
   var sb = getClient();
   if (!sb) return function(){};
@@ -51,9 +91,10 @@ export function dbSubscribe(collection, callback) {
       event: "*",
       schema: "public",
       table: "orpi_data",
-      filter: "agence_id=eq."+AGENCE_ID+",collection=eq."+collection
+      filter: "collection=eq."+collection
     }, function(payload) {
-      if (payload.new && payload.new.data) callback(payload.new.data);
+      var row = payload.new;
+      if (row && row.agence_id === AGENCE_ID && row.data) callback(row.data);
     })
     .subscribe();
   return function() { try { sb.removeChannel(channel); } catch(e){} };
