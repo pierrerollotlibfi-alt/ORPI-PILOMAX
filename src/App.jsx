@@ -215,6 +215,17 @@ var INIT_OBJECTIFS = [
 ];
 
 // ─── STORAGE LOCAL (fallback quand Supabase non configuré) ───────────────────
+// Renvoie les ids présents dans l'ancienne liste mais absents de la nouvelle
+// (= suppressions volontaires). Sert à empêcher leur réapparition lors du merge.
+function diffRemoved(oldArr, newArr) {
+  if (!Array.isArray(oldArr) || !Array.isArray(newArr)) return [];
+  var newIds = {};
+  newArr.forEach(function(x){ if (x && x.id != null) newIds[x.id] = true; });
+  var removed = [];
+  oldArr.forEach(function(x){ if (x && x.id != null && !newIds[x.id]) removed.push(x.id); });
+  return removed;
+}
+
 function lsave(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
 }
@@ -561,17 +572,17 @@ export default function App() {
   // ─── SETTERS (écrivent local + Supabase) ─────────────────────────────────────
   var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       setUsersRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.users,v);       if(supabaseConfigured)dbSave("users",v);       },[users]);
   var setAgences     = useCallback(function(u){ var v=typeof u==="function"?u(agences):u;     setAgencesRaw(v);  lsave(SK.agences,v);     if(supabaseConfigured)dbSave("agences",v);     },[agences]);
-  var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     setMandatsRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSaveMerge("mandats",v).then(function(merged){ if(Array.isArray(merged)){ setMandatsRaw(merged); lsave(SK.mandats,merged); } });     },[mandats]);
+  var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     var rm=diffRemoved(mandats,v); setMandatsRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSaveMerge("mandats",v,rm).then(function(merged){ if(Array.isArray(merged)){ setMandatsRaw(merged); lsave(SK.mandats,merged); } });     },[mandats]);
   var leads = useMemo(function(){
     return (tasks||[]).filter(function(t){ return t.type==="lead"||t.categorie==="lead"; });
   }, [tasks]);
 
   var setTresorerie  = useCallback(function(u){ var v=typeof u==="function"?u(tresorerie):u;  setTresoRaw(v&&typeof v==="object"?v:{ecritures:[]});    lsave(SK.tresorerie,v);  if(supabaseConfigured)dbSave("tresorerie",v);  },[tresorerie]);
-  var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   setLocsRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.locations,v);   if(supabaseConfigured)dbSaveMerge("locations",v).then(function(m){ if(Array.isArray(m)){ setLocsRaw(m); lsave(SK.locations,m); } });   },[locations]);
-  var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     setGestRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSaveMerge("gestion",v).then(function(m){ if(Array.isArray(m)){ setGestRaw(m); lsave(SK.gestion,m); } });     },[gestion]);
+  var setLocations   = useCallback(function(u){ var v=typeof u==="function"?u(locations):u;   var rm=diffRemoved(locations,v); setLocsRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.locations,v);   if(supabaseConfigured)dbSaveMerge("locations",v,rm).then(function(m){ if(Array.isArray(m)){ setLocsRaw(m); lsave(SK.locations,m); } });   },[locations]);
+  var setGestion     = useCallback(function(u){ var v=typeof u==="function"?u(gestion):u;     var rm=diffRemoved(gestion,v); setGestRaw(Array.isArray(v)?v:prev=>prev);     lsave(SK.gestion,v);     if(supabaseConfigured)dbSaveMerge("gestion",v,rm).then(function(m){ if(Array.isArray(m)){ setGestRaw(m); lsave(SK.gestion,m); } });     },[gestion]);
   var setInvitations = useCallback(function(u){ var v=typeof u==="function"?u(invitations):u; setInvRaw(Array.isArray(v)?v:prev=>prev);      lsave(SK.invitations,v); if(supabaseConfigured)dbSave("invitations",v); },[invitations]);
   var setObjectifs   = useCallback(function(u){ var v=typeof u==="function"?u(objectifs):u;   setObjRaw(Array.isArray(v)?v:prev=>prev);      lsave(SK.objectifs,v);   if(supabaseConfigured)dbSave("objectifs",v);   },[objectifs]);
-  var setProspection = useCallback(function(u){ var v=typeof u==="function"?u(prospection):u; setProspRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.prospection,v); if(supabaseConfigured)dbSaveMerge("prospection",v).then(function(m){ if(Array.isArray(m)){ setProspRaw(m); lsave(SK.prospection,m); } }); },[prospection]);
+  var setProspection = useCallback(function(u){ var v=typeof u==="function"?u(prospection):u; var rm=diffRemoved(prospection,v); setProspRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.prospection,v); if(supabaseConfigured)dbSaveMerge("prospection",v,rm).then(function(m){ if(Array.isArray(m)){ setProspRaw(m); lsave(SK.prospection,m); } }); },[prospection]);
   var setProspConfig = useCallback(function(u){ var v=typeof u==="function"?u(prospConfig):u; setProspCfgRaw(v); lsave(SK.prospConfig,v); if(supabaseConfigured)dbSave("prospConfig",v); },[prospConfig]);
   var setTasks       = useCallback(function(u){ var v=typeof u==="function"?u(tasks):u;       setTasksRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.tasks,v);       if(supabaseConfigured)dbSave("tasks",v);       },[tasks]);
   var setRecherches  = useCallback(function(u){ var v=typeof u==="function"?u(recherches):u;  setRechercheRaw(Array.isArray(v)?v:prev=>prev);lsave(SK.recherches,v);if(supabaseConfigured)dbSave("recherches",v);},[recherches]);

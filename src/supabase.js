@@ -45,7 +45,7 @@ export async function dbSave(collection, value) {
 // Sauvegarde "fusionnée" pour les collections en tableau d'objets {id,...}.
 // Relit l'état actuel en base et fusionne par id AVANT d'écrire, pour ne JAMAIS
 // écraser les enregistrements ajoutés/modifiés entre-temps par un autre agent.
-export async function dbSaveMerge(collection, localArray) {
+export async function dbSaveMerge(collection, localArray, removedIds) {
   var sb = getClient();
   if (!sb) return localArray;
   try {
@@ -53,20 +53,22 @@ export async function dbSaveMerge(collection, localArray) {
     if (!Array.isArray(remote)) remote = [];
     if (!Array.isArray(localArray)) localArray = [];
 
-    // Index distant par id
+    // Ensemble des ids supprimés volontairement (tombstones) : ils ne doivent
+    // jamais revenir, même s'ils sont encore présents en base.
+    var removed = {};
+    (removedIds || []).forEach(function(id){ if (id != null) removed[id] = true; });
+
+    // Index distant par id (en excluant les supprimés)
     var byId = {};
-    remote.forEach(function(item){ if (item && item.id != null) byId[item.id] = item; });
+    remote.forEach(function(item){
+      if (item && item.id != null && !removed[item.id]) byId[item.id] = item;
+    });
 
-    // Les ids présents localement (pour détecter les suppressions volontaires)
-    var localIds = {};
-    localArray.forEach(function(item){ if (item && item.id != null) localIds[item.id] = true; });
+    // Les éléments locaux écrasent/ajoutent leur version (édition en cours)
+    localArray.forEach(function(item){
+      if (item && item.id != null && !removed[item.id]) byId[item.id] = item;
+    });
 
-    // 1) Les éléments locaux écrasent/ajoutent leur version (édition en cours)
-    localArray.forEach(function(item){ if (item && item.id != null) byId[item.id] = item; });
-
-    // 2) On conserve les éléments distants absents en local UNIQUEMENT s'ils
-    //    sont récents (ajoutés par un autre agent et pas encore synchronisés ici).
-    //    -> ici on les garde tous : la suppression passe par une action explicite.
     var merged = Object.keys(byId).map(function(k){ return byId[k]; });
 
     await sb.from("orpi_data").upsert(
@@ -76,7 +78,6 @@ export async function dbSaveMerge(collection, localArray) {
     return merged;
   } catch(e) {
     console.warn("dbSaveMerge error:", e);
-    // En cas d'échec, repli sur la sauvegarde simple
     await dbSave(collection, localArray);
     return localArray;
   }
