@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, createContext, useContext } from "react";
 import Login from "./components/Login";
+import RechercheLocationPublic from "./components/RechercheLocationPublic";
 import ManagerApp from "./components/ManagerApp";
 import AgentApp from "./components/AgentApp";
 import SuperAdminApp from "./components/SuperAdminApp";
@@ -40,6 +41,7 @@ var SK = {
   tresorerie:  "orpi_data_tresorerie",
   ventes:      "orpi_data_ventes",
   challenges:  "orpi_data_challenges",
+  recherchesLocation: "orpi_data_recherches_location",
 };
 
 // ─── DONNÉES INITIALES ────────────────────────────────────────────────────────
@@ -372,6 +374,7 @@ export default function App() {
   })();
   // Si un token d'invitation est dans l'URL, on n'affiche pas le loading
   var _hasInviteToken = (function(){ try { return !!new URLSearchParams(window.location.search).get("invite"); } catch(e){ return false; } })();
+  var _isRechercheLoc = (function(){ try { return !!new URLSearchParams(window.location.search).get("recherche"); } catch(e){ return false; } })();
   var [loading, setLoading] = useState(supabaseConfigured && !_hasInviteToken);
   var [notifPerm, setNotifPerm] = useState(function(){ return permissionActuelle(); });
   var [syncMode, setSyncMode] = useState(supabaseConfigured ? "supabase" : "local");
@@ -397,6 +400,7 @@ export default function App() {
   var [journal2,    setJournal2Raw]  = useState(function(){ return lload(SK.journal, []); });
   var [ventes,      setVentesRaw]    = useState(function(){ return loadOrInit(SK.ventes, [], INIT_VENTES); });
   var [challenges,  setChallengesRaw]= useState(function(){ return lload(SK.challenges, []); });
+  var [recherchesLoc, setRechLocRaw]  = useState(function(){ return lload(SK.recherchesLocation, []); });
 
   var [currentUser, setCurrentUser] = useState(function() { return loadSession(lload(SK.users, INIT_USERS)); });
   var [page,        setPage]        = useState(function() {
@@ -440,6 +444,7 @@ export default function App() {
       { name:"prospConfig", setter:setProspCfgRaw,  sk:SK.prospConfig, init:{delaiRappelMois:2} },
       { name:"ventes",      setter:setVentesRaw,    sk:SK.ventes,      init:INIT_VENTES },
       { name:"challenges",  setter:setChallengesRaw,sk:SK.challenges,  init:[] },
+      { name:"recherchesLocation", setter:setRechLocRaw, sk:SK.recherchesLocation, init:[] },
     ];
     Promise.all(collections.map(function(c) {
       return dbLoad(c.name, null).then(function(v) {
@@ -593,6 +598,7 @@ export default function App() {
   var setFeedback    = useCallback(function(u){ var v=typeof u==="function"?u(feedback):u;     setFeedbackRaw(v);  lsave(SK.feedback,v);  if(supabaseConfigured)dbSave("feedback",v);  },[feedback]);
   var setVentes      = useCallback(function(u){ var v=typeof u==="function"?u(ventes):u;       setVentesRaw(Array.isArray(v)?v:prev=>prev);   lsave(SK.ventes,v);    if(supabaseConfigured)dbSave("ventes",v);      },[ventes]);
   var setChallenges  = useCallback(function(u){ var v=typeof u==="function"?u(challenges):u;   setChallengesRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.challenges,v); if(supabaseConfigured)dbSave("challenges",v); },[challenges]);
+  var setRecherchesLoc = useCallback(function(u){ var v=typeof u==="function"?u(recherchesLoc):u; var rm=diffRemoved(recherchesLoc,v); setRechLocRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.recherchesLocation,v); if(supabaseConfigured)dbSaveMerge("recherchesLocation",v,rm).then(function(m){ if(Array.isArray(m)){ setRechLocRaw(m); lsave(SK.recherchesLocation,m); } }); },[recherchesLoc]);
 
   // ─── TOKEN INVITATION (useEffect conservé pour compatibilité) ───────────────
   useEffect(function() {
@@ -820,14 +826,16 @@ export default function App() {
   );
 
   var ctx = {
-    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads, ventes, calcVente, challenges,
-    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie, setVentes, setChallenges,
+    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads, ventes, calcVente, challenges, recherchesLoc,
+    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie, setVentes, setChallenges, setRecherchesLoc,
     handleLogout, inviterAgent, changerMotDePasse, demanderResetMdp, resetMdpParManager, handleExport, handleImport, saveMsg,
     resets, setResets, invUserId, invAgenceId, activerCompte, activerCompteAsync,
     syncMode,
     notifPerm, demanderPermission: async function(){ var r = await demanderPermission(); setNotifPerm(r); return r; },
     syncMode,
   };
+
+  if (_isRechercheLoc) return <RechercheLocationPublic/>;
 
   if (page==="setpassword") return (
     <AppContext.Provider value={ctx}>

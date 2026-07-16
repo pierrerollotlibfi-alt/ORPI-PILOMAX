@@ -83,6 +83,21 @@ export async function dbSaveMerge(collection, localArray, removedIds) {
   }
 }
 
+// Ajoute un élément à une collection (usage public : formulaire sans login).
+// Relit la liste actuelle, ajoute l'élément, et sauvegarde. Merge-safe par nature.
+export async function dbAppendPublic(collection, item) {
+  var sb = getClient();
+  if (!sb) throw new Error("no client");
+  var current = await dbLoad(collection, []);
+  if (!Array.isArray(current)) current = [];
+  current.push(item);
+  await sb.from("orpi_data").upsert(
+    { agence_id: AGENCE_ID, collection: collection, data: current, updated_at: new Date().toISOString() },
+    { onConflict: "agence_id,collection" }
+  );
+  return item;
+}
+
 export function dbSubscribe(collection, callback) {
   var sb = getClient();
   if (!sb) return function(){};
