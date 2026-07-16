@@ -1,6 +1,7 @@
 // ─── CONFIGURATION SUPABASE ORPI PRO AMIENS ───────────────────────────────────
 var SUPABASE_URL = "https://rqytkkaxoqdygxuiqfuf.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxeXRra2F4b3FkeWd4dWlxZnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjIzOTMsImV4cCI6MjA5MjMzODM5M30.eekVf-ZNLGGc4pNNTTPA9t1-B7JxYYS_PJMhKvVLRFw";
+var AGENCE_ID = "agence-1";
 
 export var supabaseConfigured = true;
 
@@ -13,8 +14,6 @@ export function getClient() {
   }
   return client;
 }
-
-var AGENCE_ID = "agence-1";
 
 export async function dbLoad(collection, fallback) {
   var sb = getClient();
@@ -92,7 +91,7 @@ export async function dbAppendPublic(collection, item) {
   if (!Array.isArray(current)) current = [];
   current.push(item);
   await sb.from("orpi_data").upsert(
-    { agence_id: AGENCE_ID, collection: collection, data: current, updated_at: new Date().toISOString() },
+    { agence_id: "agence-1", collection: collection, data: current, updated_at: new Date().toISOString() },
     { onConflict: "agence_id,collection" }
   );
   return item;

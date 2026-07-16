@@ -25,9 +25,20 @@ export default function RechercheLocationPublic() {
   function up(k, v) { setF(function(prev){ var n = Object.assign({}, prev); n[k] = v; return n; }); }
 
   function valider() {
-    if (!f.nom.trim() || !f.prenom.trim()) return "Merci d'indiquer votre nom et prenom.";
-    if (!f.tel.trim() && !f.email.trim()) return "Merci de laisser un telephone ou un email pour vous recontacter.";
+    if (!f.prenom.trim()) return "Merci d'indiquer votre prenom.";
+    if (!f.nom.trim()) return "Merci d'indiquer votre nom.";
+    if (!f.tel.trim()) return "Merci d'indiquer votre telephone.";
+    if (!f.email.trim()) return "Merci d'indiquer votre email.";
+    if (!f.dateButoir) return "Merci d'indiquer votre date d'emmenagement souhaitee.";
+    if (!f.situation) return "Merci d'indiquer votre situation professionnelle.";
+    if (!f.profession.trim()) return "Merci d'indiquer votre profession.";
+    if (!f.employeur.trim()) return "Merci d'indiquer votre employeur.";
+    if (!f.revenus) return "Merci d'indiquer vos revenus mensuels nets.";
     if (!f.typeBien) return "Merci d'indiquer le type de bien recherche.";
+    if (!f.meubleNonMeuble) return "Merci de preciser meuble ou non meuble.";
+    if (!f.secteur.trim()) return "Merci d'indiquer le secteur souhaite.";
+    if (!f.budget) return "Merci d'indiquer votre budget mensuel maximum.";
+    if (!f.specifications.trim()) return "Merci d'apporter quelques precisions sur votre recherche.";
     if (!f.consentement) return "Merci d'accepter que vos donnees soient utilisees pour votre recherche.";
     return "";
   }
@@ -105,24 +116,24 @@ export default function RechercheLocationPublic() {
               <input style={champ} value={f.nom} onChange={function(e){ up("nom", e.target.value); }} />
             </div>
           </div>
-          <label style={lab}>{"Telephone"}</label>
+          <label style={lab}>{"Telephone *"}</label>
           <input style={champ} type="tel" value={f.tel} onChange={function(e){ up("tel", e.target.value); }} placeholder="06 12 34 56 78" />
-          <label style={lab}>{"Email"}</label>
+          <label style={lab}>{"Email *"}</label>
           <input style={champ} type="email" value={f.email} onChange={function(e){ up("email", e.target.value); }} placeholder="vous@email.com" />
 
           <div style={section}>{"Votre situation"}</div>
-          <label style={lab}>{"Date d'emmenagement souhaitee"}</label>
+          <label style={lab}>{"Date d'emmenagement souhaitee *"}</label>
           <input style={champ} type="date" value={f.dateButoir} onChange={function(e){ up("dateButoir", e.target.value); }} />
-          <label style={lab}>{"Situation professionnelle"}</label>
+          <label style={lab}>{"Situation professionnelle *"}</label>
           <select style={champ} value={f.situation} onChange={function(e){ up("situation", e.target.value); }}>
             <option value="">{"-- Choisir --"}</option>
             {SITUATIONS.map(function(s){ return <option key={s} value={s}>{s}</option>; })}
           </select>
-          <label style={lab}>{"Profession"}</label>
+          <label style={lab}>{"Profession *"}</label>
           <input style={champ} value={f.profession} onChange={function(e){ up("profession", e.target.value); }} />
-          <label style={lab}>{"Employeur"}</label>
+          <label style={lab}>{"Employeur *"}</label>
           <input style={champ} value={f.employeur} onChange={function(e){ up("employeur", e.target.value); }} />
-          <label style={lab}>{"Revenus mensuels nets du foyer (\u20AC)"}</label>
+          <label style={lab}>{"Revenus mensuels nets du foyer (\u20AC) *"}</label>
           <input style={champ} type="number" value={f.revenus} onChange={function(e){ up("revenus", e.target.value); }} placeholder="Ex : 2500" />
 
           <div style={section}>{"Le bien recherche"}</div>
@@ -131,17 +142,17 @@ export default function RechercheLocationPublic() {
             <option value="">{"-- Choisir --"}</option>
             {TYPES_BIEN.map(function(t){ return <option key={t} value={t}>{t}</option>; })}
           </select>
-          <label style={lab}>{"Meuble ou non meuble ?"}</label>
+          <label style={lab}>{"Meuble ou non meuble ? *"}</label>
           <select style={champ} value={f.meubleNonMeuble} onChange={function(e){ up("meubleNonMeuble", e.target.value); }}>
-            <option value="">{"Peu importe"}</option>
+            <option value="">{"-- Choisir --"}</option>
             <option value="meuble">{"Meuble"}</option>
             <option value="non_meuble">{"Non meuble"}</option>
           </select>
-          <label style={lab}>{"Secteur / quartier souhaite"}</label>
+          <label style={lab}>{"Secteur / quartier souhaite *"}</label>
           <input style={champ} value={f.secteur} onChange={function(e){ up("secteur", e.target.value); }} placeholder="Ex : Amiens centre, St Leu..." />
-          <label style={lab}>{"Budget mensuel max (charges comprises, \u20AC)"}</label>
+          <label style={lab}>{"Budget mensuel max (charges comprises, \u20AC) *"}</label>
           <input style={champ} type="number" value={f.budget} onChange={function(e){ up("budget", e.target.value); }} placeholder="Ex : 700" />
-          <label style={lab}>{"Precisions (nombre de personnes, animaux, garage...)"}</label>
+          <label style={lab}>{"Precisions (nombre de personnes, animaux, garage...) *"}</label>
           <textarea style={Object.assign({}, champ, { minHeight:80, resize:"vertical" })} value={f.specifications} onChange={function(e){ up("specifications", e.target.value); }} />
 
           {/* Consentement RGPD */}
@@ -161,7 +172,7 @@ export default function RechercheLocationPublic() {
             {envoiEnCours ? "Envoi en cours..." : "Envoyer ma recherche"}
           </button>
           <p style={{ fontSize:11, color:"#94A3B8", textAlign:"center", marginTop:12 }}>
-            {"* Champs obligatoires \u00B7 ORPI Amiens, 18 rue Gresset, 80000 Amiens"}
+            {"Tous les champs sont obligatoires \u00B7 ORPI Amiens, 18 rue Gresset, 80000 Amiens"}
           </p>
         </div>
       </div>
