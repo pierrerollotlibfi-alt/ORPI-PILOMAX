@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, createContext, useContext } from "react";
 import Login from "./components/Login";
 import RechercheLocationPublic from "./components/RechercheLocationPublic";
+import ProspectPublic from "./components/ProspectPublic";
 import ManagerApp from "./components/ManagerApp";
 import AgentApp from "./components/AgentApp";
 import SuperAdminApp from "./components/SuperAdminApp";
@@ -42,6 +43,7 @@ var SK = {
   ventes:      "orpi_data_ventes",
   challenges:  "orpi_data_challenges",
   recherchesLocation: "orpi_data_recherches_location",
+  prospects: "orpi_data_prospects",
 };
 
 // ─── DONNÉES INITIALES ────────────────────────────────────────────────────────
@@ -375,6 +377,7 @@ export default function App() {
   // Si un token d'invitation est dans l'URL, on n'affiche pas le loading
   var _hasInviteToken = (function(){ try { return !!new URLSearchParams(window.location.search).get("invite"); } catch(e){ return false; } })();
   var _isRechercheLoc = (function(){ try { return !!new URLSearchParams(window.location.search).get("recherche"); } catch(e){ return false; } })();
+  var _isProspect = (function(){ try { return !!new URLSearchParams(window.location.search).get("prospect"); } catch(e){ return false; } })();
   var [loading, setLoading] = useState(supabaseConfigured && !_hasInviteToken);
   var [notifPerm, setNotifPerm] = useState(function(){ return permissionActuelle(); });
   var [syncMode, setSyncMode] = useState(supabaseConfigured ? "supabase" : "local");
@@ -401,6 +404,7 @@ export default function App() {
   var [ventes,      setVentesRaw]    = useState(function(){ return loadOrInit(SK.ventes, [], INIT_VENTES); });
   var [challenges,  setChallengesRaw]= useState(function(){ return lload(SK.challenges, []); });
   var [recherchesLoc, setRechLocRaw]  = useState(function(){ return lload(SK.recherchesLocation, []); });
+  var [prospects,   setProspectsRaw] = useState(function(){ return lload(SK.prospects, []); });
 
   var [currentUser, setCurrentUser] = useState(function() { return loadSession(lload(SK.users, INIT_USERS)); });
   var [page,        setPage]        = useState(function() {
@@ -445,6 +449,7 @@ export default function App() {
       { name:"ventes",      setter:setVentesRaw,    sk:SK.ventes,      init:INIT_VENTES },
       { name:"challenges",  setter:setChallengesRaw,sk:SK.challenges,  init:[] },
       { name:"recherchesLocation", setter:setRechLocRaw, sk:SK.recherchesLocation, init:[] },
+      { name:"prospects", setter:setProspectsRaw, sk:SK.prospects, init:[] },
     ];
     Promise.all(collections.map(function(c) {
       return dbLoad(c.name, null).then(function(v) {
@@ -575,7 +580,7 @@ export default function App() {
   }, []);
 
   // ─── SETTERS (écrivent local + Supabase) ─────────────────────────────────────
-  var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       setUsersRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.users,v);       if(supabaseConfigured)dbSave("users",v);       },[users]);
+  var setUsers       = useCallback(function(u){ var v=typeof u==="function"?u(users):u;       var rm=diffRemoved(users,v); setUsersRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.users,v);       if(supabaseConfigured)dbSaveMerge("users",v,rm).then(function(m){ if(Array.isArray(m)){ setUsersRaw(m); lsave(SK.users,m); } });       },[users]);
   var setAgences     = useCallback(function(u){ var v=typeof u==="function"?u(agences):u;     setAgencesRaw(v);  lsave(SK.agences,v);     if(supabaseConfigured)dbSave("agences",v);     },[agences]);
   var setMandats     = useCallback(function(u){ var v=typeof u==="function"?u(mandats):u;     var rm=diffRemoved(mandats,v); setMandatsRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.mandats,v);     if(supabaseConfigured)dbSaveMerge("mandats",v,rm).then(function(merged){ if(Array.isArray(merged)){ setMandatsRaw(merged); lsave(SK.mandats,merged); } });     },[mandats]);
   var leads = useMemo(function(){
@@ -592,13 +597,14 @@ export default function App() {
   var setTasks       = useCallback(function(u){ var v=typeof u==="function"?u(tasks):u;       setTasksRaw(Array.isArray(v)?v:prev=>prev);    lsave(SK.tasks,v);       if(supabaseConfigured)dbSave("tasks",v);       },[tasks]);
   var setRecherches  = useCallback(function(u){ var v=typeof u==="function"?u(recherches):u;  setRechercheRaw(Array.isArray(v)?v:prev=>prev);lsave(SK.recherches,v);if(supabaseConfigured)dbSave("recherches",v);},[recherches]);
   var setJournal     = useCallback(function(u){ var v=typeof u==="function"?u(journal):u;       setJournalRaw(Array.isArray(v)?v:prev=>prev);  lsave(SK.journal,v);   if(supabaseConfigured)dbSave("journal",v);     },[journal]);
-  var setResets      = useCallback(function(u){ var v=typeof u==="function"?u(resets):u;        setResetsRaw(Array.isArray(v)?v:prev=>prev);   lsave(SK.resets,v);    if(supabaseConfigured)dbSave("resets",v);      },[resets]);
+  var setResets      = useCallback(function(u){ var v=typeof u==="function"?u(resets):u;        var rm=diffRemoved(resets,v); setResetsRaw(Array.isArray(v)?v:prev=>prev);   lsave(SK.resets,v);    if(supabaseConfigured)dbSaveMerge("resets",v,rm).then(function(m){ if(Array.isArray(m)){ setResetsRaw(m); lsave(SK.resets,m); } });      },[resets]);
   var setOffMarket   = useCallback(function(u){ var v=typeof u==="function"?u(offmarket):u;    setOffMktRaw(v);   lsave(SK.offmarket,v); if(supabaseConfigured)dbSave("offmarket",v);  },[offmarket]);
   var setKpiConfig   = useCallback(function(u){ var v=typeof u==="function"?u(kpiConfig):u;    setKpiCfgRaw(v);   lsave(SK.kpiConfig,v); if(supabaseConfigured)dbSave("kpiConfig",v); },[kpiConfig]);
   var setFeedback    = useCallback(function(u){ var v=typeof u==="function"?u(feedback):u;     setFeedbackRaw(v);  lsave(SK.feedback,v);  if(supabaseConfigured)dbSave("feedback",v);  },[feedback]);
   var setVentes      = useCallback(function(u){ var v=typeof u==="function"?u(ventes):u;       setVentesRaw(Array.isArray(v)?v:prev=>prev);   lsave(SK.ventes,v);    if(supabaseConfigured)dbSave("ventes",v);      },[ventes]);
   var setChallenges  = useCallback(function(u){ var v=typeof u==="function"?u(challenges):u;   setChallengesRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.challenges,v); if(supabaseConfigured)dbSave("challenges",v); },[challenges]);
   var setRecherchesLoc = useCallback(function(u){ var v=typeof u==="function"?u(recherchesLoc):u; var rm=diffRemoved(recherchesLoc,v); setRechLocRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.recherchesLocation,v); if(supabaseConfigured)dbSaveMerge("recherchesLocation",v,rm).then(function(m){ if(Array.isArray(m)){ setRechLocRaw(m); lsave(SK.recherchesLocation,m); } }); },[recherchesLoc]);
+  var setProspects = useCallback(function(u){ var v=typeof u==="function"?u(prospects):u; var rm=diffRemoved(prospects,v); setProspectsRaw(Array.isArray(v)?v:prev=>prev); lsave(SK.prospects,v); if(supabaseConfigured)dbSaveMerge("prospects",v,rm).then(function(m){ if(Array.isArray(m)){ setProspectsRaw(m); lsave(SK.prospects,m); } }); },[prospects]);
 
   // ─── TOKEN INVITATION (useEffect conservé pour compatibilité) ───────────────
   useEffect(function() {
@@ -623,7 +629,6 @@ export default function App() {
     var uWithLogin = {...u, derniereConnexion: now};
     var newUsers = users.map(function(x){ return x.id===u.id ? uWithLogin : x; });
     setUsers(newUsers);
-    if(supabaseConfigured) { try { dbSave("users", newUsers); } catch(e){} }
     saveSession(u.id); setCurrentUser(uWithLogin); setPage("app"); return null;
   }
   function handleLogout() { clearSession(); setCurrentUser(null); setPage("login"); }
@@ -826,8 +831,8 @@ export default function App() {
   );
 
   var ctx = {
-    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads, ventes, calcVente, challenges, recherchesLoc,
-    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie, setVentes, setChallenges, setRecherchesLoc,
+    currentUser, users, agences, mandats, locations, gestion, invitations, objectifs, prospection, prospConfig, tasks, recherches, journal, offmarket, kpiConfig, feedback, tresorerie, leads, ventes, calcVente, challenges, recherchesLoc, prospects,
+    setUsers, setAgences, setMandats, setLocations, setGestion, setInvitations, setObjectifs, setProspection, setProspConfig, setTasks, setRecherches, setJournal, addJournal, setOffMarket, setKpiConfig, setFeedback, setTresorerie, setVentes, setChallenges, setRecherchesLoc, setProspects,
     handleLogout, inviterAgent, changerMotDePasse, demanderResetMdp, resetMdpParManager, handleExport, handleImport, saveMsg,
     resets, setResets, invUserId, invAgenceId, activerCompte, activerCompteAsync,
     syncMode,
@@ -836,6 +841,7 @@ export default function App() {
   };
 
   if (_isRechercheLoc) return <RechercheLocationPublic/>;
+  if (_isProspect) return <ProspectPublic/>;
 
   if (page==="setpassword") return (
     <AppContext.Provider value={ctx}>

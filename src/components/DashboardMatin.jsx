@@ -88,6 +88,27 @@ export default function DashboardMatin({ onNavigate }) {
   var salut = heure < 12 ? "Bonjour" : heure < 18 ? "Bon après-midi" : "Bonsoir";
   var totalAlertes = expirantBientot.length + impayes.length + offSansRelance.length + tachesJour.length;
 
+  // ─── INDICATEURS CLES POUR L'ACCUEIL ─────────────────────────────────────────
+  var STATUTS_PROD = ["sous_offre","compromis","cs_levees","vendu"];
+  var agence = (ctx.agences||[]).find(function(a){ return a.id===agenceId; }) || {};
+  var pointMort = agence.pointMort || 273762;
+  var commVendu = mandats.filter(function(m){ return m.statut==="vendu"; })
+    .reduce(function(s,m){ return s + (m.commission||0); }, 0);
+  var commPipeline = mandats.filter(function(m){ return m.statut==="sous_offre"||m.statut==="compromis"||m.statut==="cs_levees"; })
+    .reduce(function(s,m){ return s + (m.commission||0); }, 0);
+  var tauxPointMort = Math.min(100, Math.round((commVendu / pointMort) * 100));
+  var nbEnProd = mandats.filter(function(m){ return STATUTS_PROD.indexOf(m.statut)!==-1; }).length;
+  var demandesLoc = (ctx.recherchesLoc||[]).filter(function(d){ return d.agenceId===agenceId; });
+  var demandesLocNouvelles = demandesLoc.filter(function(d){ return (d.statut||"nouveau")==="nouveau"; }).length;
+
+  // Raccourcis d'action rapide (navigation)
+  var raccourcis = [
+    { icon:"🏠", label:"Mandats",        tab:"mandats",      couleur:"#E8001D" },
+    { icon:"👥", label:"Attribuer",      tab:"agents",       couleur:"#1D3557" },
+    { icon:"📈", label:"Production",      tab:"production",   couleur:"#059669" },
+    { icon:"📨", label:"Demandes loc.",  tab:"recherchesloc",couleur:"#7C3AED", badge:demandesLocNouvelles },
+  ];
+
   return (
     <div>
       {/* Header salutation */}
@@ -138,6 +159,56 @@ export default function DashboardMatin({ onNavigate }) {
             </div>
           );
         })()}
+      </div>
+
+      {/* ─── RACCOURCIS D'ACTION RAPIDE ─── */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:8,marginBottom:14}}>
+        {raccourcis.map(function(r){
+          return (
+            <button key={r.tab} onClick={function(){ if(onNavigate) onNavigate(r.tab); }}
+              style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"14px 6px",
+                background:"#fff",border:"1px solid var(--g200)",borderTop:"3px solid "+r.couleur,borderRadius:12,cursor:"pointer"}}>
+              <span style={{fontSize:24}}>{r.icon}</span>
+              <span style={{fontSize:11,fontWeight:700,color:"var(--g700)",textAlign:"center",lineHeight:1.2}}>{r.label}</span>
+              {r.badge > 0 && (
+                <span style={{position:"absolute",top:6,right:6,minWidth:18,height:18,padding:"0 4px",borderRadius:9,
+                  background:r.couleur,color:"#fff",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{r.badge}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── INDICATEURS CLES ─── */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))",gap:10,marginBottom:16}}>
+        {/* Point mort */}
+        <div onClick={function(){ if(onNavigate) onNavigate("production"); }}
+          style={{background:"#fff",border:"1px solid var(--g200)",borderRadius:12,padding:"14px 16px",cursor:"pointer"}}>
+          <div style={{fontSize:11,color:"var(--g500)",textTransform:"uppercase",letterSpacing:0.4,marginBottom:6}}>{"Point mort"}</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+            <span style={{fontSize:22,fontWeight:800,color:tauxPointMort>=100?"#16A34A":"var(--navy)"}}>{tauxPointMort+" %"}</span>
+            <span style={{fontSize:11,color:"var(--g400)"}}>{fmt(commVendu)+" / "+fmt(pointMort)}</span>
+          </div>
+          <div style={{height:8,background:"var(--g100)",borderRadius:4,overflow:"hidden"}}>
+            <div style={{height:"100%",width:tauxPointMort+"%",background:tauxPointMort>=100?"#16A34A":"linear-gradient(90deg,#E8001D,#FF6B6B)",borderRadius:4}}/>
+          </div>
+        </div>
+        {/* Pipeline */}
+        <div onClick={function(){ if(onNavigate) onNavigate("production"); }}
+          style={{background:"#fff",border:"1px solid var(--g200)",borderRadius:12,padding:"14px 16px",borderTop:"3px solid #3B82F6",cursor:"pointer"}}>
+          <div style={{fontSize:11,color:"var(--g500)",textTransform:"uppercase",letterSpacing:0.4,marginBottom:4}}>{"En production"}</div>
+          <div style={{fontSize:22,fontWeight:800,color:"var(--g900)"}}>{fmt(commPipeline)}</div>
+          <div style={{fontSize:11,color:"var(--g400)",marginTop:2}}>{nbEnProd+" bien"+(nbEnProd>1?"s":"")+" en cours"}</div>
+        </div>
+        {/* Demandes location */}
+        <div onClick={function(){ if(onNavigate) onNavigate("recherchesloc"); }}
+          style={{background:"#fff",border:"1px solid var(--g200)",borderRadius:12,padding:"14px 16px",borderTop:"3px solid #7C3AED",cursor:"pointer"}}>
+          <div style={{fontSize:11,color:"var(--g500)",textTransform:"uppercase",letterSpacing:0.4,marginBottom:4}}>{"Demandes location"}</div>
+          <div style={{fontSize:22,fontWeight:800,color:"var(--g900)"}}>{demandesLoc.length}</div>
+          <div style={{fontSize:11,color:demandesLocNouvelles>0?"#7C3AED":"var(--g400)",marginTop:2,fontWeight:demandesLocNouvelles>0?700:400}}>
+            {demandesLocNouvelles>0 ? demandesLocNouvelles+" nouvelle"+(demandesLocNouvelles>1?"s":"")+" à traiter" : "aucune en attente"}
+          </div>
+        </div>
       </div>
 
       {/* Score alertes */}

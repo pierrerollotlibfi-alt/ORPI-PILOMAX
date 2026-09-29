@@ -8,6 +8,7 @@ import Leads from "./Leads";
 import Recherches from "./Recherches";
 import GestionLocative from "./GestionLocative";
 import LeadsLocation from "./LeadsLocation";
+import LeadsProspects from "./LeadsProspects";
 import DashboardMatin from "./DashboardMatin";
 import ChallengeProspection from "./ChallengeProspection";
 import PwaInstallButton from "./PwaInstallButton";
@@ -392,6 +393,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
         {id:"prospection", icon:"🚶", label:"Prospection"},
         {id:"challenge",    icon:"🏆", label:"Challenge Prosp."},
         {id:"leads",       icon:"📥", label:"Leads"},
+        {id:"prospects",   icon:"🎯", label:"Prospects pré-ouv."},
         {id:"taches",      icon:"✅", label:"Tâches"},
         {id:"recherches",  icon:"🔍", label:"Recherches"},
         {id:"matching",    icon:"🎯", label:"Rapprochements"},
@@ -879,6 +881,7 @@ export default function ManagerApp({ agenceIdOverride, onRetourGroupe }) {
       {/* ──────────── GESTION LOCATIVE ──────────── */}
       {tab==="gestion" && <GestionLocative/>}
       {tab==="recherchesloc" && <LeadsLocation/>}
+      {tab==="prospects" && <LeadsProspects/>}
       {tab==="stats" && <StatsComparatives/>}
       {tab==="matching" && <MatchingManager/>}
       {tab==="km" && <IndemniteKm/>}

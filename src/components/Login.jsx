@@ -18,6 +18,7 @@ export default function Login({ onLogin }) {
   var ctx = useApp();
   var [email,      setEmail]      = useState("");
   var [pwd,        setPwd]        = useState("");
+  var [showPwd,    setShowPwd]    = useState(false);
   var [error,      setError]      = useState("");
   var [loading,    setLoading]    = useState(false);
   var [vue,        setVue]        = useState("login");
@@ -108,12 +109,20 @@ export default function Login({ onLogin }) {
 
           <div className="form-group" style={{marginBottom:8}}>
             <label className="form-label">{"Mot de passe"}</label>
-            <input type="password" className="form-input"
-              placeholder="••••••••"
-              value={pwd}
-              onChange={function(e){setPwd(e.target.value);setError("");}}
-              onKeyDown={function(e){if(e.key==="Enter")submit();}}
-              autoComplete="current-password"/>
+            <div style={{position:"relative"}}>
+              <input type={showPwd ? "text" : "password"} className="form-input"
+                placeholder="••••••••"
+                value={pwd}
+                onChange={function(e){setPwd(e.target.value);setError("");}}
+                onKeyDown={function(e){if(e.key==="Enter")submit();}}
+                style={{paddingRight:44}}
+                autoComplete="current-password"/>
+              <button type="button" onClick={function(){setShowPwd(function(p){return !p;});}}
+                style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,padding:4,lineHeight:1}}
+                aria-label={showPwd?"Masquer":"Afficher"}>
+                {showPwd ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
 
           <div style={{textAlign:"right",marginBottom:20}}>
@@ -134,8 +143,8 @@ export default function Login({ onLogin }) {
           </div>
         </div>
 
-                {/* Bouton PWA install multi-navigateur */}
-        <PwaInstallButton canInstall={canInstall} installApp={installApp}/>        )}
+        {/* Bouton PWA install multi-navigateur */}
+        <PwaInstallButton canInstall={canInstall} installApp={installApp}/>
       </div>
 
       {/* ─── COPYRIGHT ─── */}
