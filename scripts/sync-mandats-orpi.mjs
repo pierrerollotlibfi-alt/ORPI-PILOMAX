@@ -41,6 +41,21 @@ function mapType(t) {
   if (x.includes("local") || x.includes("commerce")) return "local";
   return x || "autre";
 }
+
+// Récupère jusqu'à 3 photos distinctes depuis la page d'une annonce.
+async function recupererPhotos(annonceUrl) {
+  try {
+    const html = await (await fetch(annonceUrl, { headers: { "User-Agent": UA } })).text();
+    const urls = html.match(/https:\/\/cutjhqvjma\.cloudimg\.io\/[^"'\s)]+/gi) || [];
+    const parPhoto = {};
+    for (const u of urls) {
+      const m = u.match(/--([0-9a-f-]{20,})/i);
+      const key = m ? m[1].slice(0, 20) : u;
+      if (!parPhoto[key]) parPhoto[key] = u;
+    }
+    return Object.values(parPhoto).slice(0, 3);
+  } catch (e) { return []; }
+}
 function parsePage(html) {
   const biens = [];
   const cards = html.split('data-oncrawl="estate-card"').slice(1);
@@ -183,18 +198,31 @@ async function main() {
     }
   });
 
-  // b) Ajouter les nouveaux biens du site
-  biens.forEach(b => {
-    if (!webParId[b.annonceId]) {
-      maxRef += 1;
-      resultat.push(nouveauMandat(b, "WEB-" + String(maxRef).padStart(3, "0"), today));
-      crees++;
+  // b) Ajouter les nouveaux biens du site (avec leurs photos)
+  const aCreer = biens.filter(b => !webParId[b.annonceId]);
+  for (const b of aCreer) {
+    maxRef += 1;
+    const nm = nouveauMandat(b, "WEB-" + String(maxRef).padStart(3, "0"), today);
+    nm.photos = await recupererPhotos(b.url);
+    resultat.push(nm);
+    crees++;
+    await new Promise(r => setTimeout(r, 150));
+  }
+
+  // c) Compléter les photos des biens web déjà présents mais sans photo
+  let photosAjoutees = 0;
+  for (const m of resultat) {
+    if (m.source === "orpi-web" && m.url && (!m.photos || m.photos.length === 0) && !m.retireDuSite) {
+      const ph = await recupererPhotos(m.url);
+      if (ph.length > 0) { m.photos = ph; photosAjoutees++; }
+      await new Promise(r => setTimeout(r, 150));
     }
-  });
+  }
 
   console.log("3. Réconciliation :");
   console.log("   + " + crees + " nouveau(x)");
   console.log("   ~ " + majs + " prix mis à jour");
+  console.log("   \uD83D\uDCF7 " + photosAjoutees + " bien(s) complété(s) en photos");
   console.log("   ⊘ " + retires + " retiré(s) du site (marqués, non supprimés)");
   if (reapparus) console.log("   ↻ " + reapparus + " réapparu(s)");
   console.log("   = " + resultat.length + " mandats au total\n");
