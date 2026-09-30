@@ -51,7 +51,9 @@ async function recupererPhotos(annonceUrl) {
     for (const u of urls) {
       const m = u.match(/--([0-9a-f-]{20,})/i);
       const key = m ? m[1].slice(0, 20) : u;
-      if (!parPhoto[key]) parPhoto[key] = u;
+      // décoder les entités HTML (&amp; -> &) sinon la signature de l'image est cassée
+      const clean = u.replace(/&amp;/g, "&").replace(/&#38;/g, "&");
+      if (!parPhoto[key]) parPhoto[key] = clean;
     }
     return Object.values(parPhoto).slice(0, 3);
   } catch (e) { return []; }
